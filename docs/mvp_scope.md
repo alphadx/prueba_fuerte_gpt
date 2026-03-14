@@ -167,3 +167,73 @@ Un ítem del alcance MVP se considera "Done" cuando cumple todo lo siguiente:
 - Emisión fiscal en ambiente productivo SII.
 - Automatizaciones avanzadas de pricing/promociones.
 - Workflows de RRHH no documentales (remuneraciones, asistencia avanzada).
+
+## Índices clave de término por paso/etapa (1 a 12)
+
+> Escala sugerida por índice: **Cumple / Parcial / No cumple**.  
+> Regla sugerida de cierre de etapa: **Terminado** cuando todos los índices críticos están en “Cumple” y no hay bloqueadores severos abiertos.
+
+### Paso 1: Definir alcance MVP y criterios de aceptación
+- **Índice de cobertura de alcance MVP:** % de módulos MVP con historia + criterio de aceptación documentado (meta: 100%).
+- **Índice de trazabilidad funcional:** % de historias enlazadas a evidencia de validación (meta: >= 95%).
+- **Índice de ambigüedad funcional:** # de dudas críticas abiertas en backlog (meta: 0).
+
+### Paso 2: Crear arquitectura base y repositorio ejecutable
+- **Índice de estructura base creada:** presencia de carpetas objetivo (`apps/api`, `apps/web`, `workers/alerts`, `infra`, `tests`) (meta: 100%).
+- **Índice de ejecución local inicial:** `make up`, `make test`, `make seed` operativos en entorno limpio (meta: 3/3).
+- **Índice de contrato API inicial:** endpoints base descritos en OpenAPI y versionados (meta: 100% de endpoints MVP definidos).
+
+### Paso 3: Levantar servicios de soporte con Docker Compose
+- **Índice de salud de servicios core:** % de servicios core en estado healthy (meta: 100%).
+- **Índice de arranque reproducible:** tiempo de bootstrap desde cero (meta: <= 15 min).
+- **Índice de paridad de entorno:** `.env.example` cubre todas las variables requeridas de ejecución (meta: 100%).
+
+### Paso 4: Diseñar modelo de datos inicial y migraciones
+- **Índice de cobertura de entidades MVP:** % de entidades del plan con migración aplicada (meta: 100%).
+- **Índice de migraciones idempotentes:** ejecución up/down sin errores en entorno limpio (meta: 100%).
+- **Índice de consistencia relacional:** # de errores de FK/constraints en pruebas de integración (meta: 0 críticos).
+
+### Paso 5: Implementar API modular con autenticación y permisos
+- **Índice de cobertura CRUD por módulo:** % de operaciones mínimas implementadas por módulo (meta: >= 90% MVP).
+- **Índice de seguridad de acceso:** % de endpoints protegidos con JWT/roles según definición (meta: 100%).
+- **Índice de auditoría crítica:** % de operaciones sensibles con registro auditable (meta: 100%).
+
+### Paso 6: Implementar POS y flujo de caja mínimo operable
+- **Índice de completitud de flujo POS:** apertura -> venta -> pago -> cierre ejecutable fin a fin (meta: 100%).
+- **Índice de exactitud de caja:** diferencia arqueo vs transacciones (meta: 0 o dentro de tolerancia definida).
+- **Índice de consistencia inventario-venta:** % de ventas que generan movimiento de stock correcto (meta: 100%).
+
+### Paso 7: Integrar boleta electrónica vía proveedor (sandbox)
+- **Índice de emisión sandbox exitosa:** % de boletas de prueba emitidas sin error (meta: >= 98%).
+- **Índice de latencia de emisión:** tiempo p95 de emisión/acuse sandbox (meta: umbral definido por equipo).
+- **Índice de resiliencia de cola:** tasa de reintentos exitosos tras fallo transitorio (meta: >= 95%).
+
+### Paso 8: Integrar capa de pagos por adaptadores
+- **Índice de cobertura de medios MVP:** drivers definidos y operativos (`cash`, stubs electrónicos) (meta: 100%).
+- **Índice de idempotencia webhook:** duplicados que alteran estado de pago (meta: 0).
+- **Índice de conciliación básica:** % de pagos conciliados vs ventas pagadas (meta: 100%).
+
+### Paso 9: Construir e-commerce básico con retiro en tienda
+- **Índice de éxito checkout retiro:** % de checkouts exitosos en e2e (meta: >= 95%).
+- **Índice de consistencia stock web/tienda:** discrepancia de stock entre canales (meta: <= umbral definido).
+- **Índice de transición de estados de pedido:** % de pedidos que siguen flujo válido de estados (meta: 100%).
+
+### Paso 10: Implementar RRHH documental flexible y motor de alertas
+- **Índice de cobertura documental:** % de empleados con documentos requeridos cargados en pruebas (meta: 100% fixture).
+- **Índice de precisión de alertas:** % de alertas generadas correctamente según umbrales (meta: >= 95%).
+- **Índice de entrega de notificaciones pruebas:** % de eventos entregados a canal in-app/email de prueba (meta: >= 95%).
+
+### Paso 11: Crear estado inicial válido de pruebas
+- **Índice de bootstrap QA:** tiempo para dejar entorno listo con `make bootstrap-test-state` (meta: <= 10 min).
+- **Índice de completitud de fixtures críticos:** escenarios críticos disponibles y ejecutables (meta: 100%).
+- **Índice de estabilidad de smoke tests:** tasa de éxito repetida (meta: >= 95% en corridas consecutivas).
+
+### Paso 12: Validación final, observabilidad y checklist de salida
+- **Índice de salud de pipeline:** % de jobs (lint/test/integración/smoke) en verde (meta: 100%).
+- **Índice de SLO técnico mínimo:** cumplimiento de latencia/errores/cola definidos (meta: 100% de SLO MVP).
+- **Índice de preparación go-live:** checklist de salida completo y aprobado (meta: 100% ítems críticos cerrados).
+
+## Semáforo de avance recomendado
+- **Verde (Terminado):** todos los índices críticos cumplen meta y sin bloqueadores severos.
+- **Amarillo (Parcial):** 1 o más índices no críticos bajo meta, con plan de cierre fechado.
+- **Rojo (No terminado):** 1 o más índices críticos fuera de meta o bloqueadores severos abiertos.
