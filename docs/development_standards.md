@@ -92,3 +92,13 @@ Formato sugerido de commit:
 - [ ] Sin secretos ni credenciales en el diff.
 - [ ] Documentación actualizada (README/docs del módulo).
 - [ ] Riesgos y siguientes pasos explícitos en el PR.
+
+
+## 9) Política de entorno para pruebas reales (Docker)
+
+- Toda sesión que involucre servicios (`api`, `worker`, `postgres`, `redis`) debe iniciar con verificación de Docker.
+- Comando base: `make doctor-docker`.
+- Si Docker no está disponible, se considera bloqueo de entorno y se debe:
+  1. registrar el intento de instalación/activación,
+  2. documentar el bloqueo exacto,
+  3. continuar con validaciones estáticas mientras se habilita Docker.

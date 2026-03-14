@@ -1,8 +1,14 @@
 # workers/alerts
 
-Esqueleto del worker asíncrono para motor de alertas de RRHH documental.
+Worker asíncrono para motor de alertas RRHH documental.
 
-Pendiente en pasos siguientes:
-- cola Redis,
-- job diario de umbrales 30/15/7/1 días,
-- notificación in-app y email de prueba.
+## Estado actual
+
+- Implementado `worker.py` que consume eventos desde Redis (`BLPOP`).
+- Cola por defecto: `alerts_queue`.
+- Variables configurables: `REDIS_URL`, `ALERTS_QUEUE`, `WORKER_POLL_SECONDS`.
+
+## Ejecución
+
+- Local dockerizado: `make compose-up`.
+- La API publica eventos con `POST /alerts/dispatch` y el worker los procesa en segundo plano.

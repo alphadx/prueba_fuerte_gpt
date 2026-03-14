@@ -1,4 +1,16 @@
-.PHONY: up test seed
+.PHONY: doctor-docker up test seed compose-up compose-up-full compose-down
+
+doctor-docker:
+	@echo "[doctor] Verificando Docker y Docker Compose..."
+	@if command -v docker >/dev/null 2>&1; then \
+		docker --version; \
+		docker compose version || true; \
+		echo "[doctor] OK: Docker disponible."; \
+	else \
+		echo "[doctor] ERROR: Docker no está instalado/disponible."; \
+		echo "[doctor] Acción requerida: instalar Docker Engine + Docker Compose antes de ejecutar pruebas reales."; \
+		exit 1; \
+	fi
 
 up:
 	python3 -m venv .venv
@@ -12,3 +24,12 @@ test:
 
 seed:
 	python3 infra/scripts/seed.py
+
+compose-up:
+	docker compose --profile core --env-file .env.example up -d --build
+
+compose-up-full:
+	docker compose --profile full --env-file .env.example up -d --build
+
+compose-down:
+	docker compose --env-file .env.example down

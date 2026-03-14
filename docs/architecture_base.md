@@ -2,24 +2,26 @@
 
 ## Monorepo inicial
 
-- `apps/api`: servicio FastAPI con endpoint de healthcheck.
+- `apps/api`: servicio FastAPI con endpoint de healthcheck y encolado de alertas.
 - `apps/web`: esqueleto de frontend Next.js.
-- `workers/alerts`: esqueleto de worker para alertas.
+- `workers/alerts`: worker para consumir cola Redis.
 - `infra`: scripts y datos semilla.
 - `tests`: pruebas iniciales de API.
 
 ## OpenAPI como fuente de verdad
 
-El contrato inicial está definido en `apps/api/openapi.yaml` e incluye el endpoint `GET /health`.
+El contrato inicial está definido en `apps/api/openapi.yaml` e incluye `GET /health` y `POST /alerts/dispatch`.
 
 ## Scripts de ejecución
 
 - `make up`
 - `make test`
 - `make seed`
+- `make compose-up`
+- `make compose-up-full`
+- `make compose-down`
 
 Estos comandos permiten levantar, validar y preparar un estado base de desarrollo para continuar con el paso 3 (Docker Compose).
-
 
 ## Reforzamiento para siguientes contribuciones
 

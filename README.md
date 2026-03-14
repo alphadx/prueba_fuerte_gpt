@@ -1,6 +1,6 @@
 # ERP Barrio Chile - Monorepo base
 
-Este repositorio implementa el **paso 2 del plan**: arquitectura base y repositorio ejecutable para un MVP ERP en Chile.
+Este repositorio implementa el **paso 2 del plan** y avances del **paso 3**: arquitectura base ejecutable + soporte Docker Compose con cola Redis.
 
 ## Estructura
 
@@ -15,6 +15,7 @@ Este repositorio implementa el **paso 2 del plan**: arquitectura base y reposito
 - Python 3.11+
 - Node.js 20+ (para `apps/web`)
 - GNU Make
+- Docker + Docker Compose
 
 ## Comandos principales
 
@@ -22,6 +23,9 @@ Este repositorio implementa el **paso 2 del plan**: arquitectura base y reposito
 make up
 make test
 make seed
+make compose-up
+make compose-up-full
+make compose-down
 ```
 
 ### Qué hace cada comando
@@ -29,12 +33,29 @@ make seed
 - `make up`: instala dependencias de API y levanta FastAPI localmente en `http://127.0.0.1:8000`.
 - `make test`: ejecuta los tests base de API.
 - `make seed`: genera datos semilla iniciales en `infra/seeds/dev_seed.json`.
+- `make compose-up`: levanta perfil `core` (`postgres`, `redis`, `api`, `worker`, `web`).
+- `make compose-up-full`: levanta perfil `full` (core + `mailhog`, `minio`).
+- `make compose-down`: baja servicios Docker Compose.
 
 ## Contrato OpenAPI como fuente de verdad
 
 El contrato vive en `apps/api/openapi.yaml`. Cualquier endpoint nuevo debe declararse primero ahí.
 
+## Endpoints iniciales
+
+- `GET /health`: disponibilidad del servicio.
+- `POST /alerts/dispatch`: encola alertas documentales hacia Redis/worker.
+
 ## Estándares y colaboración
 
 - Estándares técnicos y guía de colaboración (humanos + GPTs): `docs/development_standards.md`.
 - Guía específica del paso 2: `docs/architecture_base.md`.
+- Registro de avance del plan: `docs/progress_log.md`.
+- Revisión de mitigaciones del paso 2: `docs/step2_mitigations.md`.
+
+
+## Política operativa de sesión (Docker)
+
+- En cada sesión técnica se debe validar Docker al inicio con `make doctor-docker`.
+- Si Docker no está instalado/disponible, **primero se debe instalar/habilitar** antes de ejecutar pruebas reales con Compose.
+- Para pruebas integradas de servicios usar `make compose-up` (o `make compose-up-full`).
