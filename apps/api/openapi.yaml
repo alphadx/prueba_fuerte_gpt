@@ -1,0 +1,25 @@
+openapi: 3.1.0
+info:
+  title: ERP Barrio API
+  version: 0.1.0
+  description: Contrato inicial del API del MVP ERP.
+servers:
+  - url: http://localhost:8000
+paths:
+  /health:
+    get:
+      tags: [system]
+      summary: Verifica disponibilidad del servicio
+      operationId: getHealth
+      responses:
+        '200':
+          description: Servicio disponible
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status:
+                    type: string
+                    example: ok
