@@ -1,0 +1,20 @@
+{
+  "company": {
+    "name": "Demo ERP Barrio",
+    "rut": "76.123.456-7"
+  },
+  "branch": {
+    "name": "Casa Matriz",
+    "code": "BR-001"
+  },
+  "users": [
+    {
+      "email": "admin@example.com",
+      "role": "admin"
+    },
+    {
+      "email": "cajero@example.com",
+      "role": "cajero"
+    }
+  ]
+}
