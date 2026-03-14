@@ -1,0 +1,89 @@
+openapi: 3.1.0
+info:
+  title: ERP Barrio API
+  version: 0.2.1
+  description: Contrato inicial del API del MVP ERP.
+servers:
+  - url: http://localhost:8000
+paths:
+  /health:
+    get:
+      tags: [system]
+      summary: Verifica disponibilidad del servicio
+      operationId: getHealth
+      responses:
+        '200':
+          description: Servicio disponible
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status:
+                    type: string
+                    example: ok
+  /ready:
+    get:
+      tags: [system]
+      summary: Verifica disponibilidad para recibir tráfico
+      operationId: getReady
+      responses:
+        '200':
+          description: Servicio listo
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status:
+                    type: string
+                    example: ready
+  /alerts/dispatch:
+    post:
+      tags: [alerts]
+      summary: Encola una alerta documental para worker asíncrono
+      operationId: postAlertsDispatch
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [employee_id, document_type, days_to_expire]
+              properties:
+                employee_id:
+                  type: string
+                  minLength: 1
+                document_type:
+                  type: string
+                  minLength: 1
+                days_to_expire:
+                  type: integer
+                  minimum: 0
+      responses:
+        '200':
+          description: Alerta encolada
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, backend]
+                properties:
+                  status:
+                    type: string
+                    example: queued
+                  backend:
+                    type: string
+                    example: redis
+        '503':
+          description: Cola no disponible y fallback deshabilitado
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [detail]
+                properties:
+                  detail:
+                    type: string
