@@ -19,10 +19,3 @@ El contrato inicial está definido en `apps/api/openapi.yaml` e incluye el endpo
 - `make seed`
 
 Estos comandos permiten levantar, validar y preparar un estado base de desarrollo para continuar con el paso 3 (Docker Compose).
-
-
-## Reforzamiento para siguientes contribuciones
-
-- Aplicar la guía de estándares en `docs/development_standards.md`.
-- Mantener enfoque API-first: actualizar OpenAPI antes de implementar endpoints.
-- En PRs, reportar comandos exactos de validación y limitaciones de entorno (si existen).

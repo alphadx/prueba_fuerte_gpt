@@ -33,8 +33,3 @@ make seed
 ## Contrato OpenAPI como fuente de verdad
 
 El contrato vive en `apps/api/openapi.yaml`. Cualquier endpoint nuevo debe declararse primero ahí.
-
-## Estándares y colaboración
-
-- Estándares técnicos y guía de colaboración (humanos + GPTs): `docs/development_standards.md`.
-- Guía específica del paso 2: `docs/architecture_base.md`.

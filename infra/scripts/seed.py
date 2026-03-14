@@ -1,10 +1,3 @@
-"""Seed inicial del repositorio.
-
-Notas para desarrolladores y agentes GPT:
-- Este seed es deliberadamente pequeño para el paso 2.
-- En el paso 11 debe evolucionar a `make bootstrap-test-state` con fixtures completos.
-"""
-
 import json
 from pathlib import Path
 
