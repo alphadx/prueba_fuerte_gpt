@@ -102,3 +102,10 @@ Formato sugerido de commit:
   1. registrar el intento de instalación/activación,
   2. documentar el bloqueo exacto,
   3. continuar con validaciones estáticas mientras se habilita Docker.
+
+
+## 10) Identidad y acceso (IAM)
+
+- El control de identidad debe centralizarse en IdP (Keycloak) con OIDC/OAuth2.
+- La API no debe implementar login local productivo; sólo validar tokens y aplicar permisos de dominio.
+- Roles de negocio (`admin`, `cajero`, `bodega`, `rrhh`) deben mapearse desde claims de token + reglas internas.

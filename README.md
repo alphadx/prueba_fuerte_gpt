@@ -34,7 +34,7 @@ make compose-down
 - `make test`: ejecuta los tests base de API.
 - `make seed`: genera datos semilla iniciales en `infra/seeds/dev_seed.json`.
 - `make compose-up`: levanta perfil `core` (`postgres`, `redis`, `api`, `worker`, `web`).
-- `make compose-up-full`: levanta perfil `full` (core + `mailhog`, `minio`).
+- `make compose-up-full`: levanta perfil `full` (core + `mailhog`, `minio`, `keycloak`, `keycloak-db`).
 - `make compose-down`: baja servicios Docker Compose.
 
 ## Contrato OpenAPI como fuente de verdad
@@ -59,3 +59,10 @@ El contrato vive en `apps/api/openapi.yaml`. Cualquier endpoint nuevo debe decla
 - En cada sesión técnica se debe validar Docker al inicio con `make doctor-docker`.
 - Si Docker no está instalado/disponible, **primero se debe instalar/habilitar** antes de ejecutar pruebas reales con Compose.
 - Para pruebas integradas de servicios usar `make compose-up` (o `make compose-up-full`).
+
+
+## Control de usuarios y SSO
+
+- Se adopta estrategia de identidad con **Keycloak** (OIDC/OAuth2).
+- Diseño y consideraciones: `docs/auth_strategy.md`.
+- En perfil `full`, Keycloak queda disponible para preparar el paso 5 (auth/permisos).

@@ -67,3 +67,5 @@ Cada avance debe añadir:
 - Se incorporaron mejoras técnicas: endpoint `GET /ready`, control de fallback de cola y contrato OpenAPI actualizado.
 
 - Mitigación operativa: se añadió `make doctor-docker` para forzar chequeo explícito de Docker al inicio de sesión.
+
+- Se incorporó decisión de SSO con Keycloak y se agregó base de infraestructura en perfil `full`.
