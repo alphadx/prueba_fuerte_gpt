@@ -1,6 +1,6 @@
 # ERP Barrio Chile - Monorepo base
 
-Este repositorio implementa el **paso 2 del plan** y avances del **paso 3**: arquitectura base ejecutable + soporte Docker Compose con cola Redis.
+Este repositorio implementa el **paso 2 del plan** y la **base técnica del paso 3**: arquitectura base ejecutable + soporte Docker Compose con cola Redis.
 
 ## Estructura
 
@@ -26,6 +26,7 @@ make seed
 make compose-up
 make compose-up-full
 make compose-down
+make compose-smoke
 ```
 
 ### Qué hace cada comando
@@ -36,6 +37,7 @@ make compose-down
 - `make compose-up`: levanta perfil `core` (`postgres`, `redis`, `api`, `worker`, `web`).
 - `make compose-up-full`: levanta perfil `full` (core + `mailhog`, `minio`, `keycloak`, `keycloak-db`).
 - `make compose-down`: baja servicios Docker Compose.
+- `make compose-smoke`: valida endpoints `/health` y `/ready` de la API levantada por Compose.
 
 ## Contrato OpenAPI como fuente de verdad
 

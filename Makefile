@@ -1,4 +1,4 @@
-.PHONY: doctor-docker up test seed compose-up compose-up-full compose-down
+.PHONY: doctor-docker up test seed compose-up compose-up-full compose-down compose-smoke
 
 doctor-docker:
 	@echo "[doctor] Verificando Docker y Docker Compose..."
@@ -33,3 +33,10 @@ compose-up-full:
 
 compose-down:
 	docker compose --env-file .env.example down
+
+
+compose-smoke:
+	@echo "[smoke] Verificando endpoints del stack core..."
+	@curl -fsS http://127.0.0.1:$${API_PORT:-8000}/health >/dev/null
+	@curl -fsS http://127.0.0.1:$${API_PORT:-8000}/ready >/dev/null
+	@echo "[smoke] OK: /health y /ready responden correctamente."
