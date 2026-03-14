@@ -29,7 +29,7 @@ Integrate electronic receipt issuance in sandbox without compromising checkout l
 ## Trends to adopt
 - Outbox + worker processing for guaranteed delivery semantics.
 - Unified integration telemetry (latency, error classes, retry outcomes).
-- Adapter plugability for future provider replacement.
+- Adapter pluggability for future provider replacement.
 
 ## Reliability focus
 - Protect POS flow from provider downtime.

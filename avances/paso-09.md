@@ -7,7 +7,7 @@
 
 ## Grado de cumplimiento
 - **Éxito checkout retiro:** 0% (flujo e-commerce no implementado).
-- **Consistencia stock web/tienda:** N/A inicial (sin sincronización activa).
+- **Consistencia stock web/tienda:** No aplica por ahora (sin sincronización activa).
 - **Transición de estados de pedido:** 0% (sin máquina de estados ejecutable).
 
 ## Estado de avance del paso

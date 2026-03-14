@@ -7,7 +7,7 @@
 
 ## Grado de cumplimiento
 - **Emisión sandbox exitosa:** 0% (integración no implementada).
-- **Latencia de emisión:** N/A inicial (sin mediciones en runtime).
+- **Latencia de emisión:** No aplica por ahora (sin mediciones en ejecución).
 - **Resiliencia de cola:** 0% (no hay worker/reintentos probados).
 
 ## Estado de avance del paso

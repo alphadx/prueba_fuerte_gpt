@@ -7,7 +7,7 @@
 
 ## Grado de cumplimiento
 - **Cobertura de medios MVP:** 0% (drivers no implementados).
-- **Idempotencia webhook:** N/A inicial (sin webhook activo).
+- **Idempotencia webhook:** No aplica por ahora (sin webhook activo).
 - **Conciliación básica:** 0% (sin flujo de pagos conciliado).
 
 ## Estado de avance del paso

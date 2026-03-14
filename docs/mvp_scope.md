@@ -170,7 +170,7 @@ Un ítem del alcance MVP se considera "Done" cuando cumple todo lo siguiente:
 
 ## Índices clave de término por paso/etapa (1 a 12)
 
-> Escala sugerida por índice: **Cumple / Parcial / No cumple**.  
+> Escala sugerida por índice: **Cumple / Parcial / No cumple**.
 > Regla sugerida de cierre de etapa: **Terminado** cuando todos los índices críticos están en “Cumple” y no hay bloqueadores severos abiertos.
 
 ### Paso 1: Definir alcance MVP y criterios de aceptación

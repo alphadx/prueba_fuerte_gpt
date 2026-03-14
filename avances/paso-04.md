@@ -8,7 +8,7 @@
 ## Grado de cumplimiento
 - **Cobertura de entidades MVP:** 0% (sin migraciones aplicadas).
 - **Migraciones idempotentes:** 0% (sin evidencia de pruebas up/down).
-- **Consistencia relacional:** N/A inicial (aún no medible sin modelo implementado).
+- **Consistencia relacional:** No aplica por ahora (aún no medible sin modelo implementado).
 
 ## Estado de avance del paso
 - **Cumplimiento estimado:** **0%**

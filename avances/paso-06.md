@@ -7,7 +7,7 @@
 
 ## Grado de cumplimiento
 - **Completitud de flujo POS:** 0% (flujo aún no implementado).
-- **Exactitud de caja:** N/A inicial (sin transacciones operativas).
+- **Exactitud de caja:** No aplica por ahora (sin transacciones operativas).
 - **Consistencia inventario-venta:** 0% (no hay ejecuciones e2e del flujo).
 
 ## Estado de avance del paso
