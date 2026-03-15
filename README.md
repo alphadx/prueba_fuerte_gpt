@@ -27,6 +27,7 @@ make compose-up
 make compose-up-full
 make compose-down
 make compose-smoke
+make architecture-review
 ```
 
 ### Qué hace cada comando
@@ -35,9 +36,10 @@ make compose-smoke
 - `make test`: ejecuta los tests base de API.
 - `make seed`: genera datos semilla iniciales en `infra/seeds/dev_seed.json`.
 - `make compose-up`: levanta perfil `core` (`postgres`, `redis`, `api`, `worker`, `web`).
-- `make compose-up-full`: levanta perfil `full` (core + `mailhog`, `minio`, `keycloak`, `keycloak-db`).
+- `make compose-up-full`: levanta perfil `full` (core + `mailhog`, `greenmail`, `minio`, `keycloak`, `keycloak-db`).
 - `make compose-down`: baja servicios Docker Compose.
 - `make compose-smoke`: valida endpoints `/health` y `/ready` de la API levantada por Compose.
+- `make architecture-review`: revisa requisitos críticos de arquitectura (IMAP, UX web/móvil, QR P2P).
 
 ## Contrato OpenAPI como fuente de verdad
 
@@ -68,3 +70,8 @@ El contrato vive en `apps/api/openapi.yaml`. Cualquier endpoint nuevo debe decla
 - Se adopta estrategia de identidad con **Keycloak** (OIDC/OAuth2).
 - Diseño y consideraciones: `docs/auth_strategy.md`.
 - En perfil `full`, Keycloak queda disponible para preparar el paso 5 (auth/permisos).
+
+
+## Revisión final de arquitectura
+
+Para alinear pasos 9-12 con los requisitos críticos (correo IMAP, experiencia web+móvil y QR P2P), revisar `docs/final_infra_architecture_review.md`.

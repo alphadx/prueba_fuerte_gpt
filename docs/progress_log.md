@@ -28,7 +28,7 @@
 - `docker-compose.yml` con perfiles `core` y `full`.
 - `Makefile` extendido con `make compose-smoke` para validar readiness de API.
 - Servicios `core`: `postgres`, `redis`, `api`, `worker`, `web`.
-- Servicios `full`: `mailhog`, `minio`.
+- Servicios `full`: `mailhog`, `greenmail` (SMTP+IMAP), `minio`, `keycloak`, `keycloak-db`.
 - `.env.example` con variables base del entorno.
 - Dockerfiles para `apps/api` y `workers/alerts`.
 - API extendida con `POST /alerts/dispatch` para encolar eventos.
@@ -70,3 +70,13 @@ Cada avance debe añadir:
 - Mitigación operativa: se añadió `make doctor-docker` para forzar chequeo explícito de Docker al inicio de sesión.
 
 - Se incorporó decisión de SSO con Keycloak y se agregó base de infraestructura en perfil `full`.
+
+
+## Hardening de arquitectura (última ventana de cambios)
+
+- Se agregó revisión formal en `docs/final_infra_architecture_review.md` para alinear pasos 9-12 con:
+  - correo de pruebas verificable vía IMAP,
+  - experiencia UI web/móvil,
+  - validación QR para transacciones entre pares (P2P).
+- Se reforzó infraestructura `compose full` con servicio GreenMail (SMTP + IMAP) para pruebas de notificaciones extremo a extremo.
+

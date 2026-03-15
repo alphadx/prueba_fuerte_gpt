@@ -13,4 +13,4 @@
 ## Estado de avance del paso
 - **Cumplimiento estimado:** **0%**
 - **Semáforo:** 🔴 Rojo (No terminado)
-- **Observación:** Dependiente de APIs de catálogo, stock y órdenes.
+- **Observación:** Debe incluir responsive web/móvil y flujo QR P2P mínimo (emitir/validar/confirmar).

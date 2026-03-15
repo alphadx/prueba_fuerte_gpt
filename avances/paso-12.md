@@ -13,4 +13,4 @@
 ## Estado de avance del paso
 - **Cumplimiento estimado:** **0%**
 - **Semáforo:** 🔴 Rojo (No terminado)
-- **Observación:** Etapa final dependiente de cierre de todos los pasos anteriores.
+- **Observación:** El checklist final debe incluir UX móvil/web, confiabilidad IMAP y seguridad del flujo QR P2P.

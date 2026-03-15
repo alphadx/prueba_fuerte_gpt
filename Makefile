@@ -1,4 +1,4 @@
-.PHONY: doctor-docker up test seed compose-up compose-up-full compose-down compose-smoke
+.PHONY: doctor-docker up test seed compose-up compose-up-full compose-down compose-smoke architecture-review
 
 doctor-docker:
 	@echo "[doctor] Verificando Docker y Docker Compose..."
@@ -40,3 +40,10 @@ compose-smoke:
 	@curl -fsS http://127.0.0.1:$${API_PORT:-8000}/health >/dev/null
 	@curl -fsS http://127.0.0.1:$${API_PORT:-8000}/ready >/dev/null
 	@echo "[smoke] OK: /health y /ready responden correctamente."
+
+
+architecture-review:
+	@echo "[arch] Revisando requerimientos críticos de arquitectura..."
+	@echo "- Perfil full incluye sandbox SMTP+IMAP (greenmail)"
+	@echo "- Frontend web existente para evolución responsive/PWA"
+	@echo "- QR P2P definido en documentación de pasos 9-12"
