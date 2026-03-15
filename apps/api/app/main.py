@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field
 from app.modules.products.router import router as products_router
 from app.services.queue import queue_client
 
-app = FastAPI(title="ERP Barrio API", version="0.3.0")
+app = FastAPI(title="ERP Barrio API", version="0.3.1")
 
 
 class AlertDispatchRequest(BaseModel):

@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: ERP Barrio API
-  version: 0.3.0
+  version: 0.3.1
   description: Contrato inicial del API del MVP ERP.
 servers:
   - url: http://localhost:8000
@@ -11,6 +11,78 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
+  schemas:
+    ErrorResponse:
+      type: object
+      required: [detail]
+      properties:
+        detail:
+          type: string
+    AlertDispatchRequest:
+      type: object
+      required: [employee_id, document_type, days_to_expire]
+      properties:
+        employee_id:
+          type: string
+          minLength: 1
+        document_type:
+          type: string
+          minLength: 1
+        days_to_expire:
+          type: integer
+          minimum: 0
+    AlertDispatchResponse:
+      type: object
+      required: [status, backend]
+      properties:
+        status:
+          type: string
+          example: queued
+        backend:
+          type: string
+          example: redis
+    ProductCreateRequest:
+      type: object
+      required: [sku, name, price]
+      properties:
+        sku:
+          type: string
+          minLength: 1
+        name:
+          type: string
+          minLength: 1
+        price:
+          type: number
+          exclusiveMinimum: 0
+    ProductUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+        price:
+          type: number
+          exclusiveMinimum: 0
+    ProductResponse:
+      type: object
+      required: [id, sku, name, price]
+      properties:
+        id:
+          type: string
+        sku:
+          type: string
+        name:
+          type: string
+        price:
+          type: number
+    ProductListResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductResponse'
 paths:
   /health:
     get:
@@ -56,43 +128,20 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required: [employee_id, document_type, days_to_expire]
-              properties:
-                employee_id:
-                  type: string
-                  minLength: 1
-                document_type:
-                  type: string
-                  minLength: 1
-                days_to_expire:
-                  type: integer
-                  minimum: 0
+              $ref: '#/components/schemas/AlertDispatchRequest'
       responses:
         '200':
           description: Alerta encolada
           content:
             application/json:
               schema:
-                type: object
-                required: [status, backend]
-                properties:
-                  status:
-                    type: string
-                    example: queued
-                  backend:
-                    type: string
-                    example: redis
+                $ref: '#/components/schemas/AlertDispatchResponse'
         '503':
           description: Cola no disponible y fallback deshabilitado
           content:
             application/json:
               schema:
-                type: object
-                required: [detail]
-                properties:
-                  detail:
-                    type: string
+                $ref: '#/components/schemas/ErrorResponse'
   /products:
     get:
       tags: [products]
@@ -103,66 +152,158 @@ paths:
       responses:
         '200':
           description: Listado de productos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductListResponse'
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
     post:
       tags: [products]
       summary: Crea un producto en catálogo
       operationId: postProducts
       security:
         - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductCreateRequest'
       responses:
         '201':
           description: Producto creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductResponse'
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '409':
           description: SKU duplicado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /products/{product_id}:
+    parameters:
+      - in: path
+        name: product_id
+        required: true
+        schema:
+          type: string
     get:
       tags: [products]
       summary: Obtiene un producto por identificador
       operationId: getProductById
       security:
         - bearerAuth: []
-      parameters:
-        - in: path
-          name: product_id
-          required: true
-          schema:
-            type: string
       responses:
         '200':
           description: Producto encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductResponse'
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '404':
           description: Producto no existe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
     patch:
       tags: [products]
       summary: Actualiza campos de un producto
       operationId: patchProductById
       security:
         - bearerAuth: []
-      parameters:
-        - in: path
-          name: product_id
-          required: true
-          schema:
-            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductUpdateRequest'
       responses:
         '200':
           description: Producto actualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductResponse'
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '404':
           description: Producto no existe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
     delete:
       tags: [products]
       summary: Elimina un producto del catálogo
       operationId: deleteProductById
       security:
         - bearerAuth: []
-      parameters:
-        - in: path
-          name: product_id
-          required: true
-          schema:
-            type: string
       responses:
         '204':
           description: Producto eliminado
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '404':
           description: Producto no existe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'

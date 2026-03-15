@@ -7,10 +7,10 @@
 
 ## Grado de cumplimiento
 - **Cobertura CRUD por módulo:** 20% (CRUD completo habilitado para módulo inicial `products`).
-- **Seguridad de acceso:** 100% en módulo `products`; pendiente replicar en módulos restantes.
+- **Seguridad de acceso:** 100% en módulo `products`, con validaciones de claims temporales (`exp`, `nbf`) y soporte de verificación HS256 por secreto (`JWT_HS256_SECRET`).
 - **Auditoría crítica:** 100% en `products`; pendiente extender a caja/pagos/documentos tributarios/RRHH.
 
 ## Estado de avance del paso
-- **Cumplimiento estimado:** **35%**
+- **Cumplimiento estimado:** **45%**
 - **Semáforo:** 🟡 Amarillo (En progreso)
-- **Observación:** Se implementó baseline reusable de autenticación (`Bearer/JWT claims`) + autorización RBAC + trazabilidad de auditoría para continuar con más vertical slices.
+- **Observación:** Se consolidó baseline reusable de autenticación/autorización + trazabilidad de auditoría y se robusteció el contrato OpenAPI de errores/seguridad para continuar con más vertical slices.

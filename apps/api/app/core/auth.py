@@ -1,16 +1,21 @@
 """Authentication helpers for API endpoints.
 
 MVP approach:
-- Tokens are expected as JWT-like bearer strings coming from an external IdP.
-- Signature verification is intentionally out of scope for this repo stage.
-- Claims extraction powers role-based authorization inside the API.
+- Access tokens are expected as JWT bearer strings from an external IdP.
+- If `JWT_HS256_SECRET` is configured, HS256 signature verification is enforced.
+- When no secret is configured, unsigned/unchecked tokens are allowed only for bootstrap.
 """
 
 from __future__ import annotations
 
 import base64
+import hashlib
+import hmac
 import json
+import os
+import time
 from dataclasses import dataclass
+from typing import Any
 
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -26,45 +31,95 @@ class AuthContext:
     roles: frozenset[str]
 
 
-def _decode_payload(token: str) -> dict[str, object]:
-    """Decode JWT payload segment without signature verification.
+def _b64url_decode(encoded: str) -> bytes:
+    padding = "=" * (-len(encoded) % 4)
+    return base64.urlsafe_b64decode(f"{encoded}{padding}".encode("utf-8"))
 
-    This keeps the API decoupled from a specific IdP SDK while step 5 focuses on
-    modular authorization wiring.
-    """
+
+def _b64url_encode(raw: bytes) -> str:
+    return base64.urlsafe_b64encode(raw).decode("utf-8").rstrip("=")
+
+
+def _decode_jwt_parts(token: str) -> tuple[dict[str, Any], dict[str, Any], str, str]:
     try:
         segments = token.split(".")
         if len(segments) != 3:
             raise ValueError("token format")
 
-        payload_segment = segments[1]
-        padding = "=" * (-len(payload_segment) % 4)
-        decoded = base64.urlsafe_b64decode(f"{payload_segment}{padding}".encode("utf-8"))
-        payload = json.loads(decoded.decode("utf-8"))
+        header_raw, payload_raw, signature_raw = segments
+        header = json.loads(_b64url_decode(header_raw).decode("utf-8"))
+        payload = json.loads(_b64url_decode(payload_raw).decode("utf-8"))
     except (ValueError, json.JSONDecodeError, UnicodeDecodeError) as exc:
         raise HTTPException(status_code=401, detail="Invalid bearer token") from exc
 
-    if not isinstance(payload, dict):
+    if not isinstance(header, dict) or not isinstance(payload, dict):
         raise HTTPException(status_code=401, detail="Invalid bearer token")
 
-    return payload
+    return header, payload, f"{header_raw}.{payload_raw}", signature_raw
+
+
+def _verify_hs256(signing_input: str, signature_raw: str, secret: str) -> None:
+    expected = hmac.new(
+        secret.encode("utf-8"),
+        signing_input.encode("utf-8"),
+        digestmod=hashlib.sha256,
+    ).digest()
+    actual = _b64url_encode(expected)
+
+    if not hmac.compare_digest(actual, signature_raw):
+        raise HTTPException(status_code=401, detail="Invalid token signature")
+
+
+def _verify_registered_claims(payload: dict[str, Any]) -> None:
+    now = int(time.time())
+
+    exp = payload.get("exp")
+    if exp is not None:
+        if not isinstance(exp, int) or exp <= now:
+            raise HTTPException(status_code=401, detail="Expired token")
+
+    nbf = payload.get("nbf")
+    if nbf is not None:
+        if not isinstance(nbf, int) or nbf > now:
+            raise HTTPException(status_code=401, detail="Token not active yet")
+
+
+def _extract_roles(payload: dict[str, Any]) -> frozenset[str]:
+    roles_claim = payload.get("roles")
+    if isinstance(roles_claim, list) and all(isinstance(role, str) for role in roles_claim):
+        return frozenset(roles_claim)
+
+    # Keycloak-compatible shape
+    realm_access = payload.get("realm_access")
+    if isinstance(realm_access, dict):
+        realm_roles = realm_access.get("roles")
+        if isinstance(realm_roles, list) and all(isinstance(role, str) for role in realm_roles):
+            return frozenset(realm_roles)
+
+    raise HTTPException(status_code=401, detail="Invalid roles claim")
 
 
 def get_auth_context(
     credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
 ) -> AuthContext:
-    """Extract identity and roles from Bearer token claims."""
+    """Extract identity and roles from bearer token claims."""
     if credentials is None:
         raise HTTPException(status_code=401, detail="Missing bearer token")
 
-    payload = _decode_payload(credentials.credentials)
-    subject = payload.get("sub")
-    roles_claim = payload.get("roles", [])
+    header, payload, signing_input, signature_raw = _decode_jwt_parts(credentials.credentials)
+    secret = os.getenv("JWT_HS256_SECRET")
 
+    if secret:
+        algorithm = header.get("alg")
+        if algorithm != "HS256":
+            raise HTTPException(status_code=401, detail="Unsupported token algorithm")
+        _verify_hs256(signing_input, signature_raw, secret)
+
+    _verify_registered_claims(payload)
+
+    subject = payload.get("sub")
     if not isinstance(subject, str) or not subject:
         raise HTTPException(status_code=401, detail="Missing token subject")
 
-    if not isinstance(roles_claim, list) or not all(isinstance(role, str) for role in roles_claim):
-        raise HTTPException(status_code=401, detail="Invalid roles claim")
-
-    return AuthContext(subject=subject, roles=frozenset(roles_claim))
+    roles = _extract_roles(payload)
+    return AuthContext(subject=subject, roles=roles)
