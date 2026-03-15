@@ -49,6 +49,7 @@ Sí, se considera **SSO con Keycloak** desde esta etapa para evitar acoplar aute
 - La verificación criptográfica HS256 se activa al definir `JWT_HS256_SECRET`.
 - Por seguridad, el modo sin verificación queda deshabilitado por defecto y sólo se habilita explícitamente con `JWT_ALLOW_INSECURE_TOKENS=true` (uso local temporal).
 - Se validan claims temporales `exp` y `nbf` para evitar uso de tokens expirados/no vigentes.
+- Opcionalmente se puede exigir aislamiento por emisor/audiencia con `JWT_EXPECTED_ISS` y `JWT_EXPECTED_AUD`.
 
 ## Próximos pasos técnicos
 

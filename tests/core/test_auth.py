@@ -93,3 +93,49 @@ def test_auth_rejects_bad_signature(monkeypatch: pytest.MonkeyPatch) -> None:
 
     assert exc.value.status_code == 401
     assert exc.value.detail == "Invalid token signature"
+
+
+def test_auth_rejects_unexpected_issuer(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("JWT_HS256_SECRET", "test-secret")
+    monkeypatch.setenv("JWT_EXPECTED_ISS", "https://issuer.erp")
+    token = _build_token(
+        {"sub": "u-6", "roles": ["admin"], "iss": "https://other-issuer"},
+        alg="HS256",
+        secret="test-secret",
+    )
+
+    with pytest.raises(HTTPException) as exc:
+        get_auth_context(HTTPAuthorizationCredentials(scheme="Bearer", credentials=token))
+
+    assert exc.value.status_code == 401
+    assert exc.value.detail == "Invalid token issuer"
+
+
+def test_auth_accepts_expected_audience_in_list(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("JWT_HS256_SECRET", "test-secret")
+    monkeypatch.setenv("JWT_EXPECTED_AUD", "erp-api")
+    token = _build_token(
+        {"sub": "u-7", "roles": ["admin"], "aud": ["erp-web", "erp-api"]},
+        alg="HS256",
+        secret="test-secret",
+    )
+
+    auth = get_auth_context(HTTPAuthorizationCredentials(scheme="Bearer", credentials=token))
+
+    assert auth.subject == "u-7"
+
+
+def test_auth_rejects_invalid_audience(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("JWT_HS256_SECRET", "test-secret")
+    monkeypatch.setenv("JWT_EXPECTED_AUD", "erp-api")
+    token = _build_token(
+        {"sub": "u-8", "roles": ["admin"], "aud": "other-aud"},
+        alg="HS256",
+        secret="test-secret",
+    )
+
+    with pytest.raises(HTTPException) as exc:
+        get_auth_context(HTTPAuthorizationCredentials(scheme="Bearer", credentials=token))
+
+    assert exc.value.status_code == 401
+    assert exc.value.detail == "Invalid token audience"

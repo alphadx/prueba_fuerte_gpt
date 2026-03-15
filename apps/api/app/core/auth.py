@@ -4,6 +4,7 @@ MVP approach:
 - Access tokens are expected as JWT bearer strings from an external IdP.
 - If `JWT_HS256_SECRET` is configured, HS256 signature verification is enforced.
 - Unsigned/unchecked tokens are rejected by default unless `JWT_ALLOW_INSECURE_TOKENS=true`.
+- Optional issuer/audience validation can be enforced with `JWT_EXPECTED_ISS` and `JWT_EXPECTED_AUD`.
 """
 
 from __future__ import annotations
@@ -70,8 +71,6 @@ def _verify_hs256(signing_input: str, signature_raw: str, secret: str) -> None:
         raise HTTPException(status_code=401, detail="Invalid token signature")
 
 
-
-
 def _allow_insecure_tokens() -> bool:
     return os.getenv("JWT_ALLOW_INSECURE_TOKENS", "false").lower() == "true"
 
@@ -88,6 +87,27 @@ def _verify_registered_claims(payload: dict[str, Any]) -> None:
     if nbf is not None:
         if not isinstance(nbf, int) or nbf > now:
             raise HTTPException(status_code=401, detail="Token not active yet")
+
+
+def _verify_optional_tenant_claims(payload: dict[str, Any]) -> None:
+    expected_iss = os.getenv("JWT_EXPECTED_ISS")
+    if expected_iss:
+        iss = payload.get("iss")
+        if not isinstance(iss, str) or iss != expected_iss:
+            raise HTTPException(status_code=401, detail="Invalid token issuer")
+
+    expected_aud = os.getenv("JWT_EXPECTED_AUD")
+    if expected_aud:
+        aud = payload.get("aud")
+        if isinstance(aud, str):
+            audiences = {aud}
+        elif isinstance(aud, list) and all(isinstance(item, str) for item in aud):
+            audiences = set(aud)
+        else:
+            raise HTTPException(status_code=401, detail="Invalid token audience")
+
+        if expected_aud not in audiences:
+            raise HTTPException(status_code=401, detail="Invalid token audience")
 
 
 def _extract_roles(payload: dict[str, Any]) -> frozenset[str]:
@@ -124,6 +144,7 @@ def get_auth_context(
         raise HTTPException(status_code=401, detail="Token verification requires JWT_HS256_SECRET")
 
     _verify_registered_claims(payload)
+    _verify_optional_tenant_claims(payload)
 
     subject = payload.get("sub")
     if not isinstance(subject, str) or not subject:
