@@ -3,7 +3,7 @@
 ## Estado general
 
 - Fecha de actualización: 2026-03-14
-- Estado global: **Paso 2 consolidado / Paso 3 completado (base técnica)**
+- Estado global: **Paso 4 completado (modelo de datos y migraciones iniciales)**
 
 ## Avances ejecutados (inicio por paso 2)
 
@@ -38,12 +38,28 @@
 - Correr smoke end-to-end con daemon Docker habilitado (`make compose-up` + `make compose-smoke`).
 - Capturar evidencia de logs API/worker durante despacho real de alerta.
 
+
+### ✅ Paso 4 — Diseñar modelo de datos inicial y migraciones
+
+**Estado:** completado a nivel de diseño y assets de migración.
+
+**Implementado:**
+- Cadena inicial de migración SQL versionada en `infra/migrations/0001_initial_schema.up.sql` y rollback en `infra/migrations/0001_initial_schema.down.sql`.
+- Cobertura de 20/20 entidades MVP (core, inventario, ventas, fiscal, e-commerce, RRHH).
+- Restricciones relacionales base (FK, `UNIQUE`, `CHECK`) e índices iniciales para patrones de consulta críticos.
+- Uso de `JSONB` para campos dinámicos (`custom_data`, `schema_definition`, `metadata`, `payload`).
+- Script de ejecución de migraciones `infra/scripts/migrate.py` y comandos `make migrate-up`, `make migrate-down`, `make migrate-status`.
+- Diagrama ER base y guía operativa de migraciones en `infra/migrations/README.md`.
+
+**Pendiente para entorno con Docker habilitado:**
+- Ejecutar gate completo contra PostgreSQL real: `up -> down -> up` para evidencia operativa de idempotencia en runtime.
+
 ## Tablero resumido del plan
 
 - [x] Paso 1 — Alcance MVP y criterios de aceptación.
 - [x] Paso 2 — Arquitectura base y repositorio ejecutable.
 - [x] Paso 3 — Docker Compose + `.env.example` (base técnica).
-- [ ] Paso 4 — Modelo de datos y migraciones.
+- [x] Paso 4 — Modelo de datos y migraciones.
 - [ ] Paso 5 — API modular + auth/permisos.
 - [ ] Paso 6 — POS y flujo de caja.
 - [ ] Paso 7 — Boleta electrónica sandbox.
