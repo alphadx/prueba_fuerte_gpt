@@ -1,3 +1,7 @@
+import pytest
+
+pytest.importorskip("httpx")
+
 import base64
 import json
 

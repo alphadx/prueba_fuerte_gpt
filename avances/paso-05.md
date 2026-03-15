@@ -13,4 +13,4 @@
 ## Estado de avance del paso
 - **Cumplimiento estimado:** **45%**
 - **Semáforo:** 🟡 Amarillo (En progreso)
-- **Observación:** Se consolidó baseline reusable de autenticación/autorización + trazabilidad de auditoría y se robusteció el contrato OpenAPI de errores/seguridad para continuar con más vertical slices.
+- **Observación:** Se consolidó baseline reusable de autenticación/autorización + trazabilidad de auditoría, se robusteció el contrato OpenAPI de errores/seguridad y se estabilizó la suite de tests para entornos restringidos (saltando tests API cuando falta `httpx`).
