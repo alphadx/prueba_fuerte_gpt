@@ -82,3 +82,15 @@ El contrato vive en `apps/api/openapi.yaml`. Cualquier endpoint nuevo debe decla
 ## Revisión final de arquitectura
 
 Para alinear pasos 9-12 con los requisitos críticos (correo IMAP, experiencia web+móvil y QR P2P), revisar `docs/final_infra_architecture_review.md`.
+
+## Registro documental de inspección (`docs/inspeccion`)
+
+Se creó un paquete documental completo para la inspección por pasos, con reportes ejecutivos y anexos técnicos de evidencia:
+
+- `docs/inspeccion/plan.md`: plan base de inspección y criterios de aprobación parcial (alcance operativo vigente en pasos 3–5).
+- `docs/inspeccion/reporte_paso1.md` a `docs/inspeccion/reporte_paso5.md`: reportes por paso con estado, observaciones y porcentaje de aceptación.
+- `docs/inspeccion/anexos/paso1_analisis.md` a `docs/inspeccion/anexos/paso5_analisis.md`: análisis técnico detallado por paso (hallazgos, patrones/anti-patrones, riesgos y recomendaciones).
+- `docs/inspeccion/reporte.md`: consolidado ejecutivo con calificación agrupada por paso y nota general.
+- `docs/inspeccion/anexos/conclusion_general.md`: criterio de consolidación, lectura ejecutiva del resultado global y acciones de gobernanza recomendadas.
+
+En conjunto, este registro deja trazabilidad documental de la inspección realizada, separando el resumen de gestión (reportes) de la evidencia técnica ampliada (anexos).
