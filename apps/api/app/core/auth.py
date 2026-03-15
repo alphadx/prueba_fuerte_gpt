@@ -3,7 +3,7 @@
 MVP approach:
 - Access tokens are expected as JWT bearer strings from an external IdP.
 - If `JWT_HS256_SECRET` is configured, HS256 signature verification is enforced.
-- When no secret is configured, unsigned/unchecked tokens are allowed only for bootstrap.
+- Unsigned/unchecked tokens are rejected by default unless `JWT_ALLOW_INSECURE_TOKENS=true`.
 """
 
 from __future__ import annotations
@@ -70,6 +70,12 @@ def _verify_hs256(signing_input: str, signature_raw: str, secret: str) -> None:
         raise HTTPException(status_code=401, detail="Invalid token signature")
 
 
+
+
+def _allow_insecure_tokens() -> bool:
+    return os.getenv("JWT_ALLOW_INSECURE_TOKENS", "false").lower() == "true"
+
+
 def _verify_registered_claims(payload: dict[str, Any]) -> None:
     now = int(time.time())
 
@@ -109,11 +115,13 @@ def get_auth_context(
     header, payload, signing_input, signature_raw = _decode_jwt_parts(credentials.credentials)
     secret = os.getenv("JWT_HS256_SECRET")
 
+    algorithm = header.get("alg")
     if secret:
-        algorithm = header.get("alg")
         if algorithm != "HS256":
             raise HTTPException(status_code=401, detail="Unsupported token algorithm")
         _verify_hs256(signing_input, signature_raw, secret)
+    elif not _allow_insecure_tokens():
+        raise HTTPException(status_code=401, detail="Token verification requires JWT_HS256_SECRET")
 
     _verify_registered_claims(payload)
 
