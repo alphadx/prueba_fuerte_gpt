@@ -40,6 +40,14 @@ EXPECTED_JSONB_COLUMNS: tuple[str, ...] = (
     "payload JSONB",
 )
 
+EXPECTED_COMMENT_MARKERS: tuple[str, ...] = (
+    "COMMENT ON TABLE companies IS",
+    "COMMENT ON TABLE sales IS",
+    "COMMENT ON TABLE employee_documents IS",
+    "COMMENT ON COLUMN sales.total IS",
+    "COMMENT ON COLUMN alarm_events.payload IS",
+)
+
 
 def assert_contains(content: str, needle: str, label: str) -> None:
     """Raise a readable assertion if ``needle`` is missing in ``content``."""
@@ -63,6 +71,9 @@ def main() -> int:
     assert_contains(up_sql, "CREATE INDEX IF NOT EXISTS idx_sales_branch_sold_at", "índice de ventas")
     assert_contains(up_sql, "CREATE INDEX IF NOT EXISTS idx_alarm_events_status_triggered", "índice de alarmas")
     assert_contains(er_doc, "```mermaid", "diagrama ER")
+
+    for marker in EXPECTED_COMMENT_MARKERS:
+        assert_contains(up_sql, marker, "comentario de documentación")
 
     print("[ok] Validación estática del paso 4 completada")
     return 0

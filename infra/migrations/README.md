@@ -72,3 +72,9 @@ erDiagram
 ## Validación rápida en este repositorio
 
 - `make verify-step4` ejecuta chequeos estáticos de cobertura de entidades, JSONB, índices críticos y presencia de diagrama ER.
+
+
+## Convención de documentación SQL
+
+- La migración `0001` incluye `COMMENT ON TABLE` y `COMMENT ON COLUMN` para documentar entidades y campos clave del esquema.
+- Esto mejora onboarding, mantenibilidad y trazabilidad del modelo de datos del MVP.
