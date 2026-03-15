@@ -8,9 +8,10 @@ Notas para desarrolladores y agentes GPT:
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
+from app.modules.products.router import router as products_router
 from app.services.queue import queue_client
 
-app = FastAPI(title="ERP Barrio API", version="0.2.1")
+app = FastAPI(title="ERP Barrio API", version="0.3.0")
 
 
 class AlertDispatchRequest(BaseModel):
@@ -40,3 +41,6 @@ def dispatch_alert(payload: AlertDispatchRequest) -> dict[str, str]:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
 
     return {"status": "queued", "backend": backend}
+
+
+app.include_router(products_router)

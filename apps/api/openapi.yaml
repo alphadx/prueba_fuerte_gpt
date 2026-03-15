@@ -1,10 +1,16 @@
 openapi: 3.1.0
 info:
   title: ERP Barrio API
-  version: 0.2.1
+  version: 0.3.0
   description: Contrato inicial del API del MVP ERP.
 servers:
   - url: http://localhost:8000
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
 paths:
   /health:
     get:
@@ -87,3 +93,76 @@ paths:
                 properties:
                   detail:
                     type: string
+  /products:
+    get:
+      tags: [products]
+      summary: Lista productos del catálogo
+      operationId: getProducts
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Listado de productos
+    post:
+      tags: [products]
+      summary: Crea un producto en catálogo
+      operationId: postProducts
+      security:
+        - bearerAuth: []
+      responses:
+        '201':
+          description: Producto creado
+        '409':
+          description: SKU duplicado
+  /products/{product_id}:
+    get:
+      tags: [products]
+      summary: Obtiene un producto por identificador
+      operationId: getProductById
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: product_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Producto encontrado
+        '404':
+          description: Producto no existe
+    patch:
+      tags: [products]
+      summary: Actualiza campos de un producto
+      operationId: patchProductById
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: product_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Producto actualizado
+        '404':
+          description: Producto no existe
+    delete:
+      tags: [products]
+      summary: Elimina un producto del catálogo
+      operationId: deleteProductById
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: product_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Producto eliminado
+        '404':
+          description: Producto no existe
