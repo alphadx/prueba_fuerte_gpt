@@ -8,11 +8,12 @@ Notas para desarrolladores y agentes GPT:
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
+from app.modules.branches.router import router as branches_router
 from app.modules.products.router import router as products_router
 from app.modules.users.router import router as users_router
 from app.services.queue import queue_client
 
-app = FastAPI(title="ERP Barrio API", version="0.3.2")
+app = FastAPI(title="ERP Barrio API", version="0.3.3")
 
 
 class AlertDispatchRequest(BaseModel):
@@ -47,3 +48,5 @@ def dispatch_alert(payload: AlertDispatchRequest) -> dict[str, str]:
 app.include_router(products_router)
 
 app.include_router(users_router)
+
+app.include_router(branches_router)
