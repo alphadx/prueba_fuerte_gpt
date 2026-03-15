@@ -10,15 +10,17 @@ import json
 from fastapi.testclient import TestClient
 
 from app.main import app
+from app.modules.products.service import product_service
 
 
 client = TestClient(app)
 
 
 @pytest.fixture(autouse=True)
-def _jwt_env(monkeypatch: pytest.MonkeyPatch) -> None:
+def _test_setup(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("JWT_HS256_SECRET", "test-secret")
     monkeypatch.delenv("JWT_ALLOW_INSECURE_TOKENS", raising=False)
+    product_service.reset_state()
 
 
 def _b64url(data: bytes) -> str:
@@ -60,6 +62,39 @@ def test_products_reject_invalid_signature() -> None:
     )
 
     assert response.status_code == 401
+
+
+def test_products_reject_duplicate_sku() -> None:
+    headers = _auth_header(roles=["admin"])
+
+    first = client.post(
+        "/products",
+        json={"sku": "SKU-100", "name": "Arroz", "price": 1590},
+        headers=headers,
+    )
+    assert first.status_code == 201
+
+    second = client.post(
+        "/products",
+        json={"sku": "SKU-100", "name": "Arroz Premium", "price": 2090},
+        headers=headers,
+    )
+    assert second.status_code == 409
+
+
+def test_products_forbid_delete_for_non_admin() -> None:
+    admin_headers = _auth_header(roles=["admin"])
+    bodega_headers = _auth_header(roles=["bodega"])
+
+    created = client.post(
+        "/products",
+        json={"sku": "SKU-100", "name": "Arroz", "price": 1590},
+        headers=admin_headers,
+    )
+    product_id = created.json()["id"]
+
+    forbidden = client.delete(f"/products/{product_id}", headers=bodega_headers)
+    assert forbidden.status_code == 403
 
 
 def test_products_crud_flow_for_admin() -> None:

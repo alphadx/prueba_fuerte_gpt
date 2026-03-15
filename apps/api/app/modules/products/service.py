@@ -65,5 +65,12 @@ class ProductService:
             del self._by_id[product_id]
             del self._ids_by_sku[product.sku]
 
+    def reset_state(self) -> None:
+        """Clear in-memory state (test utility for deterministic runs)."""
+        with self._lock:
+            self._by_id.clear()
+            self._ids_by_sku.clear()
+            self._seq = 0
+
 
 product_service = ProductService()
