@@ -5,6 +5,11 @@ Usage:
   python infra/scripts/migrate.py up
   python infra/scripts/migrate.py down --version 0001
   python infra/scripts/migrate.py status
+
+Notes:
+- Migration files are discovered from ``infra/migrations`` using the convention
+  ``<version>_<name>.up.sql`` and ``<version>_<name>.down.sql``.
+- Applied versions are tracked in ``schema_migrations``.
 """
 
 from __future__ import annotations
@@ -12,14 +17,30 @@ from __future__ import annotations
 import argparse
 import os
 from pathlib import Path
+from typing import Literal
 
 import psycopg
 
 ROOT = Path(__file__).resolve().parents[1]
 MIGRATIONS_DIR = ROOT / "migrations"
+Direction = Literal["up", "down"]
 
 
-def migration_files(direction: str) -> list[Path]:
+def extract_version(file_path: Path) -> str:
+    """Return migration version from filename.
+
+    Example:
+        ``0001_initial_schema.up.sql`` -> ``0001``
+    """
+    return file_path.name.split("_")[0]
+
+
+def migration_files(direction: Direction) -> list[Path]:
+    """List migration files ordered for execution.
+
+    ``up`` is applied in ascending order, while ``down`` is evaluated in
+    descending order (newest first).
+    """
     suffix = f".{direction}.sql"
     files = sorted(MIGRATIONS_DIR.glob(f"*{suffix}"))
     if direction == "down":
@@ -28,6 +49,7 @@ def migration_files(direction: str) -> list[Path]:
 
 
 def ensure_table(conn: psycopg.Connection) -> None:
+    """Create ``schema_migrations`` table if needed."""
     with conn.cursor() as cur:
         cur.execute(
             """
@@ -41,6 +63,7 @@ def ensure_table(conn: psycopg.Connection) -> None:
 
 
 def status(conn: psycopg.Connection) -> None:
+    """Print applied migrations in ascending order by version."""
     ensure_table(conn)
     with conn.cursor() as cur:
         cur.execute("SELECT version, applied_at FROM schema_migrations ORDER BY version")
@@ -55,13 +78,14 @@ def status(conn: psycopg.Connection) -> None:
 
 
 def apply_up(conn: psycopg.Connection) -> None:
+    """Apply every pending ``.up.sql`` migration file."""
     ensure_table(conn)
     with conn.cursor() as cur:
         cur.execute("SELECT version FROM schema_migrations")
         applied = {row[0] for row in cur.fetchall()}
 
     for path in migration_files("up"):
-        version = path.name.split("_")[0]
+        version = extract_version(path)
         if version in applied:
             print(f"[skip] {path.name} ya aplicada")
             continue
@@ -75,13 +99,18 @@ def apply_up(conn: psycopg.Connection) -> None:
 
 
 def apply_down(conn: psycopg.Connection, target_version: str | None) -> None:
+    """Rollback applied migrations.
+
+    If ``target_version`` is provided, only that specific migration is rolled
+    back. Otherwise, all applied migrations are rolled back in reverse order.
+    """
     ensure_table(conn)
     with conn.cursor() as cur:
         cur.execute("SELECT version FROM schema_migrations ORDER BY version DESC")
         applied = [row[0] for row in cur.fetchall()]
 
     for path in migration_files("down"):
-        version = path.name.split("_")[0]
+        version = extract_version(path)
         if version not in applied:
             continue
         if target_version and version != target_version:
@@ -98,6 +127,7 @@ def apply_down(conn: psycopg.Connection, target_version: str | None) -> None:
 
 
 def parse_args() -> argparse.Namespace:
+    """Parse command-line arguments for migration execution."""
     parser = argparse.ArgumentParser()
     parser.add_argument("action", choices=["up", "down", "status"])
     parser.add_argument("--version", default=None, help="Versión específica para rollback (ej: 0001)")
@@ -105,6 +135,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def main() -> None:
+    """Entrypoint for migration management CLI."""
     args = parse_args()
     db_url = os.getenv("DATABASE_URL", "postgresql://erp_user:erp_pass@127.0.0.1:5432/erp_barrio")
 

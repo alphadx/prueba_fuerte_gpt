@@ -4,14 +4,13 @@
 from __future__ import annotations
 
 from pathlib import Path
-import sys
 
 ROOT = Path(__file__).resolve().parents[2]
 UP_SQL = ROOT / "infra/migrations/0001_initial_schema.up.sql"
 DOWN_SQL = ROOT / "infra/migrations/0001_initial_schema.down.sql"
 ER_DOC = ROOT / "infra/migrations/README.md"
 
-EXPECTED_TABLES = [
+EXPECTED_TABLES: tuple[str, ...] = (
     "companies",
     "branches",
     "users",
@@ -32,22 +31,24 @@ EXPECTED_TABLES = [
     "employee_documents",
     "alarm_rules",
     "alarm_events",
-]
+)
 
-EXPECTED_JSONB_COLUMNS = [
+EXPECTED_JSONB_COLUMNS: tuple[str, ...] = (
     "custom_data JSONB",
     "schema_definition JSONB",
     "metadata JSONB",
     "payload JSONB",
-]
+)
 
 
 def assert_contains(content: str, needle: str, label: str) -> None:
+    """Raise a readable assertion if ``needle`` is missing in ``content``."""
     if needle not in content:
         raise AssertionError(f"Falta {label}: {needle}")
 
 
 def main() -> int:
+    """Run static step-4 checks against migration assets and docs."""
     up_sql = UP_SQL.read_text(encoding="utf-8")
     down_sql = DOWN_SQL.read_text(encoding="utf-8")
     er_doc = ER_DOC.read_text(encoding="utf-8")
