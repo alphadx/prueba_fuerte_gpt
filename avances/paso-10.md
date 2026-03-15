@@ -13,4 +13,4 @@
 ## Estado de avance del paso
 - **Cumplimiento estimado:** **0%**
 - **Semáforo:** 🔴 Rojo (No terminado)
-- **Observación:** Requiere modelo documental + worker periódico.
+- **Observación:** Las notificaciones deben ser verificables por SMTP+IMAP en entorno de pruebas (`compose full`).
