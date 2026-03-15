@@ -11,11 +11,16 @@
 - **Consistencia relacional:** 0 críticos detectados en revisión estática de FK/UNIQUE/CHECK.
 
 ## Estado de avance del paso
-- **Cumplimiento estimado:** **100%**
-- **Semáforo:** 🟢 Verde (Terminado)
-- **Observación:** se creó esquema inicial completo con guía de ejecución y script para aplicar/rollback.
+- **Cumplimiento estimado:** **95%**
+- **Semáforo:** 🟡 Amarillo (Implementación completa, validación runtime pendiente)
+- **Observación:** esquema y migraciones listos; falta ejecutar prueba `up -> down -> up` en PostgreSQL real en este entorno.
 
 ## Evidencia
 - Migraciones: `infra/migrations/0001_initial_schema.up.sql`, `infra/migrations/0001_initial_schema.down.sql`.
 - Runner: `infra/scripts/migrate.py` + comandos `make migrate-up|migrate-down|migrate-status`.
 - Diagrama ER base y cobertura: `infra/migrations/README.md`.
+
+
+## Verificación de requerimientos
+- Se agregó matriz de cumplimiento del paso en `docs/step4_validation.md`.
+- Se agregó verificación automática estática en `infra/scripts/verify_step4.py` (`make verify-step4`).

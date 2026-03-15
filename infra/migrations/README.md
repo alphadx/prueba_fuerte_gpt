@@ -22,6 +22,7 @@ Este directorio contiene la cadena inicial de migraciones para el MVP ERP.
 make migrate-up
 make migrate-status
 make migrate-down VERSION=0001
+make verify-step4
 ```
 
 Variable opcional:
@@ -66,3 +67,8 @@ erDiagram
     alarm_rules ||--o{ alarm_events : triggers
     employee_documents ||--o{ alarm_events : targets
 ```
+
+
+## Validación rápida en este repositorio
+
+- `make verify-step4` ejecuta chequeos estáticos de cobertura de entidades, JSONB, índices críticos y presencia de diagrama ER.

@@ -1,4 +1,4 @@
-.PHONY: doctor-docker up test seed migrate-up migrate-down migrate-status compose-up compose-up-full compose-down compose-smoke architecture-review
+.PHONY: doctor-docker up test seed migrate-up migrate-down migrate-status verify-step4 compose-up compose-up-full compose-down compose-smoke architecture-review
 
 doctor-docker:
 	@echo "[doctor] Verificando Docker y Docker Compose..."
@@ -39,6 +39,9 @@ migrate-status:
 	python3 -m venv .venv
 	. .venv/bin/activate && pip install -r apps/api/requirements.txt
 	. .venv/bin/activate && python infra/scripts/migrate.py status
+
+verify-step4:
+	python3 infra/scripts/verify_step4.py
 
 compose-up:
 	docker compose --profile core --env-file .env.example up -d --build

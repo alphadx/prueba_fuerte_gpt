@@ -25,6 +25,7 @@ make test
 make seed
 make migrate-up
 make migrate-status
+make verify-step4
 make compose-up
 make compose-up-full
 make compose-down
@@ -39,6 +40,7 @@ make architecture-review
 - `make seed`: genera datos semilla iniciales en `infra/seeds/dev_seed.json`.
 - `make migrate-up`: aplica migraciones SQL versionadas contra PostgreSQL.
 - `make migrate-status`: lista versiones de migración aplicadas.
+- `make verify-step4`: ejecuta validaciones estáticas de cobertura/requisitos del paso 4.
 - `make compose-up`: levanta perfil `core` (`postgres`, `redis`, `api`, `worker`, `web`).
 - `make compose-up-full`: levanta perfil `full` (core + `mailhog`, `greenmail`, `minio`, `keycloak`, `keycloak-db`).
 - `make compose-down`: baja servicios Docker Compose.

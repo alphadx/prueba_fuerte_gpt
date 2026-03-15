@@ -41,7 +41,7 @@
 
 ### ✅ Paso 4 — Diseñar modelo de datos inicial y migraciones
 
-**Estado:** completado a nivel de diseño y assets de migración.
+**Estado:** implementación completada y validación estática cerrada; validación runtime pendiente por entorno.
 
 **Implementado:**
 - Cadena inicial de migración SQL versionada en `infra/migrations/0001_initial_schema.up.sql` y rollback en `infra/migrations/0001_initial_schema.down.sql`.
@@ -53,6 +53,7 @@
 
 **Pendiente para entorno con Docker habilitado:**
 - Ejecutar gate completo contra PostgreSQL real: `up -> down -> up` para evidencia operativa de idempotencia en runtime.
+- En este entorno no fue posible por ausencia de Docker/psql; se añadió validación estática automatizada (`make verify-step4`).
 
 ## Tablero resumido del plan
 
