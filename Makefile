@@ -1,4 +1,4 @@
-.PHONY: doctor-docker up test seed migrate-up migrate-down migrate-status verify-step4 compose-up compose-up-full compose-down compose-smoke architecture-review
+.PHONY: doctor-docker up test seed migrate-up migrate-down migrate-status verify-step4 verify-step5 compose-up compose-up-full compose-down compose-smoke architecture-review
 
 doctor-docker:
 	@echo "[doctor] Verificando Docker y Docker Compose..."
@@ -65,3 +65,7 @@ architecture-review:
 	@echo "- Perfil full incluye sandbox SMTP+IMAP (greenmail)"
 	@echo "- Frontend web existente para evolución responsive/PWA"
 	@echo "- QR P2P definido en documentación de pasos 9-12"
+
+
+verify-step5:
+	python3 infra/scripts/verify_step5.py

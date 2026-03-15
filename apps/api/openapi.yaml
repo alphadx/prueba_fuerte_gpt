@@ -1,10 +1,429 @@
 openapi: 3.1.0
 info:
   title: ERP Barrio API
-  version: 0.2.1
+  version: 0.3.8
   description: Contrato inicial del API del MVP ERP.
 servers:
   - url: http://localhost:8000
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    ErrorResponse:
+      type: object
+      required: [detail]
+      properties:
+        detail:
+          type: string
+    AlertDispatchRequest:
+      type: object
+      required: [employee_id, document_type, days_to_expire]
+      properties:
+        employee_id:
+          type: string
+          minLength: 1
+        document_type:
+          type: string
+          minLength: 1
+        days_to_expire:
+          type: integer
+          minimum: 0
+    AlertDispatchResponse:
+      type: object
+      required: [status, backend]
+      properties:
+        status:
+          type: string
+          example: queued
+        backend:
+          type: string
+          example: redis
+    ProductCreateRequest:
+      type: object
+      required: [sku, name, price]
+      properties:
+        sku:
+          type: string
+          minLength: 1
+        name:
+          type: string
+          minLength: 1
+        price:
+          type: number
+          exclusiveMinimum: 0
+    ProductUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+        price:
+          type: number
+          exclusiveMinimum: 0
+    ProductResponse:
+      type: object
+      required: [id, sku, name, price]
+      properties:
+        id:
+          type: string
+        sku:
+          type: string
+        name:
+          type: string
+        price:
+          type: number
+    ProductListResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductResponse'
+    BranchCreateRequest:
+      type: object
+      required: [code, name, address]
+      properties:
+        code:
+          type: string
+          minLength: 1
+        name:
+          type: string
+          minLength: 1
+        address:
+          type: string
+          minLength: 1
+        is_active:
+          type: boolean
+          default: true
+    BranchUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+        address:
+          type: string
+          minLength: 1
+        is_active:
+          type: boolean
+    BranchResponse:
+      type: object
+      required: [id, code, name, address, is_active]
+      properties:
+        id:
+          type: string
+        code:
+          type: string
+        name:
+          type: string
+        address:
+          type: string
+        is_active:
+          type: boolean
+    BranchListResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/BranchResponse'
+    EmployeeCreateRequest:
+      type: object
+      required: [employee_code, full_name, role]
+      properties:
+        employee_code:
+          type: string
+          minLength: 1
+        full_name:
+          type: string
+          minLength: 1
+        role:
+          type: string
+          minLength: 1
+        is_active:
+          type: boolean
+          default: true
+    EmployeeUpdateRequest:
+      type: object
+      properties:
+        full_name:
+          type: string
+          minLength: 1
+        role:
+          type: string
+          minLength: 1
+        is_active:
+          type: boolean
+    EmployeeResponse:
+      type: object
+      required: [id, employee_code, full_name, role, is_active]
+      properties:
+        id:
+          type: string
+        employee_code:
+          type: string
+        full_name:
+          type: string
+        role:
+          type: string
+        is_active:
+          type: boolean
+    EmployeeListResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/EmployeeResponse'
+    DocumentTypeCreateRequest:
+      type: object
+      required: [code, name]
+      properties:
+        code:
+          type: string
+          minLength: 1
+        name:
+          type: string
+          minLength: 1
+        requires_expiry:
+          type: boolean
+          default: true
+        is_active:
+          type: boolean
+          default: true
+    DocumentTypeUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+        requires_expiry:
+          type: boolean
+        is_active:
+          type: boolean
+    DocumentTypeResponse:
+      type: object
+      required: [id, code, name, requires_expiry, is_active]
+      properties:
+        id:
+          type: string
+        code:
+          type: string
+        name:
+          type: string
+        requires_expiry:
+          type: boolean
+        is_active:
+          type: boolean
+    DocumentTypeListResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocumentTypeResponse'
+    EmployeeDocumentCreateRequest:
+      type: object
+      required: [employee_id, document_type_code, expires_on, status]
+      properties:
+        employee_id:
+          type: string
+          minLength: 1
+        document_type_code:
+          type: string
+          minLength: 1
+        expires_on:
+          type: string
+          minLength: 1
+        status:
+          type: string
+          minLength: 1
+    EmployeeDocumentUpdateRequest:
+      type: object
+      properties:
+        expires_on:
+          type: string
+          minLength: 1
+        status:
+          type: string
+          minLength: 1
+    EmployeeDocumentResponse:
+      type: object
+      required: [id, employee_id, document_type_code, expires_on, status]
+      properties:
+        id:
+          type: string
+        employee_id:
+          type: string
+        document_type_code:
+          type: string
+        expires_on:
+          type: string
+        status:
+          type: string
+    EmployeeDocumentListResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/EmployeeDocumentResponse'
+    PaymentCreateRequest:
+      type: object
+      required: [sale_id, amount, method, status, idempotency_key]
+      properties:
+        sale_id:
+          type: string
+          minLength: 1
+        amount:
+          type: number
+          exclusiveMinimum: 0
+        method:
+          type: string
+          minLength: 1
+        status:
+          type: string
+          minLength: 1
+        idempotency_key:
+          type: string
+          minLength: 1
+    PaymentUpdateRequest:
+      type: object
+      properties:
+        status:
+          type: string
+          minLength: 1
+    PaymentResponse:
+      type: object
+      required: [id, sale_id, amount, method, status, idempotency_key]
+      properties:
+        id:
+          type: string
+        sale_id:
+          type: string
+        amount:
+          type: number
+        method:
+          type: string
+        status:
+          type: string
+        idempotency_key:
+          type: string
+    PaymentListResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PaymentResponse'
+    CashSessionCreateRequest:
+      type: object
+      required: [branch_id, opened_by, opening_amount, status]
+      properties:
+        branch_id:
+          type: string
+          minLength: 1
+        opened_by:
+          type: string
+          minLength: 1
+        opening_amount:
+          type: number
+          minimum: 0
+        status:
+          type: string
+          minLength: 1
+    CashSessionUpdateRequest:
+      type: object
+      properties:
+        closing_amount:
+          type: number
+          minimum: 0
+        status:
+          type: string
+          minLength: 1
+    CashSessionResponse:
+      type: object
+      required: [id, branch_id, opened_by, opening_amount, status]
+      properties:
+        id:
+          type: string
+        branch_id:
+          type: string
+        opened_by:
+          type: string
+        opening_amount:
+          type: number
+        closing_amount:
+          type: number
+          nullable: true
+        status:
+          type: string
+    CashSessionListResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CashSessionResponse'
+    UserCreateRequest:
+      type: object
+      required: [username, full_name, role]
+      properties:
+        username:
+          type: string
+          minLength: 3
+        full_name:
+          type: string
+          minLength: 1
+        role:
+          type: string
+          minLength: 1
+        is_active:
+          type: boolean
+          default: true
+    UserUpdateRequest:
+      type: object
+      properties:
+        full_name:
+          type: string
+          minLength: 1
+        role:
+          type: string
+          minLength: 1
+        is_active:
+          type: boolean
+    UserResponse:
+      type: object
+      required: [id, username, full_name, role, is_active]
+      properties:
+        id:
+          type: string
+        username:
+          type: string
+        full_name:
+          type: string
+        role:
+          type: string
+        is_active:
+          type: boolean
+    UserListResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserResponse'
 paths:
   /health:
     get:
@@ -50,40 +469,1331 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required: [employee_id, document_type, days_to_expire]
-              properties:
-                employee_id:
-                  type: string
-                  minLength: 1
-                document_type:
-                  type: string
-                  minLength: 1
-                days_to_expire:
-                  type: integer
-                  minimum: 0
+              $ref: '#/components/schemas/AlertDispatchRequest'
       responses:
         '200':
           description: Alerta encolada
           content:
             application/json:
               schema:
-                type: object
-                required: [status, backend]
-                properties:
-                  status:
-                    type: string
-                    example: queued
-                  backend:
-                    type: string
-                    example: redis
+                $ref: '#/components/schemas/AlertDispatchResponse'
         '503':
           description: Cola no disponible y fallback deshabilitado
           content:
             application/json:
               schema:
-                type: object
-                required: [detail]
-                properties:
-                  detail:
-                    type: string
+                $ref: '#/components/schemas/ErrorResponse'
+  /products:
+    get:
+      tags: [products]
+      summary: Lista productos del catálogo
+      operationId: getProducts
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Listado de productos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductListResponse'
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags: [products]
+      summary: Crea un producto en catálogo
+      operationId: postProducts
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductCreateRequest'
+      responses:
+        '201':
+          description: Producto creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductResponse'
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: SKU duplicado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /products/{product_id}:
+    parameters:
+      - in: path
+        name: product_id
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [products]
+      summary: Obtiene un producto por identificador
+      operationId: getProductById
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Producto encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductResponse'
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Producto no existe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    patch:
+      tags: [products]
+      summary: Actualiza campos de un producto
+      operationId: patchProductById
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductUpdateRequest'
+      responses:
+        '200':
+          description: Producto actualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductResponse'
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Producto no existe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags: [products]
+      summary: Elimina un producto del catálogo
+      operationId: deleteProductById
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Producto eliminado
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Producto no existe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /branches:
+    get:
+      tags: [branches]
+      summary: Lista sucursales de la organización
+      operationId: getBranches
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Listado de sucursales
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BranchListResponse'
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags: [branches]
+      summary: Crea una sucursal del ERP
+      operationId: postBranches
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BranchCreateRequest'
+      responses:
+        '201':
+          description: Sucursal creada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BranchResponse'
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Código de sucursal duplicado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /branches/{branch_id}:
+    parameters:
+      - in: path
+        name: branch_id
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [branches]
+      summary: Obtiene una sucursal por identificador
+      operationId: getBranchById
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Sucursal encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BranchResponse'
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Sucursal no existe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    patch:
+      tags: [branches]
+      summary: Actualiza campos de una sucursal
+      operationId: patchBranchById
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BranchUpdateRequest'
+      responses:
+        '200':
+          description: Sucursal actualizada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BranchResponse'
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Sucursal no existe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags: [branches]
+      summary: Elimina una sucursal del ERP
+      operationId: deleteBranchById
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Sucursal eliminada
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Sucursal no existe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /employees:
+    get:
+      tags: [employees]
+      summary: Lista colaboradores del ERP
+      operationId: getEmployees
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Listado de colaboradores
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeListResponse'
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags: [employees]
+      summary: Crea un colaborador del ERP
+      operationId: postEmployees
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmployeeCreateRequest'
+      responses:
+        '201':
+          description: Colaborador creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeResponse'
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Código de colaborador duplicado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /employees/{employee_id}:
+    parameters:
+      - in: path
+        name: employee_id
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [employees]
+      summary: Obtiene un colaborador por identificador
+      operationId: getEmployeeById
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Colaborador encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeResponse'
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Colaborador no existe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    patch:
+      tags: [employees]
+      summary: Actualiza campos de un colaborador
+      operationId: patchEmployeeById
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmployeeUpdateRequest'
+      responses:
+        '200':
+          description: Colaborador actualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeResponse'
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Colaborador no existe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags: [employees]
+      summary: Elimina un colaborador del ERP
+      operationId: deleteEmployeeById
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Colaborador eliminado
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Colaborador no existe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /document-types:
+    get:
+      tags: [document-types]
+      summary: Lista tipos documentales del ERP
+      operationId: getDocumentTypes
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Listado de tipos documentales
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentTypeListResponse'
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags: [document-types]
+      summary: Crea un tipo documental del ERP
+      operationId: postDocumentTypes
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocumentTypeCreateRequest'
+      responses:
+        '201':
+          description: Tipo documental creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentTypeResponse'
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Código de tipo documental duplicado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /document-types/{document_type_id}:
+    parameters:
+      - in: path
+        name: document_type_id
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [document-types]
+      summary: Obtiene un tipo documental por identificador
+      operationId: getDocumentTypeById
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Tipo documental encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentTypeResponse'
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Tipo documental no existe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    patch:
+      tags: [document-types]
+      summary: Actualiza campos de un tipo documental
+      operationId: patchDocumentTypeById
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocumentTypeUpdateRequest'
+      responses:
+        '200':
+          description: Tipo documental actualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentTypeResponse'
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Tipo documental no existe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags: [document-types]
+      summary: Elimina un tipo documental del ERP
+      operationId: deleteDocumentTypeById
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Tipo documental eliminado
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Tipo documental no existe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /employee-documents:
+    get:
+      tags: [employee-documents]
+      summary: Lista documentos de colaboradores
+      operationId: getEmployeeDocuments
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Listado de documentos de colaboradores
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeDocumentListResponse'
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags: [employee-documents]
+      summary: Crea un documento de colaborador
+      operationId: postEmployeeDocuments
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmployeeDocumentCreateRequest'
+      responses:
+        '201':
+          description: Documento creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeDocumentResponse'
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Documento duplicado por colaborador/tipo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /employee-documents/{document_id}:
+    parameters:
+      - in: path
+        name: document_id
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [employee-documents]
+      summary: Obtiene un documento de colaborador por identificador
+      operationId: getEmployeeDocumentById
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Documento encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeDocumentResponse'
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Documento no existe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    patch:
+      tags: [employee-documents]
+      summary: Actualiza documento de colaborador
+      operationId: patchEmployeeDocumentById
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmployeeDocumentUpdateRequest'
+      responses:
+        '200':
+          description: Documento actualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeDocumentResponse'
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Documento no existe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags: [employee-documents]
+      summary: Elimina documento de colaborador
+      operationId: deleteEmployeeDocumentById
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Documento eliminado
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Documento no existe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /payments:
+    get:
+      tags: [payments]
+      summary: Lista pagos registrados
+      operationId: getPayments
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Listado de pagos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentListResponse'
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags: [payments]
+      summary: Crea un pago
+      operationId: postPayments
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentCreateRequest'
+      responses:
+        '201':
+          description: Pago creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResponse'
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: idempotency_key duplicada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /payments/{payment_id}:
+    parameters:
+      - in: path
+        name: payment_id
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [payments]
+      summary: Obtiene un pago por identificador
+      operationId: getPaymentById
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Pago encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResponse'
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Pago no existe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    patch:
+      tags: [payments]
+      summary: Actualiza estado de un pago
+      operationId: patchPaymentById
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentUpdateRequest'
+      responses:
+        '200':
+          description: Pago actualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResponse'
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Pago no existe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags: [payments]
+      summary: Elimina un pago
+      operationId: deletePaymentById
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Pago eliminado
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Pago no existe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /cash-sessions:
+    get:
+      tags: [cash-sessions]
+      summary: Lista sesiones de caja
+      operationId: getCashSessions
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Listado de sesiones de caja
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CashSessionListResponse'
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags: [cash-sessions]
+      summary: Crea una sesión de caja
+      operationId: postCashSessions
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CashSessionCreateRequest'
+      responses:
+        '201':
+          description: Sesión de caja creada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CashSessionResponse'
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /cash-sessions/{session_id}:
+    parameters:
+      - in: path
+        name: session_id
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [cash-sessions]
+      summary: Obtiene una sesión de caja por identificador
+      operationId: getCashSessionById
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Sesión encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CashSessionResponse'
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Sesión no existe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    patch:
+      tags: [cash-sessions]
+      summary: Actualiza una sesión de caja
+      operationId: patchCashSessionById
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CashSessionUpdateRequest'
+      responses:
+        '200':
+          description: Sesión actualizada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CashSessionResponse'
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Sesión no existe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags: [cash-sessions]
+      summary: Elimina una sesión de caja
+      operationId: deleteCashSessionById
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Sesión eliminada
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Sesión no existe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /users:
+    get:
+      tags: [users]
+      summary: Lista usuarios de la organización
+      operationId: getUsers
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Listado de usuarios
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserListResponse'
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags: [users]
+      summary: Crea un usuario del ERP
+      operationId: postUsers
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreateRequest'
+      responses:
+        '201':
+          description: Usuario creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Usuario duplicado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /users/{user_id}:
+    parameters:
+      - in: path
+        name: user_id
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [users]
+      summary: Obtiene un usuario por identificador
+      operationId: getUserById
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Usuario encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Usuario no existe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    patch:
+      tags: [users]
+      summary: Actualiza campos de un usuario
+      operationId: patchUserById
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdateRequest'
+      responses:
+        '200':
+          description: Usuario actualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Usuario no existe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags: [users]
+      summary: Elimina un usuario del ERP
+      operationId: deleteUserById
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Usuario eliminado
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Usuario no existe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'

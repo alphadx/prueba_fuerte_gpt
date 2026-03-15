@@ -42,6 +42,15 @@ Sí, se considera **SSO con Keycloak** desde esta etapa para evitar acoplar aute
 - Reducir deuda técnica en seguridad/autenticación.
 - Mejorar trazabilidad de sesiones y eventos de login.
 
+
+## Estado actual en API (iteración paso 5)
+
+- La API ya extrae identidad desde bearer token (`sub`) y roles desde `roles` o `realm_access.roles` (compatible con Keycloak).
+- La verificación criptográfica HS256 se activa al definir `JWT_HS256_SECRET`.
+- Por seguridad, el modo sin verificación queda deshabilitado por defecto y sólo se habilita explícitamente con `JWT_ALLOW_INSECURE_TOKENS=true` (uso local temporal).
+- Se validan claims temporales `exp` y `nbf` para evitar uso de tokens expirados/no vigentes.
+- Opcionalmente se puede exigir aislamiento por emisor/audiencia con `JWT_EXPECTED_ISS` y `JWT_EXPECTED_AUD`.
+
 ## Próximos pasos técnicos
 
 1. Levantar Keycloak en Docker Compose (`full`) junto a su base de datos.
