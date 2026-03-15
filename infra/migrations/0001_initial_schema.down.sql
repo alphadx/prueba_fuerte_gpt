@@ -1,0 +1,24 @@
+BEGIN;
+
+DROP TABLE IF EXISTS alarm_events;
+DROP TABLE IF EXISTS alarm_rules;
+DROP TABLE IF EXISTS employee_documents;
+DROP TABLE IF EXISTS document_types;
+DROP TABLE IF EXISTS employees;
+DROP TABLE IF EXISTS online_orders;
+DROP TABLE IF EXISTS pickup_slots;
+DROP TABLE IF EXISTS tax_document_events;
+DROP TABLE IF EXISTS tax_documents;
+DROP TABLE IF EXISTS payments;
+DROP TABLE IF EXISTS sale_lines;
+DROP TABLE IF EXISTS sales;
+DROP TABLE IF EXISTS cash_sessions;
+DROP TABLE IF EXISTS stock_movements;
+DROP TABLE IF EXISTS stock_items;
+DROP TABLE IF EXISTS products;
+DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS roles;
+DROP TABLE IF EXISTS branches;
+DROP TABLE IF EXISTS companies;
+
+COMMIT;

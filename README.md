@@ -1,6 +1,6 @@
 # ERP Barrio Chile - Monorepo base
 
-Este repositorio implementa el **paso 2 del plan** y la **base técnica del paso 3**: arquitectura base ejecutable + soporte Docker Compose con cola Redis.
+Este repositorio implementa los **pasos 2, 3 y 4 del plan**: arquitectura base ejecutable, soporte Docker Compose y migraciones iniciales del modelo de datos MVP.
 
 ## Estructura
 
@@ -23,6 +23,9 @@ Este repositorio implementa el **paso 2 del plan** y la **base técnica del paso
 make up
 make test
 make seed
+make migrate-up
+make migrate-status
+make verify-step4
 make compose-up
 make compose-up-full
 make compose-down
@@ -35,6 +38,9 @@ make architecture-review
 - `make up`: instala dependencias de API y levanta FastAPI localmente en `http://127.0.0.1:8000`.
 - `make test`: ejecuta los tests base de API.
 - `make seed`: genera datos semilla iniciales en `infra/seeds/dev_seed.json`.
+- `make migrate-up`: aplica migraciones SQL versionadas contra PostgreSQL.
+- `make migrate-status`: lista versiones de migración aplicadas.
+- `make verify-step4`: ejecuta validaciones estáticas de cobertura/requisitos del paso 4.
 - `make compose-up`: levanta perfil `core` (`postgres`, `redis`, `api`, `worker`, `web`).
 - `make compose-up-full`: levanta perfil `full` (core + `mailhog`, `greenmail`, `minio`, `keycloak`, `keycloak-db`).
 - `make compose-down`: baja servicios Docker Compose.
@@ -55,6 +61,7 @@ El contrato vive en `apps/api/openapi.yaml`. Cualquier endpoint nuevo debe decla
 - Estándares técnicos y guía de colaboración (humanos + GPTs): `docs/development_standards.md`.
 - Guía específica del paso 2: `docs/architecture_base.md`.
 - Registro de avance del plan: `docs/progress_log.md`.
+- Migraciones y diagrama ER base (paso 4): `infra/migrations/README.md`.
 - Revisión de mitigaciones del paso 2: `docs/step2_mitigations.md`.
 
 
