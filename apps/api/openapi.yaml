@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: ERP Barrio API
-  version: 0.3.4
+  version: 0.3.5
   description: Contrato inicial del API del MVP ERP.
 servers:
   - url: http://localhost:8000
@@ -181,6 +181,54 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/EmployeeResponse'
+    DocumentTypeCreateRequest:
+      type: object
+      required: [code, name]
+      properties:
+        code:
+          type: string
+          minLength: 1
+        name:
+          type: string
+          minLength: 1
+        requires_expiry:
+          type: boolean
+          default: true
+        is_active:
+          type: boolean
+          default: true
+    DocumentTypeUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+        requires_expiry:
+          type: boolean
+        is_active:
+          type: boolean
+    DocumentTypeResponse:
+      type: object
+      required: [id, code, name, requires_expiry, is_active]
+      properties:
+        id:
+          type: string
+        code:
+          type: string
+        name:
+          type: string
+        requires_expiry:
+          type: boolean
+        is_active:
+          type: boolean
+    DocumentTypeListResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocumentTypeResponse'
     UserCreateRequest:
       type: object
       required: [username, full_name, role]
@@ -780,6 +828,171 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         '404':
           description: Colaborador no existe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /document-types:
+    get:
+      tags: [document-types]
+      summary: Lista tipos documentales del ERP
+      operationId: getDocumentTypes
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Listado de tipos documentales
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentTypeListResponse'
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags: [document-types]
+      summary: Crea un tipo documental del ERP
+      operationId: postDocumentTypes
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocumentTypeCreateRequest'
+      responses:
+        '201':
+          description: Tipo documental creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentTypeResponse'
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Código de tipo documental duplicado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /document-types/{document_type_id}:
+    parameters:
+      - in: path
+        name: document_type_id
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [document-types]
+      summary: Obtiene un tipo documental por identificador
+      operationId: getDocumentTypeById
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Tipo documental encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentTypeResponse'
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Tipo documental no existe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    patch:
+      tags: [document-types]
+      summary: Actualiza campos de un tipo documental
+      operationId: patchDocumentTypeById
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocumentTypeUpdateRequest'
+      responses:
+        '200':
+          description: Tipo documental actualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentTypeResponse'
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Tipo documental no existe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags: [document-types]
+      summary: Elimina un tipo documental del ERP
+      operationId: deleteDocumentTypeById
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Tipo documental eliminado
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Tipo documental no existe
           content:
             application/json:
               schema:

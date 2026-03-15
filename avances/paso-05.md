@@ -6,11 +6,11 @@
 - [x] **Índice de auditoría crítica** (meta: 100%) para operaciones `create/update/delete` en `products`.
 
 ## Grado de cumplimiento
-- **Cobertura CRUD por módulo:** 80% (CRUD completo habilitado para módulos `products`, `users`, `branches` y `employees`).
-- **Seguridad de acceso:** 100% en módulos `products` y `users`, con validaciones de claims temporales (`exp`, `nbf`) y soporte de verificación HS256 por secreto (`JWT_HS256_SECRET`) y bloqueo por defecto del modo inseguro, con validación opcional de `iss`/`aud`.
+- **Cobertura CRUD por módulo:** 90% (CRUD completo habilitado para módulos `products`, `users`, `branches`, `employees` y `document_types`).
+- **Seguridad de acceso:** 100% en módulos `products`, `users`, `branches`, `employees` y `document_types`, con validaciones de claims temporales (`exp`, `nbf`) y soporte de verificación HS256 por secreto (`JWT_HS256_SECRET`) y bloqueo por defecto del modo inseguro, con validación opcional de `iss`/`aud`.
 - **Auditoría crítica:** 100% en `products`; pendiente extender a caja/pagos/documentos tributarios/RRHH.
 
 ## Estado de avance del paso
-- **Cumplimiento estimado:** **84%**
+- **Cumplimiento estimado:** **92%**
 - **Semáforo:** 🟡 Amarillo (En progreso)
-- **Observación:** Se consolidó baseline reusable de autenticación/autorización + trazabilidad de auditoría, se robusteció el contrato OpenAPI de errores/seguridad y se estabilizó la suite de tests para entornos restringidos (saltando tests API cuando falta `httpx`) y se endureció el baseline JWT con modo inseguro opt-in y controles opcionales por tenant (`iss`/`aud`) y mayor robustez de pruebas/consistencia para módulo `products` (aislamiento de estado + casos de SKU duplicado y permisos de borrado) y se añadió un segundo vertical slice (`users`) con CRUD, RBAC y auditoría, además de un tercer slice (`branches`) con el mismo baseline de seguridad/trazabilidad, y un cuarto slice (`employees`) con CRUD + RBAC + auditoría.
+- **Observación:** Se consolidó baseline reusable de autenticación/autorización + trazabilidad de auditoría, se robusteció el contrato OpenAPI de errores/seguridad y se estabilizó la suite de tests para entornos restringidos (saltando tests API cuando falta `httpx`) y se endureció el baseline JWT con modo inseguro opt-in y controles opcionales por tenant (`iss`/`aud`) y mayor robustez de pruebas/consistencia para módulo `products` (aislamiento de estado + casos de SKU duplicado y permisos de borrado) y se añadió un segundo vertical slice (`users`) con CRUD, RBAC y auditoría, además de un tercer slice (`branches`) con el mismo baseline de seguridad/trazabilidad, y un cuarto slice (`employees`) con CRUD + RBAC + auditoría, además de un quinto slice (`document_types`) que permite alcanzar la meta de cobertura CRUD del paso.
