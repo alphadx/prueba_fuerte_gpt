@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: ERP Barrio API
-  version: 0.3.5
+  version: 0.3.6
   description: Contrato inicial del API del MVP ERP.
 servers:
   - url: http://localhost:8000
@@ -229,6 +229,53 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/DocumentTypeResponse'
+    EmployeeDocumentCreateRequest:
+      type: object
+      required: [employee_id, document_type_code, expires_on, status]
+      properties:
+        employee_id:
+          type: string
+          minLength: 1
+        document_type_code:
+          type: string
+          minLength: 1
+        expires_on:
+          type: string
+          minLength: 1
+        status:
+          type: string
+          minLength: 1
+    EmployeeDocumentUpdateRequest:
+      type: object
+      properties:
+        expires_on:
+          type: string
+          minLength: 1
+        status:
+          type: string
+          minLength: 1
+    EmployeeDocumentResponse:
+      type: object
+      required: [id, employee_id, document_type_code, expires_on, status]
+      properties:
+        id:
+          type: string
+        employee_id:
+          type: string
+        document_type_code:
+          type: string
+        expires_on:
+          type: string
+        status:
+          type: string
+    EmployeeDocumentListResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/EmployeeDocumentResponse'
     UserCreateRequest:
       type: object
       required: [username, full_name, role]
@@ -993,6 +1040,171 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         '404':
           description: Tipo documental no existe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /employee-documents:
+    get:
+      tags: [employee-documents]
+      summary: Lista documentos de colaboradores
+      operationId: getEmployeeDocuments
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Listado de documentos de colaboradores
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeDocumentListResponse'
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags: [employee-documents]
+      summary: Crea un documento de colaborador
+      operationId: postEmployeeDocuments
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmployeeDocumentCreateRequest'
+      responses:
+        '201':
+          description: Documento creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeDocumentResponse'
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Documento duplicado por colaborador/tipo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /employee-documents/{document_id}:
+    parameters:
+      - in: path
+        name: document_id
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [employee-documents]
+      summary: Obtiene un documento de colaborador por identificador
+      operationId: getEmployeeDocumentById
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Documento encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeDocumentResponse'
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Documento no existe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    patch:
+      tags: [employee-documents]
+      summary: Actualiza documento de colaborador
+      operationId: patchEmployeeDocumentById
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmployeeDocumentUpdateRequest'
+      responses:
+        '200':
+          description: Documento actualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeDocumentResponse'
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Documento no existe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags: [employee-documents]
+      summary: Elimina documento de colaborador
+      operationId: deleteEmployeeDocumentById
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Documento eliminado
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Documento no existe
           content:
             application/json:
               schema:
