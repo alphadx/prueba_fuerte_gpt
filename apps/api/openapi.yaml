@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: ERP Barrio API
-  version: 0.3.6
+  version: 0.3.7
   description: Contrato inicial del API del MVP ERP.
 servers:
   - url: http://localhost:8000
@@ -276,6 +276,55 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/EmployeeDocumentResponse'
+    PaymentCreateRequest:
+      type: object
+      required: [sale_id, amount, method, status, idempotency_key]
+      properties:
+        sale_id:
+          type: string
+          minLength: 1
+        amount:
+          type: number
+          exclusiveMinimum: 0
+        method:
+          type: string
+          minLength: 1
+        status:
+          type: string
+          minLength: 1
+        idempotency_key:
+          type: string
+          minLength: 1
+    PaymentUpdateRequest:
+      type: object
+      properties:
+        status:
+          type: string
+          minLength: 1
+    PaymentResponse:
+      type: object
+      required: [id, sale_id, amount, method, status, idempotency_key]
+      properties:
+        id:
+          type: string
+        sale_id:
+          type: string
+        amount:
+          type: number
+        method:
+          type: string
+        status:
+          type: string
+        idempotency_key:
+          type: string
+    PaymentListResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PaymentResponse'
     UserCreateRequest:
       type: object
       required: [username, full_name, role]
@@ -1205,6 +1254,171 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         '404':
           description: Documento no existe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /payments:
+    get:
+      tags: [payments]
+      summary: Lista pagos registrados
+      operationId: getPayments
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Listado de pagos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentListResponse'
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags: [payments]
+      summary: Crea un pago
+      operationId: postPayments
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentCreateRequest'
+      responses:
+        '201':
+          description: Pago creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResponse'
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: idempotency_key duplicada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /payments/{payment_id}:
+    parameters:
+      - in: path
+        name: payment_id
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [payments]
+      summary: Obtiene un pago por identificador
+      operationId: getPaymentById
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Pago encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResponse'
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Pago no existe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    patch:
+      tags: [payments]
+      summary: Actualiza estado de un pago
+      operationId: patchPaymentById
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentUpdateRequest'
+      responses:
+        '200':
+          description: Pago actualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResponse'
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Pago no existe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags: [payments]
+      summary: Elimina un pago
+      operationId: deletePaymentById
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Pago eliminado
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Pago no existe
           content:
             application/json:
               schema:
