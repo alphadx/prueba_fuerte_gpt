@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: ERP Barrio API
-  version: 0.3.7
+  version: 0.3.8
   description: Contrato inicial del API del MVP ERP.
 servers:
   - url: http://localhost:8000
@@ -325,6 +325,56 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/PaymentResponse'
+    CashSessionCreateRequest:
+      type: object
+      required: [branch_id, opened_by, opening_amount, status]
+      properties:
+        branch_id:
+          type: string
+          minLength: 1
+        opened_by:
+          type: string
+          minLength: 1
+        opening_amount:
+          type: number
+          minimum: 0
+        status:
+          type: string
+          minLength: 1
+    CashSessionUpdateRequest:
+      type: object
+      properties:
+        closing_amount:
+          type: number
+          minimum: 0
+        status:
+          type: string
+          minLength: 1
+    CashSessionResponse:
+      type: object
+      required: [id, branch_id, opened_by, opening_amount, status]
+      properties:
+        id:
+          type: string
+        branch_id:
+          type: string
+        opened_by:
+          type: string
+        opening_amount:
+          type: number
+        closing_amount:
+          type: number
+          nullable: true
+        status:
+          type: string
+    CashSessionListResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CashSessionResponse'
     UserCreateRequest:
       type: object
       required: [username, full_name, role]
@@ -1419,6 +1469,165 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         '404':
           description: Pago no existe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /cash-sessions:
+    get:
+      tags: [cash-sessions]
+      summary: Lista sesiones de caja
+      operationId: getCashSessions
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Listado de sesiones de caja
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CashSessionListResponse'
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags: [cash-sessions]
+      summary: Crea una sesión de caja
+      operationId: postCashSessions
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CashSessionCreateRequest'
+      responses:
+        '201':
+          description: Sesión de caja creada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CashSessionResponse'
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /cash-sessions/{session_id}:
+    parameters:
+      - in: path
+        name: session_id
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [cash-sessions]
+      summary: Obtiene una sesión de caja por identificador
+      operationId: getCashSessionById
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Sesión encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CashSessionResponse'
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Sesión no existe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    patch:
+      tags: [cash-sessions]
+      summary: Actualiza una sesión de caja
+      operationId: patchCashSessionById
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CashSessionUpdateRequest'
+      responses:
+        '200':
+          description: Sesión actualizada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CashSessionResponse'
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Sesión no existe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags: [cash-sessions]
+      summary: Elimina una sesión de caja
+      operationId: deleteCashSessionById
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Sesión eliminada
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Sesión no existe
           content:
             application/json:
               schema:

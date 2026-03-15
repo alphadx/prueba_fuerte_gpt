@@ -9,6 +9,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
 from app.modules.branches.router import router as branches_router
+from app.modules.cash_sessions.router import router as cash_sessions_router
 from app.modules.document_types.router import router as document_types_router
 from app.modules.employee_documents.router import router as employee_documents_router
 from app.modules.payments.router import router as payments_router
@@ -17,7 +18,7 @@ from app.modules.products.router import router as products_router
 from app.modules.users.router import router as users_router
 from app.services.queue import queue_client
 
-app = FastAPI(title="ERP Barrio API", version="0.3.7")
+app = FastAPI(title="ERP Barrio API", version="0.3.8")
 
 
 class AlertDispatchRequest(BaseModel):
@@ -62,3 +63,5 @@ app.include_router(document_types_router)
 app.include_router(employee_documents_router)
 
 app.include_router(payments_router)
+
+app.include_router(cash_sessions_router)
