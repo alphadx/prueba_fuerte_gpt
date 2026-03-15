@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: ERP Barrio API
-  version: 0.3.3
+  version: 0.3.4
   description: Contrato inicial del API del MVP ERP.
 servers:
   - url: http://localhost:8000
@@ -132,6 +132,55 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/BranchResponse'
+    EmployeeCreateRequest:
+      type: object
+      required: [employee_code, full_name, role]
+      properties:
+        employee_code:
+          type: string
+          minLength: 1
+        full_name:
+          type: string
+          minLength: 1
+        role:
+          type: string
+          minLength: 1
+        is_active:
+          type: boolean
+          default: true
+    EmployeeUpdateRequest:
+      type: object
+      properties:
+        full_name:
+          type: string
+          minLength: 1
+        role:
+          type: string
+          minLength: 1
+        is_active:
+          type: boolean
+    EmployeeResponse:
+      type: object
+      required: [id, employee_code, full_name, role, is_active]
+      properties:
+        id:
+          type: string
+        employee_code:
+          type: string
+        full_name:
+          type: string
+        role:
+          type: string
+        is_active:
+          type: boolean
+    EmployeeListResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/EmployeeResponse'
     UserCreateRequest:
       type: object
       required: [username, full_name, role]
@@ -566,6 +615,171 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         '404':
           description: Sucursal no existe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /employees:
+    get:
+      tags: [employees]
+      summary: Lista colaboradores del ERP
+      operationId: getEmployees
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Listado de colaboradores
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeListResponse'
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags: [employees]
+      summary: Crea un colaborador del ERP
+      operationId: postEmployees
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmployeeCreateRequest'
+      responses:
+        '201':
+          description: Colaborador creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeResponse'
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Código de colaborador duplicado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /employees/{employee_id}:
+    parameters:
+      - in: path
+        name: employee_id
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [employees]
+      summary: Obtiene un colaborador por identificador
+      operationId: getEmployeeById
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Colaborador encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeResponse'
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Colaborador no existe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    patch:
+      tags: [employees]
+      summary: Actualiza campos de un colaborador
+      operationId: patchEmployeeById
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmployeeUpdateRequest'
+      responses:
+        '200':
+          description: Colaborador actualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeResponse'
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Colaborador no existe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags: [employees]
+      summary: Elimina un colaborador del ERP
+      operationId: deleteEmployeeById
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Colaborador eliminado
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Colaborador no existe
           content:
             application/json:
               schema:
