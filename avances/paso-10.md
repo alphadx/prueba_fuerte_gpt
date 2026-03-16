@@ -182,9 +182,11 @@ Dejar una definición cerrada del problema y de los criterios medibles que gober
 ### Hardening de auditoría y observabilidad operativa
 - Se agregó endpoint `GET /alerts/summary` para consolidar métricas de salida: eventos por estado, intentos de notificación y total de corridas.
 - Se reforzó la trazabilidad para operación/soporte con visibilidad inmediata de `pending/sent/partially_failed/failed`.
+- Se agregó capacidad de **reintento por canal** para eventos `partially_failed/failed`, sin reenviar canales ya exitosos.
 
 ### Pruebas integrales de salida
 - Se añadió prueba API e2e del flujo completo: `evaluate -> dispatch-pending -> summary`.
+- Se validó recuperación post-falla: segundo `dispatch-pending` reintenta solo el canal fallido y consolida estado final `sent`.
 - Se agregó prueba unitaria de consistencia de métricas agregadas (`summarize`) frente a estados mixtos de entrega por canal.
 
 ### Checklist de cierre del paso 10

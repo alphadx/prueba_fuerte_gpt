@@ -75,9 +75,13 @@ class AlarmEventService:
         with self._lock:
             return [AlertEvaluationRun(**vars(item)) for item in self._runs_by_id.values()]
 
-    def list_pending_events(self) -> list[AlarmEvent]:
+    def list_dispatchable_events(self) -> list[AlarmEvent]:
         with self._lock:
-            return [AlarmEvent(**vars(item)) for item in self._by_id.values() if item.status == "pending"]
+            return [
+                AlarmEvent(**vars(item))
+                for item in self._by_id.values()
+                if item.status in {"pending", "partially_failed", "failed"}
+            ]
 
     def update_notification_status(self, *, event_id: str, channel: str, status: str) -> AlarmEvent:
         with self._lock:

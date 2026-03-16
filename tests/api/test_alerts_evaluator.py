@@ -90,7 +90,7 @@ def test_alerts_end_to_end_happy_path_summary() -> None:
     assert summary_body["total_notification_attempts"] == 2
 
 
-def test_alerts_dispatch_pending_tolerates_channel_failure(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_alerts_dispatch_pending_tolerates_channel_failure_and_allows_retry(monkeypatch: pytest.MonkeyPatch) -> None:
     headers = _auth_header(roles=["rrhh"])
     client.post("/alerts/evaluate", json={"evaluation_date": "2025-01-24"}, headers=headers)
 
@@ -103,18 +103,31 @@ def test_alerts_dispatch_pending_tolerates_channel_failure(monkeypatch: pytest.M
 
     monkeypatch.setattr(alert_notification_service, "_deliver", _patched_deliver)
 
-    dispatch = client.post("/alerts/dispatch-pending", headers=headers)
-    assert dispatch.status_code == 200
-    body = dispatch.json()
-    assert body["processed_events"] == 1
-    assert body["sent_attempts"] == 1
-    assert body["failed_attempts"] == 1
+    first_dispatch = client.post("/alerts/dispatch-pending", headers=headers)
+    assert first_dispatch.status_code == 200
+    first_body = first_dispatch.json()
+    assert first_body["processed_events"] == 1
+    assert first_body["sent_attempts"] == 1
+    assert first_body["failed_attempts"] == 1
 
-    events = client.get("/alerts/events", headers=headers).json()["items"]
-    assert events[0]["status"] == "partially_failed"
+    events_after_first = client.get("/alerts/events", headers=headers).json()["items"]
+    assert events_after_first[0]["status"] == "partially_failed"
+    assert events_after_first[0]["notification_statuses"] == {"in_app": "sent", "email": "failed"}
+
+    monkeypatch.setattr(alert_notification_service, "_deliver", original)
+    second_dispatch = client.post("/alerts/dispatch-pending", headers=headers)
+    assert second_dispatch.status_code == 200
+    second_body = second_dispatch.json()
+    assert second_body["processed_events"] == 1
+    assert second_body["sent_attempts"] == 1
+    assert second_body["failed_attempts"] == 0
+
+    events_after_second = client.get("/alerts/events", headers=headers).json()["items"]
+    assert events_after_second[0]["status"] == "sent"
+    assert events_after_second[0]["notification_statuses"] == {"in_app": "sent", "email": "sent"}
 
     attempts = client.get("/alerts/notifications", headers=headers).json()["items"]
-    assert len(attempts) == 2
+    assert len(attempts) == 3
 
 
 def test_alerts_evaluations_list_for_rrhh() -> None:

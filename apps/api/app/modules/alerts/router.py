@@ -117,14 +117,22 @@ def evaluate_alerts(
 def dispatch_pending_notifications(
     auth: AuthContext = Depends(require_roles("admin", "rrhh")),
 ) -> DispatchPendingNotificationsResponse:
-    pending_events = alarm_event_service.list_pending_events()
+    dispatchable_events = alarm_event_service.list_dispatchable_events()
 
     sent_attempts = 0
     failed_attempts = 0
     processed_events = 0
 
-    for event in pending_events:
-        attempts = alert_notification_service.dispatch_event(event=event)
+    for event in dispatchable_events:
+        channels_to_send = tuple(
+            channel
+            for channel in ("in_app", "email")
+            if event.notification_statuses.get(channel) != "sent"
+        )
+        if not channels_to_send:
+            continue
+
+        attempts = alert_notification_service.dispatch_event(event=event, channels=channels_to_send)
         processed_events += 1
         for attempt in attempts:
             alarm_event_service.update_notification_status(
