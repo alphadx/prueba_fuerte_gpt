@@ -43,6 +43,16 @@ class WebhookProcessResult:
     current_status: str | None
 
 
+@dataclass
+class PaymentObservabilitySnapshot:
+    payments_total: int
+    approved_total: int
+    rejected_total: int
+    pending_total: int
+    webhook_events_processed: int
+    error_rate: float
+
+
 class PaymentService:
     def __init__(self) -> None:
         self._by_id: dict[str, Payment] = {}
@@ -327,6 +337,23 @@ class PaymentService:
             del self._ids_by_idempotency_key[payment.idempotency_key]
             if payment.provider_payment_id:
                 self._ids_by_provider_payment_id.pop(payment.provider_payment_id, None)
+
+    def get_observability_snapshot(self) -> PaymentObservabilitySnapshot:
+        with self._lock:
+            payments_total = len(self._by_id)
+            approved_total = sum(1 for item in self._by_id.values() if item.status in {"approved", "reconciled"})
+            rejected_total = sum(1 for item in self._by_id.values() if item.status in {"rejected", "failed", "cancelled"})
+            pending_total = payments_total - approved_total - rejected_total
+            webhook_events_processed = len(self._processed_webhook_events)
+            error_rate = (rejected_total / payments_total * 100) if payments_total else 0.0
+            return PaymentObservabilitySnapshot(
+                payments_total=payments_total,
+                approved_total=approved_total,
+                rejected_total=rejected_total,
+                pending_total=pending_total,
+                webhook_events_processed=webhook_events_processed,
+                error_rate=round(error_rate, 2),
+            )
 
     def reset_state(self) -> None:
         with self._lock:

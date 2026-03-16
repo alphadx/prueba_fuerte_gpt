@@ -176,3 +176,28 @@ def test_billing_document_type_query_param() -> None:
 
     missing = client.get("/billing/documents/sale-q-01", headers=admin_headers)
     assert missing.status_code == 404
+
+
+def test_billing_observability_metrics_endpoint() -> None:
+    admin_headers = _auth_header(roles=["admin"])
+    cajero_headers = _auth_header(roles=["cajero"])
+    sale_id = _create_sale(admin_headers, cajero_headers)
+
+    metrics_before = client.get("/billing/observability/metrics", headers=admin_headers)
+    assert metrics_before.status_code == 200
+    body_before = metrics_before.json()
+    assert body_before["queue_depth"] >= 1
+    assert body_before["total_documents"] >= 1
+
+    process = client.post("/billing/worker/process", json={"limit": 10}, headers=admin_headers)
+    assert process.status_code == 200
+
+    metrics_after = client.get("/billing/observability/metrics", headers=cajero_headers)
+    assert metrics_after.status_code == 200
+    body_after = metrics_after.json()
+    assert body_after["queue_depth"] == 0
+    assert body_after["total_documents"] >= 1
+    assert body_after["error_rate"] >= 0
+
+    doc = client.get(f"/billing/documents/{sale_id}", headers=admin_headers)
+    assert doc.status_code == 200

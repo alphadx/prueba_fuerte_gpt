@@ -1,71 +1,55 @@
 # Paso 12 — Validación final, observabilidad y checklist de salida
 
 ## Estado de iteración
-- **Iteración actual:** Etapa 2 de 8 — contrato de pipeline local y evidencias de release.
+- **Iteración actual:** Etapa 3 de 8 — instrumentación mínima de observabilidad.
 - **Estado:** ✅ Completada.
-- **Regla de control aplicada:** etapa cerrada; se requiere autorización del usuario para iniciar etapa 3.
+- **Regla de control aplicada:** etapa cerrada; se requiere autorización del usuario para iniciar etapa 4.
 
 ## Referencias documentales consideradas
-- `plan.md` (definición de la etapa 2 del paso 12).
-- `docs/development_standards.md` (estándares mínimos de calidad y pruebas).
-- `docs/mvp_scope.md` (índices críticos de término para salida MVP).
-- `Makefile` (comandos reales disponibles para gates).
+- `plan.md` (definición de etapa 3 del paso 12).
+- `docs/release_pipeline_contract.md` (gates y criterio GO/NO-GO/PENDIENTE_ENTORNO).
+- `apps/api/openapi.yaml` (contrato HTTP actualizado antes de exponer endpoints).
 
-## Objetivo de la etapa 2
-Diseñar y normalizar el pipeline local del paso 12 con contrato explícito de gates, criterios de bloqueo y formato reproducible de evidencia.
+## Objetivo de la etapa 3
+Implementar observabilidad mínima operable para release readiness en los flujos más críticos: emisión de boletas y pagos.
 
 ## Implementación realizada
 
-### 1) Contrato de pipeline de release
-- Se creó `docs/release_pipeline_contract.md` como documento normativo del paso 12.
-- Se definieron **4 gates oficiales** con orden, comando y severidad:
-  1. `make test`.
-  2. `make bootstrap-validate`.
-  3. `make smoke-test-state`.
-  4. `make doctor-docker` + `make compose-smoke` (en entorno con Docker).
-- Se estableció regla de decisión `GO / NO-GO / PENDIENTE_ENTORNO` para separar fallas funcionales de limitaciones de infraestructura.
+### 1) Observabilidad de billing
+- Se agregó snapshot de métricas en `BillingService`:
+  - `queue_depth`, `queued_documents`, `processing_documents`, `dead_lettered_documents`, `total_documents`, `error_rate`.
+- Se expuso endpoint protegido `GET /billing/observability/metrics`.
 
-### 2) Contrato de evidencias reproducibles
-- Se incorporó formato mínimo de evidencia por corrida (timestamp UTC, SHA, estado por gate, notas y decisión final).
-- Se añadió plantilla YAML para estandarizar reportes de ejecución en etapas posteriores.
+### 2) Observabilidad de pagos
+- Se agregó snapshot de métricas en `PaymentService`:
+  - `payments_total`, `approved_total`, `rejected_total`, `pending_total`, `webhook_events_processed`, `error_rate`.
+- Se expuso endpoint protegido `GET /payments/observability/metrics` con traza de auditoría.
 
-### 3) Baseline ejecutado para validar el contrato
-- `make test` continúa en rojo por una falla conocida de billing.
-- `make bootstrap-validate` pasa correctamente.
-- `make smoke-test-state` pasa correctamente.
-- `make doctor-docker` confirma limitación de entorno actual (Docker no disponible).
+### 3) Contrato API y pruebas
+- Se actualizaron schemas FastAPI para respuestas de observabilidad de billing y pagos.
+- Se actualizó `apps/api/openapi.yaml` con ambos endpoints y sus componentes.
+- Se agregaron pruebas API para validar payloads y cálculo base de métricas.
 
-## Resultado de la etapa 2
+## Resultado de la etapa 3
+- **Cobertura funcional:** observabilidad mínima activa para dos dominios críticos del release.
+- **Estado release:** **NO-GO** se mantiene (hasta resolver gate `make test` completo y evidencia Docker en entorno compatible).
+- **Semáforo del paso:** 🟠 Ámbar con mejora en telemetría operativa.
 
-### Estado de gates del contrato
-- **Gate 1 — Unit + integración API (`make test`):** ❌ fail.
-- **Gate 2 — Bootstrap report (`make bootstrap-validate`):** ✅ pass.
-- **Gate 3 — Smoke estado QA (`make smoke-test-state`):** ✅ pass.
-- **Gate 4 — Docker health + compose smoke:** ⚠️ pendiente por entorno (`doctor-docker` falla por ausencia de Docker).
+## Evidencia de ejecución (etapa 3)
+- `pytest -q tests/api/test_billing.py tests/api/test_payments.py`
+- `make test`
+- `make bootstrap-validate`
+- `make smoke-test-state`
+- `make doctor-docker`
 
-### Decisión operativa actual (según contrato)
-- **Estado release:** **NO-GO** (existe gate bloqueante rojo en `make test`).
-- **Observación adicional:** aunque se corrija ese gate, queda validación Docker pendiente para cerrar salida integral.
-
-## Backlog priorizado para etapa 3
-1. Corregir o aislar la falla de billing para llevar `make test` a verde.
-2. Avanzar instrumentación mínima de observabilidad (latencia API, cola worker, error rate boletas/pagos).
-3. Preparar ejecución de `compose-smoke` en entorno con Docker para completar evidencia de infraestructura.
-
-## Avance del paso 12 tras etapa 2
-- **Salud de pipeline:** 48% (contrato formalizado y 2/4 gates en verde; 1 rojo crítico y 1 pendiente de entorno).
-- **SLO técnico mínimo:** 24% (aún sin umbrales/owners formalizados).
-- **Preparación go-live:** 14% (sin checklist final ni rollback del paso 12).
-- **Cumplimiento estimado total del paso:** **32%**.
+## Avance del paso 12 tras etapa 3
+- **Salud de pipeline:** 55%.
+- **SLO técnico mínimo:** 40%.
+- **Preparación go-live:** 24%.
+- **Cumplimiento estimado total del paso:** **41%**.
 - **Semáforo:** 🟠 Ámbar.
-
-## Evidencia de ejecución (etapa 2)
-- `make test`.
-- `make bootstrap-validate`.
-- `make smoke-test-state`.
-- `make doctor-docker`.
 
 ---
 
-**Cierre de etapa 2:** completado.
-**Solicitud de control:** indícame si autorizas avanzar con la **Etapa 3 (instrumentación mínima de observabilidad)**.
+**Cierre de etapa 3:** completado.
+**Solicitud de control:** indícame si autorizas avanzar con la **Etapa 4 (definición de umbrales SLO + owners y alertas de operación)**.
