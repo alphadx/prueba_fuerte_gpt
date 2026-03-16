@@ -1,0 +1,24 @@
+{
+  "billing_metrics": {
+    "queue_depth": 0,
+    "queued_documents": 0,
+    "processing_documents": 0,
+    "dead_lettered_documents": 0,
+    "total_documents": 1,
+    "error_rate": 0.0
+  },
+  "payments_metrics": {
+    "payments_total": 2,
+    "approved_total": 0,
+    "rejected_total": 1,
+    "pending_total": 1,
+    "webhook_events_processed": 0,
+    "error_rate": 50.0
+  },
+  "health": {
+    "status": "ok"
+  },
+  "ready": {
+    "status": "ready"
+  }
+}

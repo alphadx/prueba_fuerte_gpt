@@ -84,3 +84,13 @@ release_validation:
 1. Ejecutar corrida integral final con consolidación de evidencias (gates + SLO + checklist).
 2. Adjuntar estado de riesgos críticos abiertos/cerrados en la corrida.
 3. Validar decisión final bajo reglas de contingencia y rollback documentadas.
+
+## Resultado etapa 7 (corrida integral)
+- Evidencia consolidada versionada: `docs/release_validation_stage7.yaml`.
+- Snapshot operativo de apoyo: `docs/release_observability_snapshot_stage7.json`.
+- Decisión consolidada de la corrida: **NO-GO** (SLO de pagos fuera de umbral y validación Docker pendiente de entorno).
+
+## Acciones obligatorias para etapa 8
+1. Hardening de cierre documental del paso 12 con reporte final de salida.
+2. Cerrar/actualizar riesgos críticos abiertos con owner y ETA final.
+3. Emitir resumen ejecutivo final del paso con estado GO/NO-GO/PENDIENTE_ENTORNO.
