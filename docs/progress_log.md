@@ -63,7 +63,7 @@
 - [x] Paso 4 — Modelo de datos y migraciones.
 - [ ] Paso 5 — API modular + auth/permisos.
 - [ ] Paso 6 — POS y flujo de caja.
-- [ ] Paso 7 — Boleta electrónica sandbox.
+- [x] Paso 7 — Boleta electrónica sandbox (prototipo iterativo 7 etapas).
 - [ ] Paso 8 — Adaptadores de pago.
 - [ ] Paso 9 — E-commerce retiro en tienda.
 - [ ] Paso 10 — RRHH documental + alertas.
@@ -97,3 +97,36 @@ Cada avance debe añadir:
   - validación QR para transacciones entre pares (P2P).
 - Se reforzó infraestructura `compose full` con servicio GreenMail (SMTP + IMAP) para pruebas de notificaciones extremo a extremo.
 
+### 🟡 Paso 7 — Integrar boleta electrónica vía proveedor (sandbox)
+
+**Estado:** en ejecución como prototipo iterativo por 7 etapas (controlado por orden del usuario).
+
+**Definición operativa vigente:**
+- Se considera avance parcial por etapa (1/7, 2/7, ... 7/7).
+- Al cierre de cada etapa se solicita autorización explícita para continuar.
+- El paso se marca completado sólo al finalizar 7/7 con evidencia y checklist.
+
+**Evolución etapa 3 (adaptador sandbox):**
+- Se reforzó el adaptador con modos de simulación de fallas transitorias y estados (`accepted/processing/rejected`).
+- Se agregó transición de estado progresiva para pruebas de reconciliación (`processing -> accepted`).
+- Se amplió trazabilidad de payload y pruebas unitarias específicas del adaptador.
+
+
+**Evolución etapa 4 (desacople POS/caja):**
+- Se desacopló confirmación de venta y creación efectiva de documento tributario mediante cola de eventos de emisión.
+- Worker de billing ahora ejecuta fase de drenado + fase de procesamiento, con métricas de lote (`enqueued`, `processed`, `succeeded`, `failed`).
+
+
+**Evolución etapa 5 (resiliencia e idempotencia):**
+- Se incorporó backoff acotado por ciclos de worker para retry de errores transitorios.
+- Se agregó estado/contador de dead-letter para errores no recuperables al agotar intentos.
+
+
+**Evolución etapa 6 (consulta y pruebas):**
+- Se habilitó consulta por tipo documental y endpoint de refresh de estado para reconciliación explícita.
+- Se amplió cobertura API para escenarios de estado progresivo y ambigüedad por tipo documental.
+
+
+**Evolución etapa 7 (hardening y cierre):**
+- Se cerró checklist de salida de paso en `docs/paso7_hardening_checklist.md`.
+- Paso 7 marcado como completado a nivel prototipo (7/7).

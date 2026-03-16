@@ -6,9 +6,9 @@ from dataclasses import dataclass
 from decimal import Decimal, ROUND_HALF_UP
 from threading import RLock
 
+from app.modules.billing.service import billing_service
 from app.modules.cash_sessions.service import cash_session_service
 from app.modules.products.service import ProductService, product_service
-from app.services.queue import queue_client
 
 TWOPLACES = Decimal("0.01")
 PAYMENT_STATE_BY_METHOD: dict[str, tuple[str, str]] = {
@@ -136,13 +136,10 @@ class SaleService:
             )
             self._by_id[sale_id] = sale
 
-            queue_client.enqueue_alert(
-                {
-                    "event_type": "billing.sale_confirmed",
-                    "sale_id": sale.id,
-                    "branch_id": sale.branch_id,
-                    "total": sale.total,
-                }
+            billing_service.enqueue_sale_emission_event(
+                sale_id=sale.id,
+                branch_id=sale.branch_id,
+                total=sale.total,
             )
             sale.billing_event_emitted = True
             return self._clone(sale)
