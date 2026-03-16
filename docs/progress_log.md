@@ -63,7 +63,7 @@
 - [x] Paso 4 — Modelo de datos y migraciones.
 - [ ] Paso 5 — API modular + auth/permisos.
 - [ ] Paso 6 — POS y flujo de caja.
-- [ ] Paso 7 — Boleta electrónica sandbox.
+- [ ] Paso 7 — Boleta electrónica sandbox (prototipo iterativo 7 etapas).
 - [ ] Paso 8 — Adaptadores de pago.
 - [ ] Paso 9 — E-commerce retiro en tienda.
 - [ ] Paso 10 — RRHH documental + alertas.
@@ -97,3 +97,11 @@ Cada avance debe añadir:
   - validación QR para transacciones entre pares (P2P).
 - Se reforzó infraestructura `compose full` con servicio GreenMail (SMTP + IMAP) para pruebas de notificaciones extremo a extremo.
 
+### 🟡 Paso 7 — Integrar boleta electrónica vía proveedor (sandbox)
+
+**Estado:** en ejecución como prototipo iterativo por 7 etapas (controlado por orden del usuario).
+
+**Definición operativa vigente:**
+- Se considera avance parcial por etapa (1/7, 2/7, ... 7/7).
+- Al cierre de cada etapa se solicita autorización explícita para continuar.
+- El paso se marca completado sólo al finalizar 7/7 con evidencia y checklist.

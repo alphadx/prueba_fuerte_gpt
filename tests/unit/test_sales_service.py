@@ -10,7 +10,7 @@ def setup_function() -> None:
 
 
 def test_sale_service_maps_payment_states_deterministically(monkeypatch) -> None:
-    monkeypatch.setattr("app.modules.sales.service.queue_client.enqueue_alert", lambda payload: "memory")
+    monkeypatch.setattr("app.modules.sales.service.billing_service.enqueue_sale_document", lambda **kwargs: None)
 
     product = product_service.create_product(sku="SKU-1", name="Pan", price=1000)
     product_service.set_stock(product.id, 10)
@@ -40,7 +40,7 @@ def test_sale_service_maps_payment_states_deterministically(monkeypatch) -> None
 
 
 def test_sale_service_rejects_branch_mismatch(monkeypatch) -> None:
-    monkeypatch.setattr("app.modules.sales.service.queue_client.enqueue_alert", lambda payload: "memory")
+    monkeypatch.setattr("app.modules.sales.service.billing_service.enqueue_sale_document", lambda **kwargs: None)
 
     product = product_service.create_product(sku="SKU-2", name="Leche", price=1200)
     product_service.set_stock(product.id, 10)
@@ -62,7 +62,7 @@ def test_sale_service_rejects_branch_mismatch(monkeypatch) -> None:
 
 
 def test_sale_service_rolls_back_partial_stock_and_kardex(monkeypatch) -> None:
-    monkeypatch.setattr("app.modules.sales.service.queue_client.enqueue_alert", lambda payload: "memory")
+    monkeypatch.setattr("app.modules.sales.service.billing_service.enqueue_sale_document", lambda **kwargs: None)
 
     p1 = product_service.create_product(sku="SKU-3", name="Arroz", price=1800)
     p2 = product_service.create_product(sku="SKU-4", name="Aceite", price=4200)
