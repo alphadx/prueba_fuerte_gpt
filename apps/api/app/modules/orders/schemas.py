@@ -62,27 +62,37 @@ class OrderTransitionEventResponse(BaseModel):
     current_state: str
     actor: str
     reason: str
+    happened_at: str
 
 
 class PickupCheckoutConfirmResponse(BaseModel):
     order_id: str
     order_state: str
+    customer_status: str
     branch_id: str
     pickup_slot_id: str
     totals: dict[str, float | str]
     idempotency_key: str
+    promised_ready_by: str
+    created_at: str
     lines: list[OrderLineResponse]
 
 
 class PickupOrderResponse(BaseModel):
     order_id: str
     state: str
+    customer_status: str
     branch_id: str
     pickup_slot_id: str
     customer: dict[str, str]
     idempotency_key: str
     lines: list[OrderLineResponse]
     subtotal: float
+    created_at: str
+    updated_at: str
+    promised_ready_by: str
+    ready_at: str | None
+    delivered_at: str | None
     transitions: list[OrderTransitionEventResponse]
 
 
@@ -95,6 +105,8 @@ class OrderTransitionResponse(BaseModel):
     order_id: str
     previous_state: str
     current_state: str
+    customer_status: str
+    updated_at: str
 
 
 class OrderObservabilityResponse(BaseModel):
@@ -104,6 +116,7 @@ class OrderObservabilityResponse(BaseModel):
     rejected_checkouts: int
     rejected_transitions: int
     idempotent_replays: int
+    ready_over_sla: int
 
 
 class OrderConsistencyReportResponse(BaseModel):

@@ -159,6 +159,13 @@ Se creó un frontend MVP estático en `apps/web`:
   - razón de movimiento esperada (`pickup-checkout-confirmation`).
 - Se fortaleció la trazabilidad para incidentes al registrar rechazos en métricas internas y auditoría.
 
+
+### Ajustes de diseño aplicados (alineados a prácticas omnicanal)
+- Se separó **estado interno operativo** (`state`) de **estado visible al cliente** (`customer_status`) para evitar que UI sea fuente de verdad y mejorar comunicación del pedido.
+- Se añadieron atributos temporales de ciclo de vida (`created_at`, `updated_at`, `promised_ready_by`, `ready_at`, `delivered_at`) para trazabilidad y control de SLA de retiro.
+- Se agregó métrica `ready_over_sla` para monitorear pedidos listos fuera de promesa de retiro.
+- Se reforzó consistencia de dominio verificando coherencia entre estado terminal y timestamps (`entregado` requiere `delivered_at`, `listo_para_retiro` requiere `ready_at`).
+
 ### Checklist de salida del paso 9
 - [x] Checkout pickup idempotente y con rollback.
 - [x] Máquina de estados forward-only con historial de transiciones.

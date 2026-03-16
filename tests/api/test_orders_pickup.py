@@ -121,6 +121,8 @@ def test_pickup_checkout_confirm_decrements_stock_and_is_idempotent() -> None:
     assert first.status_code == 201
     first_body = first.json()
     assert first_body["order_state"] == "recibido"
+    assert first_body["customer_status"] == "confirmado"
+    assert first_body["promised_ready_by"]
     assert product_service.get_stock(product_id) == 2
 
     second = client.post(
@@ -136,6 +138,7 @@ def test_pickup_checkout_confirm_decrements_stock_and_is_idempotent() -> None:
     order = client.get(f"/orders/{first_body['order_id']}", headers=headers)
     assert order.status_code == 200
     assert order.json()["state"] == "recibido"
+    assert order.json()["customer_status"] == "confirmado"
     assert order.json()["transitions"] == []
 
 
@@ -171,6 +174,7 @@ def test_order_transitions_follow_state_machine_and_are_auditable() -> None:
     assert to_prepared.status_code == 200
     assert to_prepared.json()["previous_state"] == "recibido"
     assert to_prepared.json()["current_state"] == "preparado"
+    assert to_prepared.json()["customer_status"] == "en_preparacion"
 
     invalid_jump = client.post(
         f"/orders/{order_id}/transitions",
@@ -206,6 +210,8 @@ def test_order_transitions_follow_state_machine_and_are_auditable() -> None:
     assert fetched.status_code == 200
     payload = fetched.json()
     assert payload["state"] == "entregado"
+    assert payload["customer_status"] == "entregado"
+    assert payload["delivered_at"] is not None
     assert [item["current_state"] for item in payload["transitions"]] == [
         "preparado",
         "listo_para_retiro",
@@ -244,6 +250,7 @@ def test_order_observability_and_consistency_endpoints() -> None:
     assert body["total_orders"] >= 1
     assert body["states"]["recibido"] >= 1
     assert body["rejected_transitions"] >= 1
+    assert body["ready_over_sla"] >= 0
 
     report = client.get("/orders/consistency/report", headers=headers)
     assert report.status_code == 200

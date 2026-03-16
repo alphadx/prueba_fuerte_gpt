@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import datetime, timedelta, timezone
 from threading import RLock
 
 from app.modules.products.service import ProductService, StockMovement, product_service
@@ -11,6 +12,13 @@ ORDER_TRANSITIONS: dict[str, str] = {
     "recibido": "preparado",
     "preparado": "listo_para_retiro",
     "listo_para_retiro": "entregado",
+}
+
+CUSTOMER_STATUS_BY_STATE: dict[str, str] = {
+    "recibido": "confirmado",
+    "preparado": "en_preparacion",
+    "listo_para_retiro": "listo_para_retiro",
+    "entregado": "entregado",
 }
 
 
@@ -28,12 +36,14 @@ class OrderTransitionEvent:
     current_state: str
     actor: str
     reason: str
+    happened_at: str
 
 
 @dataclass
 class PickupOrder:
     order_id: str
     state: str
+    customer_status: str
     branch_id: str
     pickup_slot_id: str
     customer: dict[str, str]
@@ -41,6 +51,11 @@ class PickupOrder:
     lines: list[OrderLine]
     subtotal: float
     transitions: list[OrderTransitionEvent]
+    created_at: str
+    updated_at: str
+    promised_ready_by: str
+    ready_at: str | None
+    delivered_at: str | None
 
 
 @dataclass
@@ -51,6 +66,7 @@ class OrderObservabilitySnapshot:
     rejected_checkouts: int
     rejected_transitions: int
     idempotent_replays: int
+    ready_over_sla: int
 
 
 @dataclass
@@ -122,10 +138,14 @@ class PickupOrderService:
                 self._product_service.rollback_reference(reference_id=order_id)
                 raise ValueError("insufficient stock at confirmation") from exc
 
+            now = self._utcnow()
+            promised_ready_by = (now + timedelta(minutes=120)).isoformat()
+
             subtotal = sum(line.line_total for line in built_lines)
             order = PickupOrder(
                 order_id=order_id,
                 state="recibido",
+                customer_status=CUSTOMER_STATUS_BY_STATE["recibido"],
                 branch_id=branch_id,
                 pickup_slot_id=pickup_slot_id,
                 customer=customer,
@@ -133,6 +153,11 @@ class PickupOrderService:
                 lines=built_lines,
                 subtotal=subtotal,
                 transitions=[],
+                created_at=now.isoformat(),
+                updated_at=now.isoformat(),
+                promised_ready_by=promised_ready_by,
+                ready_at=None,
+                delivered_at=None,
             )
             self._by_id[order_id] = order
             self._by_idempotency_key[idempotency_key] = order_id
@@ -165,13 +190,21 @@ class PickupOrderService:
                 raise ValueError("invalid order transition")
 
             previous_state = order.state
+            now_iso = self._utcnow().isoformat()
             order.state = target_state
+            order.customer_status = CUSTOMER_STATUS_BY_STATE[target_state]
+            order.updated_at = now_iso
+            if target_state == "listo_para_retiro":
+                order.ready_at = now_iso
+            if target_state == "entregado":
+                order.delivered_at = now_iso
             order.transitions.append(
                 OrderTransitionEvent(
                     previous_state=previous_state,
                     current_state=target_state,
                     actor=actor,
                     reason=reason,
+                    happened_at=now_iso,
                 )
             )
             return self._clone(order)
@@ -187,8 +220,11 @@ class PickupOrderService:
     def get_observability_snapshot(self) -> OrderObservabilitySnapshot:
         with self._lock:
             states: dict[str, int] = {}
+            ready_over_sla = 0
             for order in self._by_id.values():
                 states[order.state] = states.get(order.state, 0) + 1
+                if order.ready_at and order.ready_at > order.promised_ready_by:
+                    ready_over_sla += 1
 
             return OrderObservabilitySnapshot(
                 total_orders=len(self._by_id),
@@ -197,6 +233,7 @@ class PickupOrderService:
                 rejected_checkouts=self._rejected_checkouts,
                 rejected_transitions=self._rejected_transitions,
                 idempotent_replays=self._idempotent_replays,
+                ready_over_sla=ready_over_sla,
             )
 
     def run_consistency_report(self) -> OrderConsistencyReport:
@@ -214,6 +251,11 @@ class PickupOrderService:
                         f"{order.order_id}: expected {len(order.lines)} stock movements, found {len(reference_movements)}"
                     )
                     continue
+
+                if order.state == "entregado" and order.delivered_at is None:
+                    inconsistencies.append(f"{order.order_id}: delivered state without delivered_at")
+                if order.state == "listo_para_retiro" and order.ready_at is None:
+                    inconsistencies.append(f"{order.order_id}: ready state without ready_at")
 
                 expected_by_product = {line.product_id: -line.qty for line in order.lines}
                 for movement in reference_movements:
@@ -252,6 +294,7 @@ class PickupOrderService:
         return PickupOrder(
             order_id=order.order_id,
             state=order.state,
+            customer_status=order.customer_status,
             branch_id=order.branch_id,
             pickup_slot_id=order.pickup_slot_id,
             customer=dict(order.customer),
@@ -259,7 +302,16 @@ class PickupOrderService:
             lines=[OrderLine(**vars(line)) for line in order.lines],
             subtotal=order.subtotal,
             transitions=[OrderTransitionEvent(**vars(item)) for item in order.transitions],
+            created_at=order.created_at,
+            updated_at=order.updated_at,
+            promised_ready_by=order.promised_ready_by,
+            ready_at=order.ready_at,
+            delivered_at=order.delivered_at,
         )
+
+    @staticmethod
+    def _utcnow() -> datetime:
+        return datetime.now(timezone.utc)
 
 
 pickup_order_service = PickupOrderService(product_service=product_service)

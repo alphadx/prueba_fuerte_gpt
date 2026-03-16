@@ -87,9 +87,12 @@ def confirm_pickup_checkout(
     return PickupCheckoutConfirmResponse(
         order_id=created.order_id,
         order_state=created.state,
+        customer_status=created.customer_status,
         branch_id=created.branch_id,
         pickup_slot_id=created.pickup_slot_id,
         idempotency_key=created.idempotency_key,
+        promised_ready_by=created.promised_ready_by,
+        created_at=created.created_at,
         totals={"subtotal": created.subtotal, "currency": "CLP"},
         lines=[
             {
@@ -132,11 +135,17 @@ def get_pickup_order(
     return PickupOrderResponse(
         order_id=order.order_id,
         state=order.state,
+        customer_status=order.customer_status,
         branch_id=order.branch_id,
         pickup_slot_id=order.pickup_slot_id,
         customer=order.customer,
         idempotency_key=order.idempotency_key,
         subtotal=order.subtotal,
+        created_at=order.created_at,
+        updated_at=order.updated_at,
+        promised_ready_by=order.promised_ready_by,
+        ready_at=order.ready_at,
+        delivered_at=order.delivered_at,
         lines=[
             {
                 "product_id": line.product_id,
@@ -152,6 +161,7 @@ def get_pickup_order(
                 "current_state": event.current_state,
                 "actor": event.actor,
                 "reason": event.reason,
+                "happened_at": event.happened_at,
             }
             for event in order.transitions
         ],
@@ -204,4 +214,6 @@ def transition_pickup_order(
         order_id=updated.order_id,
         previous_state=current_order.state,
         current_state=updated.state,
+        customer_status=updated.customer_status,
+        updated_at=updated.updated_at,
     )

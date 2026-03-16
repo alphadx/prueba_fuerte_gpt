@@ -25,7 +25,10 @@ def test_create_order_decrements_stock_and_sets_received_state() -> None:
     )
 
     assert order.state == "recibido"
+    assert order.customer_status == "confirmado"
     assert order.order_id.startswith("ord-")
+    assert order.created_at
+    assert order.promised_ready_by
     assert product_service.get_stock(product_id) == 3
     assert order.transitions == []
 
@@ -88,6 +91,7 @@ def test_transition_order_accepts_only_forward_states() -> None:
         reason="pedido preparado",
     )
     assert updated.state == "preparado"
+    assert updated.customer_status == "en_preparacion"
 
     try:
         pickup_order_service.transition_order(
@@ -127,6 +131,7 @@ def test_transition_order_records_history() -> None:
 
     fetched = pickup_order_service.get_order(order.order_id)
     assert [item.current_state for item in fetched.transitions] == ["preparado", "listo_para_retiro"]
+    assert fetched.ready_at is not None
 
 
 def test_observability_snapshot_counts_rejections_and_replays() -> None:
@@ -155,6 +160,7 @@ def test_observability_snapshot_counts_rejections_and_replays() -> None:
     assert snapshot.idempotent_replays == 1
     assert snapshot.rejected_checkouts == 1
     assert snapshot.rejected_transitions == 1
+    assert snapshot.ready_over_sla == 0
 
 
 def test_consistency_report_detects_clean_state() -> None:

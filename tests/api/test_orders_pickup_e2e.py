@@ -82,6 +82,7 @@ def test_pickup_web_to_store_e2e_flow() -> None:
     assert checkout.status_code == 201
     order_id = checkout.json()["order_id"]
     assert checkout.json()["order_state"] == "recibido"
+    assert checkout.json()["customer_status"] == "confirmado"
 
     to_prepared = client.post(
         f"/orders/{order_id}/transitions",
@@ -108,6 +109,7 @@ def test_pickup_web_to_store_e2e_flow() -> None:
     assert final_state.status_code == 200
     payload = final_state.json()
     assert payload["state"] == "entregado"
+    assert payload["customer_status"] == "entregado"
     assert [event["current_state"] for event in payload["transitions"]] == [
         "preparado",
         "listo_para_retiro",
