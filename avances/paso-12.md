@@ -1,67 +1,71 @@
 # Paso 12 — Validación final, observabilidad y checklist de salida
 
 ## Estado de iteración
-- **Iteración actual:** Etapa 1 de 8 — baseline de release readiness y criterios de aceptación medibles.
+- **Iteración actual:** Etapa 2 de 8 — contrato de pipeline local y evidencias de release.
 - **Estado:** ✅ Completada.
-- **Regla de control aplicada:** etapa cerrada; se requiere autorización del usuario para iniciar etapa 2.
+- **Regla de control aplicada:** etapa cerrada; se requiere autorización del usuario para iniciar etapa 3.
 
 ## Referencias documentales consideradas
-- `plan.md` (definición del paso 12 y entregables).
-- `docs/development_standards.md` (estándares de calidad y testing).
-- `docs/mvp_scope.md` (índices de término y criterios del MVP).
-- `Makefile` (gates y comandos ejecutables disponibles).
+- `plan.md` (definición de la etapa 2 del paso 12).
+- `docs/development_standards.md` (estándares mínimos de calidad y pruebas).
+- `docs/mvp_scope.md` (índices críticos de término para salida MVP).
+- `Makefile` (comandos reales disponibles para gates).
 
-## Objetivo de la etapa 1
-Levantar el estado real de salida del paso 12 (pipeline, observabilidad y checklist go-live) y definir brechas concretas con criterios medibles para la etapa 2.
+## Objetivo de la etapa 2
+Diseñar y normalizar el pipeline local del paso 12 con contrato explícito de gates, criterios de bloqueo y formato reproducible de evidencia.
 
-## Diagnóstico baseline (estado actual)
+## Implementación realizada
 
-### 1) Pipeline de validación
-- **Gates definidos en repositorio:**
-  - `make test` (suite unitaria + API integrada),
-  - `make bootstrap-validate` (valida reporte de bootstrap),
-  - capacidades de smoke sobre compose (`make compose-smoke`) sujetas a Docker.
-- **Resultado de evidencia ejecutada:**
-  - `make test` ❌ con 1 falla (`tests/api/test_billing.py::test_billing_refresh_status_endpoint`) por mismatch de estado esperado `processing` vs recibido `accepted`.
-  - `make bootstrap-validate` ✅ (reporte válido y dentro de contrato).
-  - `make doctor-docker` ❌ por ausencia de Docker/Compose en el entorno actual.
+### 1) Contrato de pipeline de release
+- Se creó `docs/release_pipeline_contract.md` como documento normativo del paso 12.
+- Se definieron **4 gates oficiales** con orden, comando y severidad:
+  1. `make test`.
+  2. `make bootstrap-validate`.
+  3. `make smoke-test-state`.
+  4. `make doctor-docker` + `make compose-smoke` (en entorno con Docker).
+- Se estableció regla de decisión `GO / NO-GO / PENDIENTE_ENTORNO` para separar fallas funcionales de limitaciones de infraestructura.
 
-### 2) Observabilidad mínima exigida por el paso 12
-- **Latencia API:** parcial; existe endpoint de health/ready para smoke, pero no hay baseline documentado de p95 para salida MVP.
-- **Salud de cola worker:** parcial; hay procesos de worker y colas en arquitectura, pero falta umbral operativo consolidado de backlog para gate de release.
-- **Error rate boletas/pagos:** parcial; hay pruebas de billing/pagos, pero no existe consolidado único con SLI/umbral y criterio de bloqueo de release.
+### 2) Contrato de evidencias reproducibles
+- Se incorporó formato mínimo de evidencia por corrida (timestamp UTC, SHA, estado por gate, notas y decisión final).
+- Se añadió plantilla YAML para estandarizar reportes de ejecución en etapas posteriores.
 
-### 3) Checklist de salida go-live
-- **Estado:** no existe aún `docs/release_checklist.md` como gate ejecutable del paso 12.
-- **Brecha clave:** falta clasificación formal de riesgos críticos/no críticos con criterio de bloquear/no bloquear release.
+### 3) Baseline ejecutado para validar el contrato
+- `make test` continúa en rojo por una falla conocida de billing.
+- `make bootstrap-validate` pasa correctamente.
+- `make smoke-test-state` pasa correctamente.
+- `make doctor-docker` confirma limitación de entorno actual (Docker no disponible).
 
-## Criterios de aceptación medibles definidos para paso 12 (baseline)
-1. **Índice de salud de pipeline local:**
-   - Meta: 100% de gates definidos para release en estado pass (sin fallas críticas abiertas).
-2. **Índice de SLO técnico mínimo:**
-   - Meta: 100% de métricas mínimas con target + threshold + owner (`latencia API`, `cola worker`, `error rate boletas/pagos`).
-3. **Índice de preparación go-live:**
-   - Meta: 100% de ítems críticos cerrados en checklist de salida y plan de rollback documentado.
+## Resultado de la etapa 2
 
-## Matriz de brechas priorizadas para etapa 2
-1. **Pipeline no verde** → corregir/aislar falla de billing y formalizar contrato de gates de release.
-2. **Observabilidad sin umbrales operativos** → definir SLI/SLO y semáforo de decisión.
-3. **Checklist de salida inexistente** → crear documento ejecutable con riesgos y ownership.
-4. **Dependencia de Docker en entorno actual** → declarar limitación y separar evidencia local vs evidencia en entorno con Docker.
+### Estado de gates del contrato
+- **Gate 1 — Unit + integración API (`make test`):** ❌ fail.
+- **Gate 2 — Bootstrap report (`make bootstrap-validate`):** ✅ pass.
+- **Gate 3 — Smoke estado QA (`make smoke-test-state`):** ✅ pass.
+- **Gate 4 — Docker health + compose smoke:** ⚠️ pendiente por entorno (`doctor-docker` falla por ausencia de Docker).
 
-## Avance del paso 12 tras etapa 1
-- **Salud de pipeline:** 35% (gates existentes, pero con falla crítica activa y limitación Docker en este entorno).
-- **SLO técnico mínimo:** 20% (métricas identificadas, sin objetivos/umbrales consolidados).
-- **Preparación go-live:** 10% (sin checklist final ni rollback formal en documento del paso 12).
-- **Cumplimiento estimado total del paso:** **24%**.
+### Decisión operativa actual (según contrato)
+- **Estado release:** **NO-GO** (existe gate bloqueante rojo en `make test`).
+- **Observación adicional:** aunque se corrija ese gate, queda validación Docker pendiente para cerrar salida integral.
+
+## Backlog priorizado para etapa 3
+1. Corregir o aislar la falla de billing para llevar `make test` a verde.
+2. Avanzar instrumentación mínima de observabilidad (latencia API, cola worker, error rate boletas/pagos).
+3. Preparar ejecución de `compose-smoke` en entorno con Docker para completar evidencia de infraestructura.
+
+## Avance del paso 12 tras etapa 2
+- **Salud de pipeline:** 48% (contrato formalizado y 2/4 gates en verde; 1 rojo crítico y 1 pendiente de entorno).
+- **SLO técnico mínimo:** 24% (aún sin umbrales/owners formalizados).
+- **Preparación go-live:** 14% (sin checklist final ni rollback del paso 12).
+- **Cumplimiento estimado total del paso:** **32%**.
 - **Semáforo:** 🟠 Ámbar.
 
-## Evidencia de ejecución (etapa 1)
+## Evidencia de ejecución (etapa 2)
 - `make test`.
 - `make bootstrap-validate`.
+- `make smoke-test-state`.
 - `make doctor-docker`.
 
 ---
 
-**Cierre de etapa 1:** completado.
-**Solicitud de control:** indícame si autorizas avanzar con la **Etapa 2 (contrato de pipeline local y evidencias de release)**.
+**Cierre de etapa 2:** completado.
+**Solicitud de control:** indícame si autorizas avanzar con la **Etapa 3 (instrumentación mínima de observabilidad)**.
