@@ -29,6 +29,10 @@ class AlertNotificationService:
         with self._lock:
             return [NotificationAttempt(**vars(item)) for item in self._by_id.values()]
 
+    def list_attempt_statuses(self) -> list[tuple[str, str]]:
+        with self._lock:
+            return [(item.event_id, item.status) for item in self._by_id.values()]
+
     def dispatch_event(self, *, event: AlarmEvent, channels: tuple[str, ...] = ("in_app", "email")) -> list[NotificationAttempt]:
         attempts: list[NotificationAttempt] = []
         now = datetime.utcnow().replace(microsecond=0).isoformat() + "Z"

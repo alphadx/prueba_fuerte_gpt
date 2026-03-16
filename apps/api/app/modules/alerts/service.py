@@ -45,6 +45,19 @@ class AlertEvaluationResult:
     run: AlertEvaluationRun
 
 
+@dataclass
+class AlertsSummary:
+    total_events: int
+    pending_events: int
+    sent_events: int
+    partially_failed_events: int
+    failed_events: int
+    total_notification_attempts: int
+    sent_notification_attempts: int
+    failed_notification_attempts: int
+    total_evaluations: int
+
+
 class AlarmEventService:
     def __init__(self) -> None:
         self._by_id: dict[str, AlarmEvent] = {}
@@ -147,6 +160,21 @@ class AlarmEventService:
             self._runs_by_id[run_id] = run
 
         return AlertEvaluationResult(events=created_events, run=AlertEvaluationRun(**vars(run)))
+
+    def summarize(self, *, notification_attempts: list[tuple[str, str]]) -> AlertsSummary:
+        with self._lock:
+            events = list(self._by_id.values())
+            return AlertsSummary(
+                total_events=len(events),
+                pending_events=sum(1 for event in events if event.status == "pending"),
+                sent_events=sum(1 for event in events if event.status == "sent"),
+                partially_failed_events=sum(1 for event in events if event.status == "partially_failed"),
+                failed_events=sum(1 for event in events if event.status == "failed"),
+                total_notification_attempts=len(notification_attempts),
+                sent_notification_attempts=sum(1 for _, status in notification_attempts if status == "sent"),
+                failed_notification_attempts=sum(1 for _, status in notification_attempts if status != "sent"),
+                total_evaluations=len(self._runs_by_id),
+            )
 
     def reset_state(self) -> None:
         with self._lock:

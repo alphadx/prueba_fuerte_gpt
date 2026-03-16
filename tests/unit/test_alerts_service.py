@@ -53,3 +53,23 @@ def test_alerts_service_tracks_expired_and_non_threshold_documents() -> None:
     assert result.run.scanned_documents == 2
     assert result.run.expired_documents == 1
     assert result.run.matched_documents == 0
+
+
+def test_alerts_service_summary_counts() -> None:
+    doc = employee_document_service.create_document(
+        employee_id="emp-001",
+        document_type_code="LIC",
+        issue_on="2025-01-01",
+        expires_on="2025-01-31",
+        status="vigente",
+        metadata={"issuer": "municipalidad"},
+    )
+    result = alarm_event_service.evaluate_documents(documents=[doc], evaluation_date="2025-01-24")
+    event_id = result.events[0].id
+    alarm_event_service.update_notification_status(event_id=event_id, channel="in_app", status="sent")
+    alarm_event_service.update_notification_status(event_id=event_id, channel="email", status="failed")
+
+    summary = alarm_event_service.summarize(notification_attempts=[(event_id, "sent"), (event_id, "failed")])
+    assert summary.total_events == 1
+    assert summary.partially_failed_events == 1
+    assert summary.total_notification_attempts == 2

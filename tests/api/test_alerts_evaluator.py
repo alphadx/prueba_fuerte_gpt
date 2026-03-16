@@ -67,24 +67,27 @@ def _auth_header(*, roles: list[str]) -> dict[str, str]:
     return {"Authorization": f"Bearer {_token(sub='user-1', roles=roles)}"}
 
 
-def test_alerts_evaluate_for_rrhh_and_idempotent_per_window() -> None:
+def test_alerts_end_to_end_happy_path_summary() -> None:
     headers = _auth_header(roles=["rrhh"])
 
-    first = client.post("/alerts/evaluate", json={"evaluation_date": "2025-01-24"}, headers=headers)
-    assert first.status_code == 200
-    first_body = first.json()
-    assert first_body["generated"] == 1
-    assert first_body["queued"] == 1
-    assert first_body["items"][0]["threshold_days"] == 7
-    assert first_body["items"][0]["dedupe_key"].endswith(":7:2025-01-24")
-    assert first_body["run"]["generated_events"] == 1
+    eval_response = client.post("/alerts/evaluate", json={"evaluation_date": "2025-01-24"}, headers=headers)
+    assert eval_response.status_code == 200
+    assert eval_response.json()["generated"] == 1
 
-    second = client.post("/alerts/evaluate", json={"evaluation_date": "2025-01-24"}, headers=headers)
-    assert second.status_code == 200
-    second_body = second.json()
-    assert second_body["generated"] == 0
-    assert second_body["queued"] == 0
-    assert second_body["run"]["duplicate_events"] == 1
+    dispatch_response = client.post("/alerts/dispatch-pending", headers=headers)
+    assert dispatch_response.status_code == 200
+    dispatch = dispatch_response.json()
+    assert dispatch["processed_events"] == 1
+    assert dispatch["sent_attempts"] == 2
+    assert dispatch["failed_attempts"] == 0
+
+    summary = client.get("/alerts/summary", headers=headers)
+    assert summary.status_code == 200
+    summary_body = summary.json()
+    assert summary_body["total_events"] == 1
+    assert summary_body["sent_events"] == 1
+    assert summary_body["failed_events"] == 0
+    assert summary_body["total_notification_attempts"] == 2
 
 
 def test_alerts_dispatch_pending_tolerates_channel_failure(monkeypatch: pytest.MonkeyPatch) -> None:

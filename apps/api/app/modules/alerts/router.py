@@ -13,6 +13,7 @@ from app.modules.alerts.schemas import (
     AlarmEventResponse,
     AlertEvaluationRunListResponse,
     AlertEvaluationRunResponse,
+    AlertsSummaryResponse,
     DispatchPendingNotificationsResponse,
     EvaluateAlertsRequest,
     EvaluateAlertsResponse,
@@ -168,3 +169,19 @@ def list_evaluation_runs(_: AuthContext = Depends(require_roles("admin", "rrhh")
 def list_notification_attempts(_: AuthContext = Depends(require_roles("admin", "rrhh"))) -> NotificationAttemptListResponse:
     attempts = alert_notification_service.list_attempts()
     return NotificationAttemptListResponse(items=[_to_attempt_response(item) for item in attempts])
+
+
+@router.get("/summary", response_model=AlertsSummaryResponse)
+def get_alerts_summary(_: AuthContext = Depends(require_roles("admin", "rrhh"))) -> AlertsSummaryResponse:
+    summary = alarm_event_service.summarize(notification_attempts=alert_notification_service.list_attempt_statuses())
+    return AlertsSummaryResponse(
+        total_events=summary.total_events,
+        pending_events=summary.pending_events,
+        sent_events=summary.sent_events,
+        partially_failed_events=summary.partially_failed_events,
+        failed_events=summary.failed_events,
+        total_notification_attempts=summary.total_notification_attempts,
+        sent_notification_attempts=summary.sent_notification_attempts,
+        failed_notification_attempts=summary.failed_notification_attempts,
+        total_evaluations=summary.total_evaluations,
+    )

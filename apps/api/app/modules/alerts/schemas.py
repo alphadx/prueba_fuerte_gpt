@@ -67,3 +67,15 @@ class AlarmEventListResponse(BaseModel):
 
 class AlertEvaluationRunListResponse(BaseModel):
     items: list[AlertEvaluationRunResponse]
+
+
+class AlertsSummaryResponse(BaseModel):
+    total_events: int
+    pending_events: int
+    sent_events: int
+    partially_failed_events: int
+    failed_events: int
+    total_notification_attempts: int
+    sent_notification_attempts: int
+    failed_notification_attempts: int
+    total_evaluations: int
