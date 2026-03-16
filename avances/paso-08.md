@@ -14,8 +14,8 @@
 7. **Hardening final**: conciliación básica multi-medio, auditoría y checklist de salida.
 
 ## Estado actual del prototipo
-- **Etapa en ejecución:** **Etapa 5 de 7 (completada)**.
-- **Cumplimiento estimado del paso 8:** **75%** (5/7 con webhook unificado, firma e idempotencia).
+- **Etapa en ejecución:** **Etapa 6 de 7 (completada)**.
+- **Cumplimiento estimado del paso 8:** **90%** (6/7 con feature flags y pruebas integrales cerradas).
 - **Semáforo:** 🟡 Amarillo (en progreso, base de diseño lista).
 
 ## Checklist de control por etapa
@@ -24,7 +24,7 @@
 - [x] Etapa 3 — adaptador `cash` y conciliación de caja.
 - [x] Etapa 4 — stubs `transbank_stub` y `mercadopago_stub`.
 - [x] Etapa 5 — webhook unificado idempotente.
-- [ ] Etapa 6 — feature flags + pruebas integrales.
+- [x] Etapa 6 — feature flags + pruebas integrales.
 - [ ] Etapa 7 — hardening documental y cierre.
 
 ---
@@ -160,4 +160,25 @@ Se usó la skill local `payment-gateway-idempotency` y sus referencias:
 - Callbacks fuera de orden: mitigado con transiciones monotónicas de estado.
 - Inyección de callbacks inválidos: mitigada por validación de firma por provider.
 
-**Solicitud de avance:** si estás de acuerdo, indícame **"avanzar etapa 6"** y continúo con feature flags por sucursal/canal + pruebas integrales.
+## Evidencia Etapa 6 — Feature flags por sucursal/canal + pruebas integrales
+
+### Implementación realizada
+- Se añadió control de feature flags por (`branch_id`, `channel`, `method`) en `PaymentService`, con `set_method_flag`, `list_method_flags` y validación de habilitación antes de crear pagos.
+- Se incorporaron endpoints de administración/consulta de flags:
+  - `PUT /payments/flags` (upsert de habilitación por sucursal/canal/medio).
+  - `GET /payments/flags` (listado de configuración activa).
+- Los flujos `cash` y `stubs` ahora respetan flag y responden `403` cuando el medio está deshabilitado para esa combinación.
+- Se ejecutó batería integral de escenarios: happy path, duplicados por `idempotency_key`, rechazo forzado y timeout forzado en stubs.
+
+### Criterios de aceptación de Etapa 6 (cumplidos)
+- [x] Feature flags operativos por sucursal/canal/medio de pago.
+- [x] Bloqueo efectivo de medios deshabilitados con error de autorización funcional (`403`).
+- [x] Pruebas integrales de escenarios críticos (`happy`, `duplicado`, `rechazo`, `timeout`).
+- [x] Cobertura API y unidad para reglas de activación y flujo de stubs.
+
+### Riesgos controlados en esta etapa
+- Activación accidental de medios en sucursal no preparada: mitigado con flags explícitos.
+- Drift de configuración entre canales: mitigado por clave compuesta (`branch+channel+method`).
+- Reprocesos operativos por duplicidad/reintentos: cubierto por pruebas de duplicados e idempotencia existente.
+
+**Solicitud de avance:** si estás de acuerdo, indícame **"avanzar etapa 7"** y continúo con hardening final, auditoría y checklist de salida.

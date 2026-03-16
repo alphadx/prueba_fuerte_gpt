@@ -46,6 +46,25 @@ class PaymentWebhookResponse(BaseModel):
     current_status: str | None
 
 
+
+
+class PaymentMethodFlagUpsertRequest(BaseModel):
+    branch_id: str = Field(min_length=1)
+    channel: str = Field(min_length=1)
+    method: str = Field(min_length=1)
+    enabled: bool
+
+
+class PaymentMethodFlagResponse(BaseModel):
+    branch_id: str
+    channel: str
+    method: str
+    enabled: bool
+
+
+class PaymentMethodFlagListResponse(BaseModel):
+    items: list[PaymentMethodFlagResponse]
+
 class PaymentUpdateRequest(BaseModel):
     status: str | None = Field(default=None, min_length=1)
 

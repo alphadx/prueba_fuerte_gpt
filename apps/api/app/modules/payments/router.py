@@ -12,6 +12,9 @@ from app.modules.payments.schemas import (
     CashReconciliationResponse,
     PaymentCreateRequest,
     PaymentListResponse,
+    PaymentMethodFlagListResponse,
+    PaymentMethodFlagResponse,
+    PaymentMethodFlagUpsertRequest,
     PaymentResponse,
     PaymentUpdateRequest,
     PaymentWebhookRequest,
@@ -41,6 +44,50 @@ def list_payments(_: AuthContext = Depends(require_roles("admin", "cajero"))) ->
 
 
 
+
+
+@router.get("/flags", response_model=PaymentMethodFlagListResponse)
+def list_payment_flags(auth: AuthContext = Depends(require_roles("admin", "cajero"))) -> PaymentMethodFlagListResponse:
+    flags = payment_service.list_method_flags()
+    record_audit_event(actor_id=auth.subject, action="payments.flags.list", entity="payments", metadata={"count": len(flags)})
+    return PaymentMethodFlagListResponse(
+        items=[
+            PaymentMethodFlagResponse(
+                branch_id=item.branch_id,
+                channel=item.channel,
+                method=item.method,
+                enabled=item.enabled,
+            )
+            for item in flags
+        ]
+    )
+
+
+@router.put("/flags", response_model=PaymentMethodFlagResponse)
+def upsert_payment_flag(
+    payload: PaymentMethodFlagUpsertRequest,
+    auth: AuthContext = Depends(require_roles("admin")),
+) -> PaymentMethodFlagResponse:
+    flag = payment_service.set_method_flag(
+        branch_id=payload.branch_id,
+        channel=payload.channel,
+        method=payload.method,
+        enabled=payload.enabled,
+    )
+    record_audit_event(
+        actor_id=auth.subject,
+        action="payments.flags.upsert",
+        entity=f"{flag.branch_id}:{flag.channel}:{flag.method}",
+        metadata={"enabled": flag.enabled},
+    )
+    return PaymentMethodFlagResponse(
+        branch_id=flag.branch_id,
+        channel=flag.channel,
+        method=flag.method,
+        enabled=flag.enabled,
+    )
+
+
 @router.post("/cash", response_model=PaymentResponse, status_code=status.HTTP_201_CREATED)
 def create_cash_payment(
     payload: CashPaymentCreateRequest,
@@ -57,7 +104,10 @@ def create_cash_payment(
             currency=payload.currency,
         )
     except ValueError as exc:
-        raise HTTPException(status_code=409, detail=str(exc)) from exc
+        message = str(exc)
+        if message == "payment method disabled for branch/channel":
+            raise HTTPException(status_code=403, detail=message) from exc
+        raise HTTPException(status_code=409, detail=message) from exc
 
     record_audit_event(
         actor_id=auth.subject,
@@ -106,6 +156,8 @@ def create_stub_payment(
         message = str(exc)
         if message == "unsupported provider":
             raise HTTPException(status_code=400, detail=message) from exc
+        if message == "payment method disabled for branch/channel":
+            raise HTTPException(status_code=403, detail=message) from exc
         raise HTTPException(status_code=409, detail=message) from exc
 
     record_audit_event(

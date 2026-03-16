@@ -249,3 +249,125 @@ def test_webhook_endpoint_idempotent_and_signature_checked() -> None:
         headers=headers,
     )
     assert invalid_signature.status_code == 401
+
+
+def test_payment_flags_by_branch_channel_block_and_allow() -> None:
+    admin = _auth_header(roles=["admin"])
+    cajero = _auth_header(roles=["cajero"])
+
+    set_flag = client.put(
+        "/payments/flags",
+        json={"branch_id": "branch-777", "channel": "web", "method": "transbank_stub", "enabled": False},
+        headers=admin,
+    )
+    assert set_flag.status_code == 200
+    assert set_flag.json()["enabled"] is False
+
+    blocked = client.post(
+        "/payments/stubs/transbank_stub",
+        json={
+            "sale_id": "sale-flag-1",
+            "company_id": "comp-001",
+            "branch_id": "branch-777",
+            "channel": "web",
+            "amount": 18000,
+            "currency": "CLP",
+            "idempotency_key": "idem-flag-1",
+            "metadata": {},
+        },
+        headers=cajero,
+    )
+    assert blocked.status_code == 403
+
+    enable_flag = client.put(
+        "/payments/flags",
+        json={"branch_id": "branch-777", "channel": "web", "method": "transbank_stub", "enabled": True},
+        headers=admin,
+    )
+    assert enable_flag.status_code == 200
+
+    allowed = client.post(
+        "/payments/stubs/transbank_stub",
+        json={
+            "sale_id": "sale-flag-2",
+            "company_id": "comp-001",
+            "branch_id": "branch-777",
+            "channel": "web",
+            "amount": 18000,
+            "currency": "CLP",
+            "idempotency_key": "idem-flag-2",
+            "metadata": {},
+        },
+        headers=cajero,
+    )
+    assert allowed.status_code == 201
+
+
+def test_stub_integral_reject_timeout_and_duplicate_idempotency() -> None:
+    headers = _auth_header(roles=["cajero"])
+
+    rejected = client.post(
+        "/payments/stubs/transbank_stub",
+        json={
+            "sale_id": "sale-reject-1",
+            "company_id": "comp-001",
+            "branch_id": "branch-001",
+            "channel": "web",
+            "amount": 12000,
+            "currency": "CLP",
+            "idempotency_key": "idem-reject-1",
+            "metadata": {"force_reject": "true"},
+        },
+        headers=headers,
+    )
+    assert rejected.status_code == 201
+    assert rejected.json()["status"] == "rejected"
+
+    timeout = client.post(
+        "/payments/stubs/mercadopago_stub",
+        json={
+            "sale_id": "sale-timeout-1",
+            "company_id": "comp-001",
+            "branch_id": "branch-001",
+            "channel": "web",
+            "amount": 12000,
+            "currency": "CLP",
+            "idempotency_key": "idem-timeout-1",
+            "metadata": {"force_timeout": "true"},
+        },
+        headers=headers,
+    )
+    assert timeout.status_code == 201
+    assert timeout.json()["status"] == "rejected"
+
+    first = client.post(
+        "/payments/stubs/transbank_stub",
+        json={
+            "sale_id": "sale-dup-1",
+            "company_id": "comp-001",
+            "branch_id": "branch-001",
+            "channel": "web",
+            "amount": 12000,
+            "currency": "CLP",
+            "idempotency_key": "idem-dup-1",
+            "metadata": {},
+        },
+        headers=headers,
+    )
+    assert first.status_code == 201
+
+    duplicate = client.post(
+        "/payments/stubs/transbank_stub",
+        json={
+            "sale_id": "sale-dup-1",
+            "company_id": "comp-001",
+            "branch_id": "branch-001",
+            "channel": "web",
+            "amount": 12000,
+            "currency": "CLP",
+            "idempotency_key": "idem-dup-1",
+            "metadata": {},
+        },
+        headers=headers,
+    )
+    assert duplicate.status_code == 409

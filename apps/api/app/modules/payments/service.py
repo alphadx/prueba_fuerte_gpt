@@ -26,6 +26,14 @@ class Payment:
 
 
 @dataclass
+class PaymentMethodFlag:
+    branch_id: str
+    channel: str
+    method: str
+    enabled: bool
+
+
+@dataclass
 class WebhookProcessResult:
     provider: str
     event_id: str
@@ -41,11 +49,33 @@ class PaymentService:
         self._ids_by_idempotency_key: dict[str, str] = {}
         self._ids_by_provider_payment_id: dict[str, str] = {}
         self._processed_webhook_events: set[str] = set()
+        self._feature_flags: dict[tuple[str, str, str], bool] = {}
         self._seq = 0
         self._lock = RLock()
 
     def _all_gateways(self):
         return {"cash": cash_payment_gateway, **gateway_registry}
+
+
+
+    def set_method_flag(self, *, branch_id: str, channel: str, method: str, enabled: bool) -> PaymentMethodFlag:
+        with self._lock:
+            key = (branch_id, channel, method)
+            self._feature_flags[key] = enabled
+            return PaymentMethodFlag(branch_id=branch_id, channel=channel, method=method, enabled=enabled)
+
+    def list_method_flags(self) -> list[PaymentMethodFlag]:
+        with self._lock:
+            return [
+                PaymentMethodFlag(branch_id=k[0], channel=k[1], method=k[2], enabled=v)
+                for k, v in sorted(self._feature_flags.items())
+            ]
+
+    def _ensure_method_enabled(self, *, branch_id: str, channel: str, method: str) -> None:
+        key = (branch_id, channel, method)
+        enabled = self._feature_flags.get(key, True)
+        if not enabled:
+            raise ValueError("payment method disabled for branch/channel")
 
     def list_payments(self) -> list[Payment]:
         with self._lock:
@@ -104,6 +134,7 @@ class PaymentService:
         with self._lock:
             if idempotency_key in self._ids_by_idempotency_key:
                 raise ValueError("idempotency key already exists")
+            self._ensure_method_enabled(branch_id=branch_id, channel=channel, method="cash")
 
             intent = PaymentIntent(
                 idempotency_key=idempotency_key,
@@ -157,6 +188,7 @@ class PaymentService:
                 raise ValueError("unsupported provider")
             if idempotency_key in self._ids_by_idempotency_key:
                 raise ValueError("idempotency key already exists")
+            self._ensure_method_enabled(branch_id=branch_id, channel=channel, method=provider)
 
             intent = PaymentIntent(
                 idempotency_key=idempotency_key,
@@ -302,6 +334,7 @@ class PaymentService:
             self._ids_by_idempotency_key.clear()
             self._ids_by_provider_payment_id.clear()
             self._processed_webhook_events.clear()
+            self._feature_flags.clear()
             self._seq = 0
 
 
