@@ -14,8 +14,8 @@
 7. **Hardening final**: conciliación básica multi-medio, auditoría y checklist de salida.
 
 ## Estado actual del prototipo
-- **Etapa en ejecución:** **Etapa 6 de 7 (completada)**.
-- **Cumplimiento estimado del paso 8:** **90%** (6/7 con feature flags y pruebas integrales cerradas).
+- **Etapa en ejecución:** **Etapa 7 de 7 (completada)**.
+- **Cumplimiento estimado del paso 8:** **100%** (7/7 con hardening final y checklist de cierre).
 - **Semáforo:** 🟡 Amarillo (en progreso, base de diseño lista).
 
 ## Checklist de control por etapa
@@ -25,7 +25,7 @@
 - [x] Etapa 4 — stubs `transbank_stub` y `mercadopago_stub`.
 - [x] Etapa 5 — webhook unificado idempotente.
 - [x] Etapa 6 — feature flags + pruebas integrales.
-- [ ] Etapa 7 — hardening documental y cierre.
+- [x] Etapa 7 — hardening documental y cierre.
 
 ---
 
@@ -181,4 +181,21 @@ Se usó la skill local `payment-gateway-idempotency` y sus referencias:
 - Drift de configuración entre canales: mitigado por clave compuesta (`branch+channel+method`).
 - Reprocesos operativos por duplicidad/reintentos: cubierto por pruebas de duplicados e idempotencia existente.
 
-**Solicitud de avance:** si estás de acuerdo, indícame **"avanzar etapa 7"** y continúo con hardening final, auditoría y checklist de salida.
+## Evidencia Etapa 7 — Hardening final, auditoría y checklist de salida
+
+### Implementación realizada
+- Se consolidó checklist de cierre en `docs/paso8_hardening_checklist.md` con controles de contrato canónico, drivers MVP, webhook idempotente, flags por sucursal/canal y conciliación básica.
+- Se validó que la superficie crítica de pagos mantiene trazabilidad auditada en creación de pagos, administración de flags, webhooks y conciliación.
+- Se cerró el paso con batería de pruebas integrales del módulo de pagos (unidad + API) incluyendo escenarios de duplicados, rechazos, timeout y firma inválida.
+
+### Criterios de aceptación de Etapa 7 (cumplidos)
+- [x] Checklist formal de hardening y salida documentado.
+- [x] Controles de confiabilidad y trazabilidad verificados en flujos críticos.
+- [x] Evidencia de pruebas integrales registrada para cierre del paso.
+- [x] Cierre formal del prototipo de paso 8 en 7/7 etapas.
+
+### Estado de cierre del paso 8
+- **Estado:** 🟢 Terminado (prototipo iterativo completado).
+- **Cobertura funcional MVP del paso:** contrato + adaptadores + webhook + flags + conciliación básica.
+- **Observación:** para evolución productiva se recomienda persistencia durable de eventos y métricas operativas por proveedor/canal.
+

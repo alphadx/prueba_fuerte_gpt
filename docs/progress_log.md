@@ -130,3 +130,13 @@ Cada avance debe añadir:
 **Evolución etapa 7 (hardening y cierre):**
 - Se cerró checklist de salida de paso en `docs/paso7_hardening_checklist.md`.
 - Paso 7 marcado como completado a nivel prototipo (7/7).
+
+
+### 🟢 Paso 8 — Integrar capa de pagos por adaptadores
+
+**Estado:** completado como prototipo iterativo de 7 etapas (7/7).
+
+**Cierre etapa 7 (hardening):**
+- Se cerró checklist de salida en `docs/paso8_hardening_checklist.md`.
+- Se consolidaron controles de webhook idempotente, feature flags por sucursal/canal y conciliación básica.
+- Se completó evidencia de pruebas unitarias + API para escenarios críticos.
