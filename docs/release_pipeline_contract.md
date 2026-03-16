@@ -68,3 +68,8 @@ release_validation:
 2. Clasificar riesgos críticos/no críticos con due date y owner.
 3. Adjuntar evidencia de validación contra umbrales en la corrida integral.
 
+## Resultado etapa 5 (checklist go-live)
+- Checklist oficial: `docs/release_go_live_checklist.md`.
+- La corrida final de release debe incluir estado por check (`PASS|FAIL|PENDIENTE_ENTORNO`) y riesgos críticos abiertos.
+- No se permite declarar **GO** con riesgos críticos abiertos ni checks bloqueantes en estado `FAIL`.
+
