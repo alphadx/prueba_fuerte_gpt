@@ -75,3 +75,29 @@ rollback_execution:
     api_health: "ok|degraded"
   final_decision: "NO-GO|PENDIENTE_ENTORNO|GO"
 ```
+
+
+## Comandos operativos de contingencia
+
+### Contención rápida (sin rollback de código)
+1. Congelar release (no promover nuevas versiones).
+2. Ejecutar diagnóstico base:
+   - `make test`
+   - `make bootstrap-validate`
+   - `make smoke-test-state`
+3. Si hay degradación de pagos, desactivar método afectado por flag:
+   - `PUT /payments/flags` con `enabled=false` para `branch/channel/method` impactado.
+4. Si hay degradación de billing, pausar procesamiento automático y reintentar lote controlado:
+   - `POST /billing/worker/process` con límite acotado.
+
+### Rollback de release (código/config)
+1. Seleccionar SHA estable previo validado.
+2. Ejecutar rollback de versión (git revert o deploy del SHA estable según entorno).
+3. Revalidar gates bloqueantes y SLI críticos.
+4. Registrar evidencia usando la plantilla YAML de este documento.
+
+
+## Criterio de salida post-contingencia
+- **NO-GO**: persiste cualquier check bloqueante en `FAIL` o SLO crítico fuera de umbral.
+- **PENDIENTE_ENTORNO**: no hay fallas funcionales críticas, pero falta evidencia de infraestructura (Docker/Compose).
+- **GO**: sólo si la revalidación completa queda en verde, sin riesgos críticos abiertos y con evidencia versionada.

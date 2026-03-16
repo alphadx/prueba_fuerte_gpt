@@ -78,6 +78,7 @@ release_validation:
 - Estrategia oficial: `docs/release_rollback_contingency.md`.
 - Si se activa cualquier criterio `ABORT_RELEASE`, la corrida se cierra como **NO-GO** y se ejecuta rollback controlado.
 - Toda reversión debe adjuntar evidencia mínima de ejecución y validación post-rollback.
+- Tras cualquier rollback, la decisión final debe reevaluarse con criterios de salida post-contingencia (`NO-GO|PENDIENTE_ENTORNO|GO`) definidos en `docs/release_rollback_contingency.md`.
 
 ## Acciones obligatorias para etapa 7
 1. Ejecutar corrida integral final con consolidación de evidencias (gates + SLO + checklist).

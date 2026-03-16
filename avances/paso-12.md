@@ -2,14 +2,14 @@
 
 ## Estado de iteración
 - **Iteración actual:** Etapa 6 de 8 — estrategia de rollback y contingencia operativa.
-- **Estado:** ✅ Completada.
+- **Estado:** ✅ Completada (ajustada tras revisión).
 - **Regla de control aplicada:** etapa cerrada; se requiere autorización del usuario para iniciar etapa 7.
 
 ## Referencias documentales consideradas
 - `plan.md` (definición de etapa 6 del paso 12).
 - `docs/release_pipeline_contract.md` (gates, reglas GO/NO-GO y extensiones operativas).
 - `docs/release_go_live_checklist.md` (checklist ejecutable de salida).
-- `docs/release_rollback_contingency.md` (nuevo artefacto de rollback/contingencia).
+- `docs/release_rollback_contingency.md` (artefacto de rollback/contingencia).
 
 ## Objetivo de la etapa 6
 Definir estrategia operativa de rollback y contingencia con criterios explícitos para abortar release y validar recuperación controlada.
@@ -17,23 +17,25 @@ Definir estrategia operativa de rollback y contingencia con criterios explícito
 ## Implementación realizada
 
 ### 1) Estrategia formal de rollback y contingencia
-Se creó `docs/release_rollback_contingency.md` con:
+`docs/release_rollback_contingency.md` incluye:
 - criterios de activación `ABORT_RELEASE`,
 - matriz de contingencia por escenario (API, billing, pagos, infra, evidencia),
 - runbook de rollback en 5 pasos,
 - plantilla YAML de evidencia mínima post-rollback.
 
-### 2) Endurecimiento del contrato de release
-Se extendió `docs/release_pipeline_contract.md` para incluir:
-- referencia obligatoria a estrategia de rollback,
-- regla explícita de cierre `NO-GO` al activar `ABORT_RELEASE`,
-- backlog de etapa 7 para corrida integral final y consolidación de evidencias.
+### 2) Ajuste de ejecutabilidad (esta revisión)
+Se reforzó el runbook con comandos operativos concretos para contención rápida y rollback de release:
+- diagnóstico base con `make test`, `make bootstrap-validate`, `make smoke-test-state`,
+- mitigación por dominio (flags de pagos y proceso acotado de billing),
+- criterio de salida post-contingencia (`NO-GO | PENDIENTE_ENTORNO | GO`).
 
-### 3) Integración con checklist de go-live
-Se actualizó `docs/release_go_live_checklist.md` para enlazar la evaluación de checks con activación de rollback cuando falle un check bloqueante.
+### 3) Endurecimiento del contrato de release
+`docs/release_pipeline_contract.md` quedó alineado para:
+- exigir reevaluación de decisión final tras rollback,
+- usar criterios post-contingencia antes de cualquier declaración de salida.
 
 ## Resultado de la etapa 6
-- **Cobertura funcional:** existe política explícita para abortar/revertir release con trazabilidad.
+- **Cobertura funcional:** política explícita para abortar/revertir release con trazabilidad y pasos ejecutables.
 - **Estado release:** **NO-GO** hasta completar corrida integral de etapa 7 y evidencia en entorno Docker.
 - **Semáforo del paso:** 🟠 Ámbar con mejora en resiliencia operativa.
 
@@ -45,9 +47,9 @@ Se actualizó `docs/release_go_live_checklist.md` para enlazar la evaluación de
 
 ## Avance del paso 12 tras etapa 6
 - **Salud de pipeline:** 68%.
-- **SLO técnico mínimo:** 68%.
-- **Preparación go-live:** 66%.
-- **Cumplimiento estimado total del paso:** **64%**.
+- **SLO técnico mínimo:** 70%.
+- **Preparación go-live:** 68%.
+- **Cumplimiento estimado total del paso:** **66%**.
 - **Semáforo:** 🟠 Ámbar.
 
 ---
