@@ -47,3 +47,9 @@
 - Se agregó estado interno del adaptador para simular transición progresiva `processing -> accepted` y para contabilizar intentos por idempotency key.
 - Se incorporó `reset_state()` en el provider y el `BillingService.reset_state()` ahora reinicia también el estado interno del adaptador cuando está disponible.
 - Pruebas unitarias nuevas del adaptador cubren: fail-first-N, estado progresivo y rechazo explícito.
+
+
+## Refuerzo de cumplimiento SII
+- Se agregó marco documental y referencias técnicas SII en `docs/sii_billing_compliance.md`.
+- Se añadieron comentarios con referencias SII en el adaptador sandbox para trazabilidad de diseño durante el prototipo.
+- Este refuerzo se considera prerequisito de gobernanza antes de iniciar la siguiente etapa (Etapa 4).

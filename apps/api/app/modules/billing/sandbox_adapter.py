@@ -9,6 +9,10 @@ from threading import RLock
 from app.modules.billing.provider import BillingEmissionRequest, BillingEmissionResponse
 
 _ALLOWED_STATUSES = {"accepted", "processing", "rejected"}
+# SII referencia (marco general de facturación electrónica):
+# - https://www.sii.cl/servicios_online/1039-.html
+# - https://www.sii.cl/factura_electronica/form_ele.htm
+# En prototipo usamos estados canónicos simplificados para pruebas.
 
 
 class SandboxBillingProvider:
@@ -66,6 +70,7 @@ class SandboxBillingProvider:
                 return "unknown"
             self._status_queries[track_id] = self._status_queries.get(track_id, 0) + 1
             status_mode = os.getenv("BILLING_SANDBOX_STATUS_MODE", "stable").lower()
+            # Simulación controlada para reconciliación asincrónica: estado intermedio -> aceptado.
             if status_mode == "progressive" and stored == "processing" and self._status_queries[track_id] >= 2:
                 self._status_by_track_id[track_id] = "accepted"
                 return "accepted"
