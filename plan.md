@@ -59,16 +59,16 @@ Sí: **algunas tecnologías deben montarse como servicios** (PostgreSQL, Redis, 
 - Entregable: endpoints CRUD y flujos principales documentados en Swagger.
 
 ## 6) Implementar POS y flujo de caja mínimo operable
-- Flujo POS:
-  - apertura de caja,
-  - creación de venta,
-  - registro de pago en efectivo o electrónico simulado,
-  - cierre de caja y arqueo simple.
-- Al confirmar venta:
-  - descontar stock,
-  - persistir movimiento kardex,
-  - disparar evento para facturación electrónica.
-- Entregable: pruebas de integración del flujo “venta completa”.
+- **Estado actual asumido:** borrador inicial con **cumplimiento estimado 0%** para ejecución minuciosa por etapas.
+- **Estrategia de ejecución:** dividir el paso 6 en **7 etapas secuenciales** con salida verificable por etapa:
+  1. análisis funcional/técnico y criterios de aceptación medibles,
+  2. contratos API POS+caja (requests/responses/errores),
+  3. reglas de caja (apertura/cierre/arqueo) con invariantes,
+  4. reglas de venta y pagos con estados determinísticos,
+  5. consistencia stock/kardex + rollback e idempotencia operativa,
+  6. pruebas automáticas por etapa (unitarias + integración happy/failure),
+  7. hardening final (auditoría, observabilidad mínima y checklist de cierre).
+- **Entregable de planificación:** `avances/paso-06.md` actualizado con análisis, plan de 7 etapas y protocolo de ejecución por orden del usuario.
 
 ## 7) Integrar boleta electrónica vía proveedor (sandbox)
 - Crear adaptador `BillingProvider` desacoplado.
