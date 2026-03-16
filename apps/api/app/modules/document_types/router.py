@@ -25,6 +25,8 @@ def _to_response(document_type: DocumentType) -> DocumentTypeResponse:
         name=document_type.name,
         requires_expiry=document_type.requires_expiry,
         is_active=document_type.is_active,
+        schema_version=document_type.schema_version,
+        metadata_schema=document_type.metadata_schema,
     )
 
 
@@ -44,6 +46,8 @@ def create_document_type(
             name=payload.name,
             requires_expiry=payload.requires_expiry,
             is_active=payload.is_active,
+            schema_version=payload.schema_version,
+            metadata_schema=payload.metadata_schema,
         )
     except ValueError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
@@ -52,7 +56,7 @@ def create_document_type(
         actor_id=auth.subject,
         action="document_types.create",
         entity=created.id,
-        metadata={"code": created.code},
+        metadata={"code": created.code, "schema_version": created.schema_version},
     )
     return _to_response(created)
 
@@ -80,15 +84,19 @@ def update_document_type(
             name=payload.name,
             requires_expiry=payload.requires_expiry,
             is_active=payload.is_active,
+            schema_version=payload.schema_version,
+            metadata_schema=payload.metadata_schema,
         )
     except KeyError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
 
     record_audit_event(
         actor_id=auth.subject,
         action="document_types.update",
         entity=updated.id,
-        metadata={"code": updated.code},
+        metadata={"code": updated.code, "schema_version": updated.schema_version},
     )
     return _to_response(updated)
 

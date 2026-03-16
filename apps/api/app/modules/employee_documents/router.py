@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Response, status
 from app.core.audit import record_audit_event
 from app.core.auth import AuthContext
 from app.core.permissions import require_roles
+from app.modules.document_types.service import DocumentSchemaValidationError, document_type_service
 from app.modules.employee_documents.schemas import (
     EmployeeDocumentCreateRequest,
     EmployeeDocumentListResponse,
@@ -25,6 +26,7 @@ def _to_response(item: EmployeeDocument) -> EmployeeDocumentResponse:
         document_type_code=item.document_type_code,
         expires_on=item.expires_on,
         status=item.status,
+        metadata=item.metadata,
     )
 
 
@@ -39,20 +41,29 @@ def create_document(
     auth: AuthContext = Depends(require_roles("admin", "rrhh")),
 ) -> EmployeeDocumentResponse:
     try:
+        document_type_service.validate_metadata(document_type_code=payload.document_type_code, metadata=payload.metadata)
         created = employee_document_service.create_document(
             employee_id=payload.employee_id,
             document_type_code=payload.document_type_code,
             expires_on=payload.expires_on,
             status=payload.status,
+            metadata=payload.metadata,
         )
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except DocumentSchemaValidationError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
 
     record_audit_event(
         actor_id=auth.subject,
         action="employee_documents.create",
         entity=created.id,
-        metadata={"employee_id": created.employee_id, "document_type_code": created.document_type_code},
+        metadata={
+            "employee_id": created.employee_id,
+            "document_type_code": created.document_type_code,
+        },
     )
     return _to_response(created)
 
@@ -72,13 +83,19 @@ def update_document(
     auth: AuthContext = Depends(require_roles("admin", "rrhh")),
 ) -> EmployeeDocumentResponse:
     try:
+        current = employee_document_service.get_document(document_id)
+        new_metadata = payload.metadata if payload.metadata is not None else current.metadata
+        document_type_service.validate_metadata(document_type_code=current.document_type_code, metadata=new_metadata)
         updated = employee_document_service.update_document(
             document_id,
             expires_on=payload.expires_on,
             status=payload.status,
+            metadata=payload.metadata,
         )
     except KeyError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except DocumentSchemaValidationError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
 
     record_audit_event(
         actor_id=auth.subject,

@@ -1,9 +1,9 @@
 # Paso 10 — Implementar RRHH documental flexible y motor de alertas
 
 ## Estado de iteración
-- **Iteración actual:** Etapa 1 de 7 — análisis funcional/técnico + criterios de aceptación.
+- **Iteración actual:** Etapa 2 de 7 — contrato `DocumentType` con `JSON Schema` versionado y validación en escritura.
 - **Estado:** ✅ Completada.
-- **Regla de control aplicada:** no se inicia etapa 2 sin autorización explícita del usuario.
+- **Regla de control aplicada:** no se inicia etapa 3 sin autorización explícita del usuario.
 
 ## Checklist de indicadores
 - [ ] **Índice de cobertura documental** (meta: 100% fixture).
@@ -85,6 +85,22 @@ Dejar una definición cerrada del problema y de los criterios medibles que gober
    - cuando se revisa su historial,
    - entonces se puede reconstruir regla aplicada, fecha de evaluación, resultado de deduplicación y estado por canal.
 
+
+## Implementación realizada en etapa 2
+
+### Contrato `DocumentType` flexible
+- Se extendió `DocumentType` con `schema_version` y `metadata_schema`.
+- Se agregó validación de estructura de schema al crear/actualizar tipos documentales.
+- Se incorporó control de versionado para impedir decremento de `schema_version`.
+
+### Validación de metadatos en escritura
+- La creación/actualización de `EmployeeDocument` ahora valida `metadata` contra el `metadata_schema` activo del `document_type_code`.
+- Se rechazan payloads inválidos con estado HTTP `422` y detalle trazable de campo.
+
+### Pruebas añadidas
+- Unitarias: validación de schema y validación de metadatos por tipo documental.
+- API: CRUD actualizado para contratos nuevos y rechazo de metadatos inválidos.
+
 ## Riesgos técnicos y mitigaciones iniciales
 - **Riesgo:** deriva de esquemas JSON no versionados.
   - **Mitigación:** versionado explícito por `DocumentType` y uso de schema activo.
@@ -94,15 +110,15 @@ Dejar una definición cerrada del problema y de los criterios medibles que gober
   - **Mitigación:** crear `AlarmEvent` como operación principal y desacoplar envío por adaptadores.
 
 ## Avance de cumplimiento del paso
-- **Cobertura documental:** 10% (análisis y definición cerrada).
-- **Precisión de alertas:** 10% (criterio formalizado, aún sin motor implementado).
-- **Entrega de notificaciones:** 5% (objetivo y estrategia definidos, sin adaptadores activos).
-- **Cumplimiento estimado total del paso 10:** **10%**.
-- **Semáforo:** 🟡 Amarillo (arquitectura y métricas definidas, pendiente implementación).
+- **Cobertura documental:** 30% (contrato flexible implementado y validado).
+- **Precisión de alertas:** 15% (base contractual lista para motor de evaluación).
+- **Entrega de notificaciones:** 5% (sin adaptadores activos).
+- **Cumplimiento estimado total del paso 10:** **25%**.
+- **Semáforo:** 🟡 Amarillo (implementación parcial, faltan motor y notificaciones).
 
-## Próxima etapa propuesta (Etapa 2)
-Implementar contrato de `DocumentType` flexible con `JSON Schema` versionado y validación en escritura, incluyendo pruebas unitarias de aceptación/rechazo de metadatos.
+## Próxima etapa propuesta (Etapa 3)
+Implementar flujo de carga documental (`archivo + metadatos + fechas`) con separación explícita entre almacenamiento de archivo y modelo de cumplimiento.
 
 ---
 
-**Solicitud de control:** etapa 1 finalizada. Indica “avanzar etapa 2” para continuar con la siguiente iteración.
+**Solicitud de control:** etapa 2 finalizada. Indica “avanzar etapa 3” para continuar con la siguiente iteración.

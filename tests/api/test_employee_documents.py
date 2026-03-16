@@ -10,6 +10,7 @@ import json
 from fastapi.testclient import TestClient
 
 from app.main import app
+from app.modules.document_types.service import document_type_service
 from app.modules.employee_documents.service import employee_document_service
 
 
@@ -21,6 +22,22 @@ def _test_setup(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("JWT_HS256_SECRET", "test-secret")
     monkeypatch.delenv("JWT_ALLOW_INSECURE_TOKENS", raising=False)
     employee_document_service.reset_state()
+    document_type_service.reset_state()
+    document_type_service.create_document_type(
+        code="LIC",
+        name="Licencia",
+        requires_expiry=True,
+        is_active=True,
+        schema_version=1,
+        metadata_schema={
+            "type": "object",
+            "properties": {
+                "issuer": {"type": "string"},
+                "region": {"type": "string"},
+            },
+            "required": ["issuer"],
+        },
+    )
 
 
 def _b64url(data: bytes) -> str:
@@ -55,6 +72,7 @@ def test_employee_documents_crud_flow_for_rrhh() -> None:
             "document_type_code": "LIC",
             "expires_on": "2027-12-31",
             "status": "vigente",
+            "metadata": {"issuer": "municipalidad", "region": "RM"},
         },
         headers=rrhh_headers,
     )
@@ -67,7 +85,7 @@ def test_employee_documents_crud_flow_for_rrhh() -> None:
 
     patch_response = client.patch(
         f"/employee-documents/{created['id']}",
-        json={"status": "por_vencer"},
+        json={"status": "por_vencer", "metadata": {"issuer": "seremi", "region": "RM"}},
         headers=rrhh_headers,
     )
     assert patch_response.status_code == 200
@@ -90,6 +108,7 @@ def test_employee_documents_reject_duplicate_key() -> None:
             "document_type_code": "LIC",
             "expires_on": "2027-12-31",
             "status": "vigente",
+            "metadata": {"issuer": "municipalidad"},
         },
         headers=headers,
     )
@@ -102,7 +121,24 @@ def test_employee_documents_reject_duplicate_key() -> None:
             "document_type_code": "LIC",
             "expires_on": "2028-01-01",
             "status": "vigente",
+            "metadata": {"issuer": "municipalidad"},
         },
         headers=headers,
     )
     assert second.status_code == 409
+
+
+def test_employee_documents_reject_invalid_metadata() -> None:
+    headers = _auth_header(roles=["rrhh"])
+    response = client.post(
+        "/employee-documents",
+        json={
+            "employee_id": "emp-002",
+            "document_type_code": "LIC",
+            "expires_on": "2027-12-31",
+            "status": "vigente",
+            "metadata": {"region": "RM"},
+        },
+        headers=headers,
+    )
+    assert response.status_code == 422

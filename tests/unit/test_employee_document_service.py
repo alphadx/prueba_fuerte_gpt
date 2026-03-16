@@ -11,13 +11,21 @@ def test_employee_document_service_create_get_update_delete() -> None:
         document_type_code="LIC",
         expires_on="2027-12-31",
         status="vigente",
+        metadata={"issuer": "municipalidad"},
     )
 
     fetched = employee_document_service.get_document(created.id)
     assert fetched.employee_id == "emp-001"
+    assert fetched.metadata["issuer"] == "municipalidad"
 
-    updated = employee_document_service.update_document(created.id, expires_on=None, status="por_vencer")
+    updated = employee_document_service.update_document(
+        created.id,
+        expires_on=None,
+        status="por_vencer",
+        metadata={"issuer": "seremi"},
+    )
     assert updated.status == "por_vencer"
+    assert updated.metadata["issuer"] == "seremi"
 
     employee_document_service.delete_document(created.id)
 
@@ -34,6 +42,7 @@ def test_employee_document_service_reject_duplicate_key() -> None:
         document_type_code="LIC",
         expires_on="2027-12-31",
         status="vigente",
+        metadata={"issuer": "municipalidad"},
     )
 
     try:
@@ -42,6 +51,7 @@ def test_employee_document_service_reject_duplicate_key() -> None:
             document_type_code="LIC",
             expires_on="2028-01-01",
             status="vigente",
+            metadata={"issuer": "municipalidad"},
         )
         assert False, "expected ValueError"
     except ValueError as exc:

@@ -1,5 +1,7 @@
 """Schemas for employee documents CRUD endpoints."""
 
+from typing import Any
+
 from pydantic import BaseModel, Field
 
 
@@ -8,11 +10,13 @@ class EmployeeDocumentCreateRequest(BaseModel):
     document_type_code: str = Field(min_length=1)
     expires_on: str = Field(min_length=1)
     status: str = Field(min_length=1)
+    metadata: dict[str, Any] = Field(default_factory=dict)
 
 
 class EmployeeDocumentUpdateRequest(BaseModel):
     expires_on: str | None = Field(default=None, min_length=1)
     status: str | None = Field(default=None, min_length=1)
+    metadata: dict[str, Any] | None = None
 
 
 class EmployeeDocumentResponse(BaseModel):
@@ -21,6 +25,7 @@ class EmployeeDocumentResponse(BaseModel):
     document_type_code: str
     expires_on: str
     status: str
+    metadata: dict[str, Any]
 
 
 class EmployeeDocumentListResponse(BaseModel):
