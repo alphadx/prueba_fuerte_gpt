@@ -1,14 +1,17 @@
-"""API router for stage 4 pickup checkout backend."""
+"""API router for stage 5 pickup checkout backend and state machine."""
 
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
 
+from app.core.audit import record_audit_event
 from app.core.auth import AuthContext
 from app.core.permissions import require_roles
 from app.modules.orders.schemas import (
     CatalogProductListResponse,
     CatalogProductResponse,
+    OrderTransitionRequest,
+    OrderTransitionResponse,
     PickupCheckoutConfirmRequest,
     PickupCheckoutConfirmResponse,
     PickupOrderResponse,
@@ -49,7 +52,7 @@ def list_pickup_slots(
 def confirm_pickup_checkout(
     payload: PickupCheckoutConfirmRequest,
     idempotency_key: str = Header(alias="Idempotency-Key", min_length=3),
-    _: AuthContext = Depends(require_roles("admin", "cajero")),
+    auth: AuthContext = Depends(require_roles("admin", "cajero")),
 ) -> PickupCheckoutConfirmResponse:
     try:
         created = pickup_order_service.create_order(
@@ -61,10 +64,22 @@ def confirm_pickup_checkout(
         )
     except ValueError as exc:
         detail = "INSUFFICIENT_STOCK_AT_CONFIRMATION" if "stock" in str(exc) else str(exc)
+        record_audit_event(
+            actor_id=auth.subject,
+            action="orders.checkout.rejected",
+            entity=payload.branch_id,
+            metadata={"reason": detail, "idempotency_key": idempotency_key},
+        )
         raise HTTPException(status_code=409, detail=detail) from exc
     except KeyError as exc:
         raise HTTPException(status_code=404, detail="PRODUCT_NOT_FOUND") from exc
 
+    record_audit_event(
+        actor_id=auth.subject,
+        action="orders.checkout.confirm",
+        entity=created.order_id,
+        metadata={"state": created.state, "branch_id": created.branch_id},
+    )
     return PickupCheckoutConfirmResponse(
         order_id=created.order_id,
         order_state=created.state,
@@ -111,4 +126,61 @@ def get_pickup_order(
             }
             for line in order.lines
         ],
+        transitions=[
+            {
+                "previous_state": event.previous_state,
+                "current_state": event.current_state,
+                "actor": event.actor,
+                "reason": event.reason,
+            }
+            for event in order.transitions
+        ],
+    )
+
+
+@router.post("/orders/{order_id}/transitions", response_model=OrderTransitionResponse)
+def transition_pickup_order(
+    order_id: str,
+    payload: OrderTransitionRequest,
+    auth: AuthContext = Depends(require_roles("admin", "cajero")),
+) -> OrderTransitionResponse:
+    try:
+        current_order = pickup_order_service.get_order(order_id)
+        updated = pickup_order_service.transition_order(
+            order_id=order_id,
+            target_state=payload.target_state,
+            actor=auth.subject,
+            reason=payload.reason,
+        )
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail="ORDER_NOT_FOUND") from exc
+    except ValueError as exc:
+        detail = str(exc)
+        if "invalid" in detail:
+            detail = "INVALID_ORDER_TRANSITION"
+        elif "already" in detail:
+            detail = "ORDER_ALREADY_IN_TARGET_STATE"
+
+        record_audit_event(
+            actor_id=auth.subject,
+            action="orders.transition.rejected",
+            entity=order_id,
+            metadata={"target_state": payload.target_state, "reason": detail},
+        )
+        raise HTTPException(status_code=409, detail=detail) from exc
+
+    record_audit_event(
+        actor_id=auth.subject,
+        action="orders.transition",
+        entity=order_id,
+        metadata={
+            "previous_state": current_order.state,
+            "current_state": updated.state,
+            "reason": payload.reason,
+        },
+    )
+    return OrderTransitionResponse(
+        order_id=updated.order_id,
+        previous_state=current_order.state,
+        current_state=updated.state,
     )

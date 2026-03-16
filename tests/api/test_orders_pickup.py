@@ -53,6 +53,23 @@ def _create_product(*, sku: str, stock: float) -> str:
     return product_id
 
 
+def _create_pickup_order(*, idempotency_key: str = "idem-checkout") -> str:
+    headers = _auth_header(roles=["cajero"])
+    product_id = _create_product(sku=f"SKU-{idempotency_key}", stock=4)
+    response = client.post(
+        "/checkout/pickup/confirm",
+        headers={**headers, "Idempotency-Key": idempotency_key},
+        json={
+            "branch_id": "br-001",
+            "pickup_slot_id": "slot-10-11",
+            "customer": {"name": "Maria", "email": "maria@example.com", "phone": "+56911112222"},
+            "lines": [{"product_id": product_id, "qty": 1}],
+        },
+    )
+    assert response.status_code == 201
+    return response.json()["order_id"]
+
+
 def test_pickup_checkout_requires_authentication() -> None:
     response = client.post(
         "/checkout/pickup/confirm",
@@ -119,6 +136,7 @@ def test_pickup_checkout_confirm_decrements_stock_and_is_idempotent() -> None:
     order = client.get(f"/orders/{first_body['order_id']}", headers=headers)
     assert order.status_code == 200
     assert order.json()["state"] == "recibido"
+    assert order.json()["transitions"] == []
 
 
 def test_pickup_checkout_rejects_when_stock_insufficient_and_rolls_back() -> None:
@@ -139,3 +157,57 @@ def test_pickup_checkout_rejects_when_stock_insufficient_and_rolls_back() -> Non
     assert response.status_code == 409
     assert response.json()["detail"] == "INSUFFICIENT_STOCK_AT_CONFIRMATION"
     assert product_service.get_stock(product_id) == 1
+
+
+def test_order_transitions_follow_state_machine_and_are_auditable() -> None:
+    headers = _auth_header(roles=["cajero"])
+    order_id = _create_pickup_order(idempotency_key="idem-transition")
+
+    to_prepared = client.post(
+        f"/orders/{order_id}/transitions",
+        headers=headers,
+        json={"target_state": "preparado", "reason": "pedido armado"},
+    )
+    assert to_prepared.status_code == 200
+    assert to_prepared.json()["previous_state"] == "recibido"
+    assert to_prepared.json()["current_state"] == "preparado"
+
+    invalid_jump = client.post(
+        f"/orders/{order_id}/transitions",
+        headers=headers,
+        json={"target_state": "entregado", "reason": "intento salto"},
+    )
+    assert invalid_jump.status_code == 409
+    assert invalid_jump.json()["detail"] == "INVALID_ORDER_TRANSITION"
+
+    to_ready = client.post(
+        f"/orders/{order_id}/transitions",
+        headers=headers,
+        json={"target_state": "listo_para_retiro", "reason": "pedido disponible"},
+    )
+    assert to_ready.status_code == 200
+
+    to_delivered = client.post(
+        f"/orders/{order_id}/transitions",
+        headers=headers,
+        json={"target_state": "entregado", "reason": "retiro cliente"},
+    )
+    assert to_delivered.status_code == 200
+
+    same_state = client.post(
+        f"/orders/{order_id}/transitions",
+        headers=headers,
+        json={"target_state": "entregado", "reason": "duplicado"},
+    )
+    assert same_state.status_code == 409
+    assert same_state.json()["detail"] == "ORDER_ALREADY_IN_TARGET_STATE"
+
+    fetched = client.get(f"/orders/{order_id}", headers=headers)
+    assert fetched.status_code == 200
+    payload = fetched.json()
+    assert payload["state"] == "entregado"
+    assert [item["current_state"] for item in payload["transitions"]] == [
+        "preparado",
+        "listo_para_retiro",
+        "entregado",
+    ]

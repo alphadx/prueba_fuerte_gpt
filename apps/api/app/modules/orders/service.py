@@ -7,6 +7,12 @@ from threading import RLock
 
 from app.modules.products.service import ProductService, product_service
 
+ORDER_TRANSITIONS: dict[str, str] = {
+    "recibido": "preparado",
+    "preparado": "listo_para_retiro",
+    "listo_para_retiro": "entregado",
+}
+
 
 @dataclass
 class OrderLine:
@@ -14,6 +20,14 @@ class OrderLine:
     qty: float
     unit_price: float
     line_total: float
+
+
+@dataclass
+class OrderTransitionEvent:
+    previous_state: str
+    current_state: str
+    actor: str
+    reason: str
 
 
 @dataclass
@@ -26,6 +40,7 @@ class PickupOrder:
     idempotency_key: str
     lines: list[OrderLine]
     subtotal: float
+    transitions: list[OrderTransitionEvent]
 
 
 class PickupOrderService:
@@ -96,6 +111,7 @@ class PickupOrderService:
                 idempotency_key=idempotency_key,
                 lines=built_lines,
                 subtotal=subtotal,
+                transitions=[],
             )
             self._by_id[order_id] = order
             self._by_idempotency_key[idempotency_key] = order_id
@@ -106,6 +122,38 @@ class PickupOrderService:
             if order_id not in self._by_id:
                 raise KeyError("order not found")
             return self._clone(self._by_id[order_id])
+
+    def transition_order(
+        self,
+        *,
+        order_id: str,
+        target_state: str,
+        actor: str,
+        reason: str,
+    ) -> PickupOrder:
+        with self._lock:
+            if order_id not in self._by_id:
+                raise KeyError("order not found")
+
+            order = self._by_id[order_id]
+            if order.state == target_state:
+                raise ValueError("order already in target state")
+
+            expected_next_state = ORDER_TRANSITIONS.get(order.state)
+            if expected_next_state is None or expected_next_state != target_state:
+                raise ValueError("invalid order transition")
+
+            previous_state = order.state
+            order.state = target_state
+            order.transitions.append(
+                OrderTransitionEvent(
+                    previous_state=previous_state,
+                    current_state=target_state,
+                    actor=actor,
+                    reason=reason,
+                )
+            )
+            return self._clone(order)
 
     def reset_state(self) -> None:
         with self._lock:
@@ -124,6 +172,7 @@ class PickupOrderService:
             idempotency_key=order.idempotency_key,
             lines=[OrderLine(**vars(line)) for line in order.lines],
             subtotal=order.subtotal,
+            transitions=[OrderTransitionEvent(**vars(item)) for item in order.transitions],
         )
 
 

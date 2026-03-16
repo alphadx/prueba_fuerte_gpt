@@ -27,6 +27,7 @@ def test_create_order_decrements_stock_and_sets_received_state() -> None:
     assert order.state == "recibido"
     assert order.order_id.startswith("ord-")
     assert product_service.get_stock(product_id) == 3
+    assert order.transitions == []
 
 
 def test_create_order_is_idempotent_by_key() -> None:
@@ -68,3 +69,61 @@ def test_create_order_rolls_back_when_stock_insufficient() -> None:
         raise AssertionError("expected ValueError")
 
     assert product_service.get_stock(product_id) == 1
+
+
+def test_transition_order_accepts_only_forward_states() -> None:
+    product_id = _create_product(sku="SKU-4", stock=5)
+    order = pickup_order_service.create_order(
+        branch_id="br-001",
+        pickup_slot_id="slot-10-11",
+        customer={"name": "Maria", "email": "maria@example.com", "phone": "+56911112222"},
+        lines_payload=[{"product_id": product_id, "qty": 1}],
+        idempotency_key="idem-4",
+    )
+
+    updated = pickup_order_service.transition_order(
+        order_id=order.order_id,
+        target_state="preparado",
+        actor="usr-1",
+        reason="pedido preparado",
+    )
+    assert updated.state == "preparado"
+
+    try:
+        pickup_order_service.transition_order(
+            order_id=order.order_id,
+            target_state="entregado",
+            actor="usr-1",
+            reason="salto invalido",
+        )
+    except ValueError as exc:
+        assert "invalid" in str(exc)
+    else:
+        raise AssertionError("expected ValueError")
+
+
+def test_transition_order_records_history() -> None:
+    product_id = _create_product(sku="SKU-5", stock=5)
+    order = pickup_order_service.create_order(
+        branch_id="br-001",
+        pickup_slot_id="slot-10-11",
+        customer={"name": "Maria", "email": "maria@example.com", "phone": "+56911112222"},
+        lines_payload=[{"product_id": product_id, "qty": 1}],
+        idempotency_key="idem-5",
+    )
+
+    pickup_order_service.transition_order(
+        order_id=order.order_id,
+        target_state="preparado",
+        actor="usr-1",
+        reason="bodega",
+    )
+    pickup_order_service.transition_order(
+        order_id=order.order_id,
+        target_state="listo_para_retiro",
+        actor="usr-1",
+        reason="mostrador",
+    )
+
+    fetched = pickup_order_service.get_order(order.order_id)
+    assert [item.current_state for item in fetched.transitions] == ["preparado", "listo_para_retiro"]

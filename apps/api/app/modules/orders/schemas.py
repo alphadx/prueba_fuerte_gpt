@@ -1,4 +1,4 @@
-"""Schemas for e-commerce pickup checkout (step 9 - stage 4)."""
+"""Schemas for e-commerce pickup checkout (step 9 - stage 5)."""
 
 from pydantic import BaseModel, Field
 
@@ -57,6 +57,13 @@ class OrderLineResponse(BaseModel):
     line_total: float
 
 
+class OrderTransitionEventResponse(BaseModel):
+    previous_state: str
+    current_state: str
+    actor: str
+    reason: str
+
+
 class PickupCheckoutConfirmResponse(BaseModel):
     order_id: str
     order_state: str
@@ -76,3 +83,15 @@ class PickupOrderResponse(BaseModel):
     idempotency_key: str
     lines: list[OrderLineResponse]
     subtotal: float
+    transitions: list[OrderTransitionEventResponse]
+
+
+class OrderTransitionRequest(BaseModel):
+    target_state: str = Field(min_length=1)
+    reason: str = Field(min_length=3)
+
+
+class OrderTransitionResponse(BaseModel):
+    order_id: str
+    previous_state: str
+    current_state: str

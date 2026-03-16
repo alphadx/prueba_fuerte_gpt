@@ -2,7 +2,7 @@
 
 ## Estado operativo
 - **Ejecución:** iterativa en 7 etapas (según `plan.md`).
-- **Etapa actual:** ✅ **Etapa 4 completada** (backend de creación de pedido + descuento stock + idempotencia).
+- **Etapa actual:** ✅ **Etapa 5 completada** (máquina de estados + transiciones auditables).
 - **Regla de control:** no se inicia la etapa siguiente sin autorización explícita del usuario.
 
 ## Checklist de indicadores del paso
@@ -10,10 +10,10 @@
 - [ ] **Índice de consistencia stock web/tienda** (meta: >= 99% sin quiebres por desalineación).
 - [ ] **Índice de transición válida de estados de pedido** (meta: 100%).
 
-## Grado de cumplimiento (al cierre de etapa 4)
-- **Éxito checkout retiro:** 60% (checkout backend implementado con respuesta canónica).
-- **Consistencia stock web/tienda:** 55% (descuento stock en confirmación + rollback ante falla).
-- **Transición de estados de pedido:** 25% (estado inicial `recibido` persistido, faltan transiciones etapa 5).
+## Grado de cumplimiento (al cierre de etapa 5)
+- **Éxito checkout retiro:** 70% (flujo backend estable + consulta de pedidos).
+- **Consistencia stock web/tienda:** 60% (descuento/rollback operativos en checkout).
+- **Transición de estados de pedido:** 80% (máquina de estados forward-only implementada y validada).
 
 ---
 
@@ -103,10 +103,29 @@ Se creó un frontend MVP estático en `apps/web`:
 - [x] Idempotencia operativa por `Idempotency-Key`.
 - [x] Cobertura de pruebas unitarias y API para el flujo principal.
 
+
+## Etapa 5 — Máquina de estados y transiciones auditables (completada)
+
+### Implementación realizada
+- Implementada máquina de estados explícita de pedido:
+  - `recibido -> preparado -> listo_para_retiro -> entregado`.
+- Nuevo endpoint `POST /orders/{order_id}/transitions` para aplicar transición controlada.
+- Reglas de rechazo incorporadas:
+  - `INVALID_ORDER_TRANSITION` para saltos inválidos.
+  - `ORDER_ALREADY_IN_TARGET_STATE` para transiciones repetidas al mismo estado.
+- Se agregó historial de transiciones en cada pedido (`transitions`) con actor y motivo.
+- Se agregó auditoría en operaciones de checkout y transición (éxito/rechazo).
+
+### DoD etapa 5 (cumplido)
+- [x] Máquina de estados implementada en backend.
+- [x] Endpoint de transición con validaciones de dominio.
+- [x] Historial de cambios de estado persistido en memoria para trazabilidad.
+- [x] Pruebas API y unitarias cubriendo flujo válido, saltos inválidos y repetición de estado.
+
 ## Estado de avance del paso
-- **Cumplimiento estimado total del paso 9:** **62%** (análisis + contratos + frontend + backend checkout).
-- **Semáforo:** 🟡 Amarillo (backend base listo, falta máquina de estados de transición).
-- **Próximo hito:** etapa 5 (máquina de estados y transiciones auditables de pedido).
+- **Cumplimiento estimado total del paso 9:** **76%** (incluye máquina de estados y trazabilidad).
+- **Semáforo:** 🟡 Amarillo (núcleo de pedidos estable; faltan e2e integrales y Bing Maps).
+- **Próximo hito:** etapa 6 (integración Bing Maps en vista pública + pruebas e2e integrales).
 
 ## Solicitud de control de avance
-**Etapa 4 finalizada.** Indica explícitamente si autorizas avanzar a la **Etapa 5**.
+**Etapa 5 finalizada.** Indica explícitamente si autorizas avanzar a la **Etapa 6**.
