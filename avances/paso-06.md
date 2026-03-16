@@ -44,7 +44,7 @@ Implementar un POS mínimo operable con flujo de caja confiable, asegurando que 
 - Construir/ajustar pruebas unitarias por regla crítica de dominio.
 - Ejecutar pruebas de integración del flujo completo POS+caja+stock.
 - Incorporar casos de error e idempotencia operativa.
-- **Salida de etapa:** suite de pruebas estable con cobertura de escenarios críticos.
+- **Salida de etapa:** suite de pruebas estable con cobertura de escenarios críticos. ✅ Completada (ver `docs/paso6_etapa6_pruebas_automatizadas.md`).
 
 ### Etapa 7 — Hardening y cierre del paso
 - Reforzar auditoría en operaciones sensibles (apertura, cierre, confirmación de venta).
@@ -53,7 +53,7 @@ Implementar un POS mínimo operable con flujo de caja confiable, asegurando que 
 - **Salida de etapa:** reporte de cierre con evidencia técnica y estado final.
 
 ## Estado de avance del paso
-- **Cumplimiento estimado:** **71%** (5/7 etapas cerradas)
+- **Cumplimiento estimado:** **86%** (6/7 etapas cerradas)
 - **Semáforo:** 🟡 Amarillo (en ejecución controlada)
 - **Regla de ejecución:** se avanza etapa por etapa únicamente cuando el usuario dé la orden explícita.
-- **Etapa actual:** lista para iniciar **Etapa 6 — Pruebas automatizadas por etapas**.
+- **Etapa actual:** lista para iniciar **Etapa 7 — Hardening y cierre del paso**.
