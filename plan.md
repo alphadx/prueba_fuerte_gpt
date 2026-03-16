@@ -84,12 +84,17 @@ Sí: **algunas tecnologías deben montarse como servicios** (PostgreSQL, Redis, 
 - **Entregable por etapa:** evidencia en `avances/paso-07.md` + solicitud explícita al usuario para autorizar la siguiente iteración.
 
 ## 8) Integrar capa de pagos por adaptadores
-- Interface `PaymentGateway` con drivers:
-  - `cash` (local),
-  - `transbank_stub`, `mercadopago_stub` para MVP,
-  - webhook unificado de confirmación/rechazo.
-- Mantener feature flags por sucursal/canal para activar medios de pago.
-- Entregable: conciliación básica de pagos + test de webhook idempotente.
+- **Estado operativo:** este paso se ejecuta como **prototipo iterativo en 7 etapas**.
+- **Regla de control:** al cierre de cada etapa, el equipo debe **solicitar orden de avance** antes de iniciar la siguiente.
+- **Etapas del prototipo (paso 8):**
+  1. análisis funcional/técnico de pagos + criterios de aceptación por canal y sucursal,
+  2. contrato `PaymentGateway` y modelo canónico de `PaymentIntent/PaymentResult` con errores normalizados,
+  3. implementación de adaptador `cash` con cierre local y conciliación de caja,
+  4. implementación de `transbank_stub` y `mercadopago_stub` con flujos de autorización/captura simulados,
+  5. webhook unificado (confirmación/rechazo) con firma, idempotencia y trazabilidad de eventos,
+  6. feature flags por sucursal/canal + pruebas integrales (happy path, duplicados, rechazos, timeout),
+  7. hardening final (conciliación básica multi-medio, auditoría y checklist de salida del paso).
+- **Entregable por etapa:** evidencia en `avances/paso-08.md` + solicitud explícita al usuario para autorizar la siguiente iteración.
 
 ## 9) Construir e-commerce básico con retiro en tienda
 - Frontend con:
