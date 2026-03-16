@@ -1,4 +1,4 @@
-.PHONY: doctor-docker up test seed seed-validate seed-pipeline fixtures fixtures-validate fixtures-pipeline smoke-test-state smoke-pipeline migrate-up migrate-down migrate-status verify-step4 verify-step5 compose-up compose-up-full compose-down compose-smoke architecture-review
+.PHONY: doctor-docker up test seed seed-validate seed-pipeline fixtures fixtures-validate fixtures-pipeline smoke-test-state smoke-pipeline bootstrap-test-state migrate-up migrate-down migrate-status verify-step4 verify-step5 compose-up compose-up-full compose-down compose-smoke architecture-review
 
 doctor-docker:
 	@echo "[doctor] Verificando Docker y Docker Compose..."
@@ -48,6 +48,11 @@ smoke-test-state:
 
 smoke-pipeline: seed-pipeline fixtures-pipeline smoke-test-state
 	@echo "[smoke] Pipeline de estado QA OK"
+
+bootstrap-test-state:
+	python3 -m venv .venv
+	. .venv/bin/activate && pip install -r apps/api/requirements.txt -r apps/api/requirements-dev.txt
+	. .venv/bin/activate && python infra/scripts/bootstrap_test_state.py --max-seconds 600
 
 migrate-up:
 	python3 -m venv .venv

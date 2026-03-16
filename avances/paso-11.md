@@ -1,9 +1,9 @@
 # Paso 11 — Crear estado inicial válido de pruebas
 
 ## Estado de iteración
-- **Iteración actual:** Etapa 5 de 8 — implementación de smoke tests de preparación QA.
+- **Iteración actual:** Etapa 6 de 8 — orquestación con `make bootstrap-test-state`.
 - **Estado:** ✅ Completada.
-- **Regla de control aplicada:** se cierra etapa 5 y se solicita autorización explícita para avanzar a etapa 6.
+- **Regla de control aplicada:** se cierra etapa 6 y se solicita autorización explícita para avanzar a etapa 7.
 
 ## Referencias consideradas en esta etapa
 - `plan.md` (definición del paso 11 y entregable `make bootstrap-test-state`).
@@ -65,19 +65,19 @@ Se considerará cumplido el paso 11 cuando se verifique en una corrida:
 - [ ] **Índice de estabilidad de smoke tests** (meta: >= 95%).
 
 ## Grado de cumplimiento
-- **Bootstrap QA:** 73% (seed+fixtures+smoke pipeline disponibles de forma encadenada).
-- **Completitud de fixtures críticos:** 82% (fixtures críticos ejecutables y validados por smoke).
-- **Estabilidad de smoke tests:** 64% (suite smoke implementada, pendiente medir repetibilidad >=95%).
+- **Bootstrap QA:** 88% (comando unificado `make bootstrap-test-state` operativo con reporte de runtime).
+- **Completitud de fixtures críticos:** 90% (seed+fixtures+smoke integrados en orquestación única).
+- **Estabilidad de smoke tests:** 72% (smoke automatizado en pipeline; pendiente corrida repetida hardening).
 
 ## Estado de avance del paso
-- **Cumplimiento estimado:** **74%**.
-- **Semáforo:** 🟡 Amarillo (smoke implementado; falta comando unificado final + medición de runtime objetivo).
-- **Observación:** etapa 5 finalizada con validación funcional rápida del estado QA bootstrap.
+- **Cumplimiento estimado:** **88%**.
+- **Semáforo:** 🟡 Amarillo (comando unificado listo; resta hardening/checklist final del paso).
+- **Observación:** etapa 6 finalizada con bootstrap QA end-to-end en un único comando.
 
 ---
 
-**Cierre de etapa 5:** completado.
-**Siguiente acción:** solicitar orden del usuario para ejecutar **Etapa 6 (orquestación con `make bootstrap-test-state`)**.
+**Cierre de etapa 6:** completado.
+**Siguiente acción:** solicitar orden del usuario para ejecutar **Etapa 7 (hardening, observabilidad mínima y resiliencia del bootstrap)**.
 
 
 ## Implementación realizada en etapa 2
@@ -171,3 +171,23 @@ Se considerará cumplido el paso 11 cuando se verifique en una corrida:
 ### Pruebas automatizadas de etapa 5
 - Se añadió `tests/unit/test_smoke_test_state.py` para validar la ejecución de smoke con outputs temporales de seed y fixtures.
 - Se ejecutó el pipeline smoke completo en local con resultado exitoso.
+
+
+## Implementación realizada en etapa 6
+
+### Comando unificado de bootstrap QA
+- Se implementó `infra/scripts/bootstrap_test_state.py` como orquestador único de estado QA para paso 11.
+- El flujo ejecuta secuencialmente:
+  1. `seed`
+  2. `seed-validate`
+  3. `fixtures`
+  4. `fixtures-validate`
+  5. `smoke-test-state`
+- El orquestador mide tiempos por paso, tiempo total, evalúa cumplimiento de objetivo (`<= 600s`) y genera `infra/seeds/bootstrap_report.json`.
+
+### Integración en Makefile
+- Se agregó el objetivo `make bootstrap-test-state`, que prepara entorno Python y ejecuta el orquestador con meta de 10 minutos.
+
+### Pruebas automatizadas de etapa 6
+- Se añadió `tests/unit/test_bootstrap_test_state.py` para validar ejecución exitosa del orquestador y estructura del reporte generado.
+- Se validó `make bootstrap-test-state` en local con cumplimiento de tiempo objetivo.
