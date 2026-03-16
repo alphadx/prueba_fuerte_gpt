@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ERP Barrio · E-commerce Retiro en Tienda</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <h1>Retiro en tienda</h1>
+        <p>Catálogo web por sucursal + carrito + checkout con PickupSlot.</p>
+      </div>
+      <div class="branch-picker">
+        <label for="branch">Sucursal</label>
+        <select id="branch" aria-label="Seleccionar sucursal"></select>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section>
+        <h2>Catálogo</h2>
+        <div id="catalog" class="catalog"></div>
+      </section>
+
+      <aside class="cart-panel">
+        <h2>Carrito</h2>
+        <ul id="cart-items" class="cart-items"></ul>
+        <div class="totals">
+          <span>Subtotal</span>
+          <strong id="subtotal">$0</strong>
+        </div>
+
+        <h3>Checkout</h3>
+        <form id="checkout-form">
+          <label>
+            Nombre
+            <input id="customer-name" name="customer-name" required minlength="2" />
+          </label>
+          <label>
+            Email
+            <input id="customer-email" name="customer-email" type="email" required />
+          </label>
+          <label>
+            Teléfono
+            <input id="customer-phone" name="customer-phone" required pattern="^\+?[0-9]{8,15}$" />
+          </label>
+          <label>
+            Franja de retiro
+            <select id="pickup-slot" name="pickup-slot" required></select>
+          </label>
+          <button type="submit">Confirmar retiro</button>
+        </form>
+        <p id="checkout-status" class="status" aria-live="polite"></p>
+      </aside>
+    </main>
+
+    <script src="./app.js" defer></script>
+  </body>
+</html>
