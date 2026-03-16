@@ -2,7 +2,7 @@
 
 ## Estado operativo
 - **Ejecución:** iterativa en 7 etapas (según `plan.md`).
-- **Etapa actual:** ✅ **Etapa 3 completada** (frontend MVP catálogo/carrito/checkout con `PickupSlot`).
+- **Etapa actual:** ✅ **Etapa 4 completada** (backend de creación de pedido + descuento stock + idempotencia).
 - **Regla de control:** no se inicia la etapa siguiente sin autorización explícita del usuario.
 
 ## Checklist de indicadores del paso
@@ -10,10 +10,10 @@
 - [ ] **Índice de consistencia stock web/tienda** (meta: >= 99% sin quiebres por desalineación).
 - [ ] **Índice de transición válida de estados de pedido** (meta: 100%).
 
-## Grado de cumplimiento (al cierre de etapa 3)
-- **Éxito checkout retiro:** 35% (flujo visual de checkout habilitado en frontend MVP).
-- **Consistencia stock web/tienda:** 20% (stock visible por sucursal en UI, sin reserva backend todavía).
-- **Transición de estados de pedido:** 15% (diseño contractual definido, falta enforcement en servicio).
+## Grado de cumplimiento (al cierre de etapa 4)
+- **Éxito checkout retiro:** 60% (checkout backend implementado con respuesta canónica).
+- **Consistencia stock web/tienda:** 55% (descuento stock en confirmación + rollback ante falla).
+- **Transición de estados de pedido:** 25% (estado inicial `recibido` persistido, faltan transiciones etapa 5).
 
 ---
 
@@ -76,10 +76,37 @@ Se creó un frontend MVP estático en `apps/web`:
 - [x] Validaciones básicas de formulario y carrito.
 - [x] Layout responsive base para móvil/desktop.
 
+
+## Etapa 4 — Backend checkout + stock + idempotencia (completada)
+
+### Implementación realizada
+- Nuevo módulo `orders` en API con servicio y router.
+- Endpoint `POST /checkout/pickup/confirm` con header `Idempotency-Key` para evitar doble descuento por reintentos.
+- Creación de pedido pickup en estado inicial `recibido`.
+- Descuento de stock por línea al confirmar checkout.
+- Rollback de movimientos de stock cuando ocurre falla de confirmación (ej.: stock insuficiente).
+- Endpoint `GET /orders/{order_id}` para consulta del pedido creado.
+- Endpoints de soporte para frontend:
+  - `GET /catalog/products?branch_id=...`
+  - `GET /pickup-slots?branch_id=...&date=...`
+
+### Validaciones y reglas de etapa 4
+- Confirmación exige al menos una línea de pedido.
+- Cantidades deben ser positivas.
+- Reintento con la misma `Idempotency-Key` retorna el mismo `order_id` (operación idempotente).
+- Error por stock insuficiente retorna `INSUFFICIENT_STOCK_AT_CONFIRMATION`.
+
+### DoD etapa 4 (cumplido)
+- [x] Backend de creación de pedido pickup implementado.
+- [x] Descuento de stock aplicado al confirmar checkout.
+- [x] Rollback de stock en fallas de confirmación.
+- [x] Idempotencia operativa por `Idempotency-Key`.
+- [x] Cobertura de pruebas unitarias y API para el flujo principal.
+
 ## Estado de avance del paso
-- **Cumplimiento estimado total del paso 9:** **45%** (análisis + contratos + frontend MVP).
-- **Semáforo:** 🟡 Amarillo (avance sólido, falta integración backend).
-- **Próximo hito:** etapa 4 (backend de creación de pedido + reserva/descuento de stock + idempotencia).
+- **Cumplimiento estimado total del paso 9:** **62%** (análisis + contratos + frontend + backend checkout).
+- **Semáforo:** 🟡 Amarillo (backend base listo, falta máquina de estados de transición).
+- **Próximo hito:** etapa 5 (máquina de estados y transiciones auditables de pedido).
 
 ## Solicitud de control de avance
-**Etapa 3 finalizada.** Indica explícitamente si autorizas avanzar a la **Etapa 4**.
+**Etapa 4 finalizada.** Indica explícitamente si autorizas avanzar a la **Etapa 5**.
