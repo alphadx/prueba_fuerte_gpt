@@ -138,17 +138,18 @@ Sí: **algunas tecnologías deben montarse como servicios** (PostgreSQL, Redis, 
 - Entregable: comando único `make bootstrap-test-state` que deja el sistema listo para QA en menos de 10 minutos.
 
 ## 12) Validación final, observabilidad y checklist de salida
-- Ejecutar pipeline local:
-  - lint/format,
-  - tests unitarios,
-  - integración API,
-  - smoke e2e.
-- Métricas mínimas de salud:
-  - latencia API,
-  - cola de trabajos,
-  - tasa de error de boletas/pagos.
-- Definir checklist de go-live MVP y riesgos conocidos.
-- Entregable: `docs/release_checklist.md` + reporte de ejecución del pipeline.
+- **Estado operativo:** este paso se ejecuta como **prototipo iterativo en 8 etapas**.
+- **Regla de control:** al cierre de cada etapa, el equipo debe **solicitar orden de avance** antes de iniciar la siguiente.
+- **Etapas del prototipo (paso 12):**
+  1. baseline de release readiness y criterios de aceptación medibles (pipeline, SLO y riesgos),
+  2. diseño/normalización del pipeline local (lint/format, unit, integración API, smoke e2e) con contrato de evidencias,
+  3. instrumentación mínima de observabilidad (latencia API, salud de cola worker, error rate de boletas/pagos),
+  4. definición de umbrales SLO/SLI y reglas de alerta accionables (con ownership por dominio),
+  5. checklist de go-live MVP ejecutable con clasificación de riesgos críticos/no críticos,
+  6. estrategia de rollback y contingencia operativa (incluyendo criterios de abortar release),
+  7. corrida integral de validación final y consolidación de evidencias reproducibles,
+  8. hardening de cierre documental + reporte final de salida (`release_checklist` + resumen pipeline/observabilidad).
+- **Entregable por etapa:** evidencia en `avances/paso-12.md` + solicitud explícita al usuario para autorizar la siguiente iteración.
 
 ---
 
