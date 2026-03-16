@@ -1,9 +1,9 @@
 # Paso 11 — Crear estado inicial válido de pruebas
 
 ## Estado de iteración
-- **Iteración actual:** Etapa 4 de 8 — construcción de fixtures de escenarios críticos.
+- **Iteración actual:** Etapa 5 de 8 — implementación de smoke tests de preparación QA.
 - **Estado:** ✅ Completada.
-- **Regla de control aplicada:** se cierra etapa 4 y se solicita autorización explícita para avanzar a etapa 5.
+- **Regla de control aplicada:** se cierra etapa 5 y se solicita autorización explícita para avanzar a etapa 6.
 
 ## Referencias consideradas en esta etapa
 - `plan.md` (definición del paso 11 y entregable `make bootstrap-test-state`).
@@ -65,19 +65,19 @@ Se considerará cumplido el paso 11 cuando se verifique en una corrida:
 - [ ] **Índice de estabilidad de smoke tests** (meta: >= 95%).
 
 ## Grado de cumplimiento
-- **Bootstrap QA:** 58% (seed idempotente + pipeline de fixtures funcional implementados).
-- **Completitud de fixtures críticos:** 72% (5 escenarios críticos construidos y validados por catálogo).
-- **Estabilidad de smoke tests:** 22% (validaciones de seed/fixtures activas; smoke integral pendiente).
+- **Bootstrap QA:** 73% (seed+fixtures+smoke pipeline disponibles de forma encadenada).
+- **Completitud de fixtures críticos:** 82% (fixtures críticos ejecutables y validados por smoke).
+- **Estabilidad de smoke tests:** 64% (suite smoke implementada, pendiente medir repetibilidad >=95%).
 
 ## Estado de avance del paso
-- **Cumplimiento estimado:** **57%**.
-- **Semáforo:** 🟡 Amarillo (fixtures críticos listos; falta suite smoke de escenarios y comando unificado final).
-- **Observación:** etapa 4 finalizada con construcción funcional y validación automática de fixtures críticos.
+- **Cumplimiento estimado:** **74%**.
+- **Semáforo:** 🟡 Amarillo (smoke implementado; falta comando unificado final + medición de runtime objetivo).
+- **Observación:** etapa 5 finalizada con validación funcional rápida del estado QA bootstrap.
 
 ---
 
-**Cierre de etapa 4:** completado.
-**Siguiente acción:** solicitar orden del usuario para ejecutar **Etapa 5 (implementación de smoke tests de preparación QA)**.
+**Cierre de etapa 5:** completado.
+**Siguiente acción:** solicitar orden del usuario para ejecutar **Etapa 6 (orquestación con `make bootstrap-test-state`)**.
 
 
 ## Implementación realizada en etapa 2
@@ -150,3 +150,24 @@ Se considerará cumplido el paso 11 cuando se verifique en una corrida:
 ### Pruebas automatizadas de etapa 4
 - Se añadió `tests/unit/test_fixtures_pipeline.py` para validar generación y chequeo de catálogo crítico en ruta temporal.
 - Se validó ejecución de `fixtures-pipeline` en entorno local con resultado exitoso.
+
+
+## Implementación realizada en etapa 5
+
+### Suite smoke de estado QA
+- Se agregó `infra/scripts/smoke_test_state.py` para validar ejecutabilidad del estado QA sobre dos artefactos:
+  - `infra/seeds/dev_seed.json`
+  - `infra/seeds/fixtures_state.json`
+- Los smoke checks verifican:
+  - dataset base mínimo (productos/usuarios),
+  - presencia de los 5 fixtures críticos,
+  - resultados funcionales esperados por escenario (paid/confirmed/recibido/billing emitido/webhook idempotente).
+
+### Orquestación de smoke en Makefile
+- Se incorporaron objetivos:
+  - `make smoke-test-state`
+  - `make smoke-pipeline` (encadena `seed-pipeline` + `fixtures-pipeline` + `smoke-test-state`).
+
+### Pruebas automatizadas de etapa 5
+- Se añadió `tests/unit/test_smoke_test_state.py` para validar la ejecución de smoke con outputs temporales de seed y fixtures.
+- Se ejecutó el pipeline smoke completo en local con resultado exitoso.
