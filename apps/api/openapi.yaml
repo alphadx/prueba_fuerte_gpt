@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: ERP Barrio API
-  version: 0.3.8
+  version: 0.4.0
   description: Contrato inicial del API del MVP ERP.
 servers:
   - url: http://localhost:8000
@@ -424,7 +424,143 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/UserResponse'
+    BillingProcessRequest:
+      type: object
+      properties:
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 20
+    BillingDocumentResponse:
+      type: object
+      required: [sale_id, idempotency_key, document_type, status, attempts, max_attempts]
+      properties:
+        sale_id:
+          type: string
+        idempotency_key:
+          type: string
+        document_type:
+          type: string
+        status:
+          type: string
+        attempts:
+          type: integer
+        max_attempts:
+          type: integer
+        provider_document_id:
+          type: string
+          nullable: true
+        track_id:
+          type: string
+          nullable: true
+        folio:
+          type: string
+          nullable: true
+        xml_url:
+          type: string
+          nullable: true
+        pdf_url:
+          type: string
+          nullable: true
+        raw_payload_ref:
+          type: string
+          nullable: true
+        sii_status:
+          type: string
+          nullable: true
+        last_error:
+          type: string
+          nullable: true
+        retry_after_batches:
+          type: integer
+        dead_lettered:
+          type: boolean
+    BillingWorkerProcessResponse:
+      type: object
+      required: [enqueued, processed, succeeded, failed, dead_lettered]
+      properties:
+        enqueued:
+          type: integer
+        processed:
+          type: integer
+        succeeded:
+          type: integer
+        failed:
+          type: integer
+        dead_lettered:
+          type: integer
 paths:
+  /billing/documents/{sale_id}:
+    parameters:
+      - in: path
+        name: sale_id
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [billing]
+      summary: Obtiene estado de boleta electrónica por venta
+      operationId: getBillingDocumentBySaleId
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Documento tributario encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BillingDocumentResponse'
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Documento tributario no existe para la venta
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /billing/worker/process:
+    post:
+      tags: [billing]
+      summary: Procesa cola de emisión sandbox en worker
+      operationId: postBillingWorkerProcess
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BillingProcessRequest'
+      responses:
+        '200':
+          description: Lote de documentos procesado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BillingWorkerProcessResponse'
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /health:
     get:
       tags: [system]

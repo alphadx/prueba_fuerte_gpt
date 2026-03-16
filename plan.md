@@ -71,14 +71,17 @@ Sí: **algunas tecnologías deben montarse como servicios** (PostgreSQL, Redis, 
 - **Entregable de planificación:** `avances/paso-06.md` actualizado con análisis, plan de 7 etapas y protocolo de ejecución por orden del usuario.
 
 ## 7) Integrar boleta electrónica vía proveedor (sandbox)
-- Crear adaptador `BillingProvider` desacoplado.
-- Implementar cliente sandbox con manejo de:
-  - folio,
-  - XML/PDF,
-  - track ID,
-  - estado SII.
-- Definir reintentos y cola asíncrona para evitar bloquear caja.
-- Entregable: boleta emitida en sandbox y consulta de estado desde API.
+- **Estado operativo:** este paso se ejecuta como **prototipo iterativo en 7 etapas**.
+- **Regla de control:** al cierre de cada etapa, el equipo debe **solicitar orden de avance** antes de iniciar la siguiente.
+- **Etapas del prototipo (paso 7):**
+  1. análisis funcional/técnico y criterios de aceptación fiscal sandbox,
+  2. contrato `BillingProvider` y modelo canónico de request/response,
+  3. adaptador sandbox (folio, XML/PDF, track ID, estado SII),
+  4. desacople de caja/POS con encolado asíncrono de emisión,
+  5. resiliencia (reintentos acotados, idempotencia, estados terminales),
+  6. consulta de estado/API + pruebas de integración por escenarios,
+  7. hardening documental y checklist de cierre del paso.
+- **Entregable por etapa:** evidencia en `avances/paso-07.md` + solicitud explícita al usuario para autorizar la siguiente iteración.
 
 ## 8) Integrar capa de pagos por adaptadores
 - Interface `PaymentGateway` con drivers:
