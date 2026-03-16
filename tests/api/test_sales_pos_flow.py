@@ -132,6 +132,7 @@ def test_pos_rolls_back_when_stock_is_insufficient() -> None:
     assert sale_response.status_code == 409
     assert product_service.get_stock(product_id) == 1
     assert sale_service.list_sales() == []
+    assert product_service.list_stock_movements() == []
 
 
 def test_pos_card_stub_keeps_sale_confirmed_and_payment_pending() -> None:
@@ -205,3 +206,54 @@ def test_pos_rejects_sale_when_cash_session_branch_mismatch() -> None:
     )
     assert sale_response.status_code == 409
     assert "branch mismatch" in sale_response.json()["detail"]
+
+
+def test_pos_rolls_back_partial_multi_line_failure_without_kardex_residue() -> None:
+    admin_headers = _auth_header(roles=["admin"])
+    cajero_headers = _auth_header(roles=["cajero"])
+
+    product_ok = client.post(
+        "/products",
+        json={"sku": "POS-005", "name": "Arroz", "price": 1800},
+        headers=admin_headers,
+    )
+    assert product_ok.status_code == 201
+    product_ok_id = product_ok.json()["id"]
+
+    product_fail = client.post(
+        "/products",
+        json={"sku": "POS-006", "name": "Aceite", "price": 4200},
+        headers=admin_headers,
+    )
+    assert product_fail.status_code == 201
+    product_fail_id = product_fail.json()["id"]
+
+    product_service.set_stock(product_ok_id, 5)
+    product_service.set_stock(product_fail_id, 1)
+
+    opened_session = client.post(
+        "/cash-sessions",
+        json={"branch_id": "br-001", "opened_by": "usr-001", "opening_amount": 0, "status": "open"},
+        headers=cajero_headers,
+    )
+    assert opened_session.status_code == 201
+
+    sale_response = client.post(
+        "/sales/complete",
+        json={
+            "branch_id": "br-001",
+            "cash_session_id": opened_session.json()["id"],
+            "sold_by": "usr-001",
+            "payment_method": "cash",
+            "lines": [
+                {"product_id": product_ok_id, "quantity": 2},
+                {"product_id": product_fail_id, "quantity": 2},
+            ],
+        },
+        headers=cajero_headers,
+    )
+    assert sale_response.status_code == 409
+    assert product_service.get_stock(product_ok_id) == 5
+    assert product_service.get_stock(product_fail_id) == 1
+    assert sale_service.list_sales() == []
+    assert product_service.list_stock_movements() == []

@@ -38,7 +38,7 @@ Implementar un POS mínimo operable con flujo de caja confiable, asegurando que 
 - Garantizar descuento de stock por línea con trazabilidad de referencia de venta.
 - Registrar movimiento kardex de salida por ítem vendido.
 - Implementar rollback completo cuando falle cualquier paso crítico de confirmación.
-- **Salida de etapa:** consistencia inventario-venta validada en happy/failure path.
+- **Salida de etapa:** consistencia inventario-venta validada en happy/failure path. ✅ Completada (ver `docs/paso6_etapa5_consistencia_stock_kardex.md`).
 
 ### Etapa 6 — Pruebas automatizadas por etapas
 - Construir/ajustar pruebas unitarias por regla crítica de dominio.
@@ -53,7 +53,7 @@ Implementar un POS mínimo operable con flujo de caja confiable, asegurando que 
 - **Salida de etapa:** reporte de cierre con evidencia técnica y estado final.
 
 ## Estado de avance del paso
-- **Cumplimiento estimado:** **57%** (4/7 etapas cerradas)
+- **Cumplimiento estimado:** **71%** (5/7 etapas cerradas)
 - **Semáforo:** 🟡 Amarillo (en ejecución controlada)
 - **Regla de ejecución:** se avanza etapa por etapa únicamente cuando el usuario dé la orden explícita.
-- **Etapa actual:** lista para iniciar **Etapa 5 — Consistencia stock/kardex y rollback**.
+- **Etapa actual:** lista para iniciar **Etapa 6 — Pruebas automatizadas por etapas**.

@@ -106,20 +106,16 @@ class SaleService:
             self._seq += 1
             sale_id = f"sale-{self._seq:04d}"
 
-            movements = []
             try:
                 for line in built_lines:
-                    movement = self._product_service.decrement_stock(
+                    self._product_service.decrement_stock(
                         product_id=line.product_id,
                         quantity=line.quantity,
                         reason="sale-confirmation",
                         reference_id=sale_id,
                     )
-                    movements.append(movement)
             except Exception as exc:
-                for movement in reversed(movements):
-                    current = self._product_service.get_stock(movement.product_id)
-                    self._product_service.set_stock(movement.product_id, current + abs(movement.quantity_delta))
+                self._product_service.rollback_reference(reference_id=sale_id)
                 raise ValueError("stock update failed; sale rolled back") from exc
 
             payment_status, sale_status = PAYMENT_STATE_BY_METHOD[payment_method]

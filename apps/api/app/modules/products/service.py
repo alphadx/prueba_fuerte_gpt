@@ -96,6 +96,25 @@ class ProductService:
         with self._lock:
             return [StockMovement(**vars(item)) for item in self._movements]
 
+
+    def rollback_reference(self, *, reference_id: str) -> None:
+        with self._lock:
+            kept: list[StockMovement] = []
+            rolled_back: list[StockMovement] = []
+            for movement in self._movements:
+                if movement.reference_id == reference_id:
+                    rolled_back.append(movement)
+                else:
+                    kept.append(movement)
+
+            for movement in rolled_back:
+                if movement.product_id in self._stock_by_product_id:
+                    self._stock_by_product_id[movement.product_id] = (
+                        self._stock_by_product_id[movement.product_id] - movement.quantity_delta
+                    )
+
+            self._movements = kept
+
     def get_product(self, product_id: str) -> Product:
         with self._lock:
             if product_id not in self._by_id:
