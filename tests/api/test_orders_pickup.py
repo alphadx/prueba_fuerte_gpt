@@ -211,3 +211,42 @@ def test_order_transitions_follow_state_machine_and_are_auditable() -> None:
         "listo_para_retiro",
         "entregado",
     ]
+
+
+def test_order_observability_and_consistency_endpoints() -> None:
+    headers = _auth_header(roles=["cajero"])
+    product_id = _create_product(sku="SKU-MET-1", stock=3)
+
+    checkout = client.post(
+        "/checkout/pickup/confirm",
+        headers={**headers, "Idempotency-Key": "idem-metrics-1"},
+        json={
+            "branch_id": "br-001",
+            "pickup_slot_id": "slot-10-11",
+            "customer": {"name": "Maria", "email": "maria@example.com", "phone": "+56911112222"},
+            "lines": [{"product_id": product_id, "qty": 1}],
+        },
+    )
+    assert checkout.status_code == 201
+    order_id = checkout.json()["order_id"]
+
+    # generate one rejected transition for observability counters
+    rejected = client.post(
+        f"/orders/{order_id}/transitions",
+        headers=headers,
+        json={"target_state": "entregado", "reason": "salto"},
+    )
+    assert rejected.status_code == 409
+
+    metrics = client.get("/orders/observability/metrics", headers=headers)
+    assert metrics.status_code == 200
+    body = metrics.json()
+    assert body["total_orders"] >= 1
+    assert body["states"]["recibido"] >= 1
+    assert body["rejected_transitions"] >= 1
+
+    report = client.get("/orders/consistency/report", headers=headers)
+    assert report.status_code == 200
+    report_body = report.json()
+    assert report_body["total_orders"] >= 1
+    assert report_body["orders_with_inconsistencies"] == 0

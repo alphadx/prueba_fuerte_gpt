@@ -1,4 +1,4 @@
-"""Schemas for e-commerce pickup checkout (step 9 - stage 5)."""
+"""Schemas for e-commerce pickup checkout (step 9 - stage 7)."""
 
 from pydantic import BaseModel, Field
 
@@ -95,3 +95,18 @@ class OrderTransitionResponse(BaseModel):
     order_id: str
     previous_state: str
     current_state: str
+
+
+class OrderObservabilityResponse(BaseModel):
+    total_orders: int
+    states: dict[str, int]
+    delivered_orders: int
+    rejected_checkouts: int
+    rejected_transitions: int
+    idempotent_replays: int
+
+
+class OrderConsistencyReportResponse(BaseModel):
+    total_orders: int
+    orders_with_inconsistencies: int
+    inconsistencies: list[str]

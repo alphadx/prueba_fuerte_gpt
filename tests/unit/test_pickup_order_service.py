@@ -127,3 +127,48 @@ def test_transition_order_records_history() -> None:
 
     fetched = pickup_order_service.get_order(order.order_id)
     assert [item.current_state for item in fetched.transitions] == ["preparado", "listo_para_retiro"]
+
+
+def test_observability_snapshot_counts_rejections_and_replays() -> None:
+    product_id = _create_product(sku="SKU-6", stock=5)
+
+    pickup_order_service.create_order(
+        branch_id="br-001",
+        pickup_slot_id="slot-10-11",
+        customer={"name": "Maria", "email": "maria@example.com", "phone": "+56911112222"},
+        lines_payload=[{"product_id": product_id, "qty": 1}],
+        idempotency_key="idem-6",
+    )
+    pickup_order_service.create_order(
+        branch_id="br-001",
+        pickup_slot_id="slot-10-11",
+        customer={"name": "Maria", "email": "maria@example.com", "phone": "+56911112222"},
+        lines_payload=[{"product_id": product_id, "qty": 1}],
+        idempotency_key="idem-6",
+    )
+    pickup_order_service.register_checkout_rejection()
+    pickup_order_service.register_transition_rejection()
+
+    snapshot = pickup_order_service.get_observability_snapshot()
+    assert snapshot.total_orders == 1
+    assert snapshot.states["recibido"] == 1
+    assert snapshot.idempotent_replays == 1
+    assert snapshot.rejected_checkouts == 1
+    assert snapshot.rejected_transitions == 1
+
+
+def test_consistency_report_detects_clean_state() -> None:
+    product_id = _create_product(sku="SKU-7", stock=5)
+
+    pickup_order_service.create_order(
+        branch_id="br-001",
+        pickup_slot_id="slot-10-11",
+        customer={"name": "Maria", "email": "maria@example.com", "phone": "+56911112222"},
+        lines_payload=[{"product_id": product_id, "qty": 1}],
+        idempotency_key="idem-7",
+    )
+
+    report = pickup_order_service.run_consistency_report()
+    assert report.total_orders == 1
+    assert report.orders_with_inconsistencies == 0
+    assert report.inconsistencies == []

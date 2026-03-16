@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from threading import RLock
 
-from app.modules.products.service import ProductService, product_service
+from app.modules.products.service import ProductService, StockMovement, product_service
 
 ORDER_TRANSITIONS: dict[str, str] = {
     "recibido": "preparado",
@@ -43,12 +43,32 @@ class PickupOrder:
     transitions: list[OrderTransitionEvent]
 
 
+@dataclass
+class OrderObservabilitySnapshot:
+    total_orders: int
+    states: dict[str, int]
+    delivered_orders: int
+    rejected_checkouts: int
+    rejected_transitions: int
+    idempotent_replays: int
+
+
+@dataclass
+class OrderConsistencyReport:
+    total_orders: int
+    orders_with_inconsistencies: int
+    inconsistencies: list[str]
+
+
 class PickupOrderService:
     def __init__(self, *, product_service: ProductService) -> None:
         self._product_service = product_service
         self._by_id: dict[str, PickupOrder] = {}
         self._by_idempotency_key: dict[str, str] = {}
         self._seq = 0
+        self._rejected_checkouts = 0
+        self._rejected_transitions = 0
+        self._idempotent_replays = 0
         self._lock = RLock()
 
     def create_order(
@@ -66,6 +86,7 @@ class PickupOrderService:
         with self._lock:
             existing_id = self._by_idempotency_key.get(idempotency_key)
             if existing_id:
+                self._idempotent_replays += 1
                 return self._clone(self._by_id[existing_id])
 
             built_lines: list[OrderLine] = []
@@ -155,11 +176,76 @@ class PickupOrderService:
             )
             return self._clone(order)
 
+    def register_checkout_rejection(self) -> None:
+        with self._lock:
+            self._rejected_checkouts += 1
+
+    def register_transition_rejection(self) -> None:
+        with self._lock:
+            self._rejected_transitions += 1
+
+    def get_observability_snapshot(self) -> OrderObservabilitySnapshot:
+        with self._lock:
+            states: dict[str, int] = {}
+            for order in self._by_id.values():
+                states[order.state] = states.get(order.state, 0) + 1
+
+            return OrderObservabilitySnapshot(
+                total_orders=len(self._by_id),
+                states=states,
+                delivered_orders=states.get("entregado", 0),
+                rejected_checkouts=self._rejected_checkouts,
+                rejected_transitions=self._rejected_transitions,
+                idempotent_replays=self._idempotent_replays,
+            )
+
+    def run_consistency_report(self) -> OrderConsistencyReport:
+        with self._lock:
+            inconsistencies: list[str] = []
+            movements = self._product_service.list_stock_movements()
+            movements_by_reference: dict[str, list[StockMovement]] = {}
+            for movement in movements:
+                movements_by_reference.setdefault(movement.reference_id, []).append(movement)
+
+            for order in self._by_id.values():
+                reference_movements = movements_by_reference.get(order.order_id, [])
+                if len(reference_movements) != len(order.lines):
+                    inconsistencies.append(
+                        f"{order.order_id}: expected {len(order.lines)} stock movements, found {len(reference_movements)}"
+                    )
+                    continue
+
+                expected_by_product = {line.product_id: -line.qty for line in order.lines}
+                for movement in reference_movements:
+                    expected_qty = expected_by_product.get(movement.product_id)
+                    if expected_qty is None:
+                        inconsistencies.append(
+                            f"{order.order_id}: unexpected movement product {movement.product_id}"
+                        )
+                        continue
+                    if movement.quantity_delta != expected_qty:
+                        inconsistencies.append(
+                            f"{order.order_id}: product {movement.product_id} expected delta {expected_qty}, got {movement.quantity_delta}"
+                        )
+                    if movement.reason != "pickup-checkout-confirmation":
+                        inconsistencies.append(
+                            f"{order.order_id}: invalid movement reason {movement.reason}"
+                        )
+
+            return OrderConsistencyReport(
+                total_orders=len(self._by_id),
+                orders_with_inconsistencies=len(inconsistencies),
+                inconsistencies=inconsistencies,
+            )
+
     def reset_state(self) -> None:
         with self._lock:
             self._by_id.clear()
             self._by_idempotency_key.clear()
             self._seq = 0
+            self._rejected_checkouts = 0
+            self._rejected_transitions = 0
+            self._idempotent_replays = 0
 
     @staticmethod
     def _clone(order: PickupOrder) -> PickupOrder:

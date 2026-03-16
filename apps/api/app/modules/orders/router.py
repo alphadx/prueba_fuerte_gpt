@@ -1,4 +1,4 @@
-"""API router for stage 5 pickup checkout backend and state machine."""
+"""API router for stage 7 pickup checkout backend hardening."""
 
 from __future__ import annotations
 
@@ -10,6 +10,8 @@ from app.core.permissions import require_roles
 from app.modules.orders.schemas import (
     CatalogProductListResponse,
     CatalogProductResponse,
+    OrderConsistencyReportResponse,
+    OrderObservabilityResponse,
     OrderTransitionRequest,
     OrderTransitionResponse,
     PickupCheckoutConfirmRequest,
@@ -64,6 +66,7 @@ def confirm_pickup_checkout(
         )
     except ValueError as exc:
         detail = "INSUFFICIENT_STOCK_AT_CONFIRMATION" if "stock" in str(exc) else str(exc)
+        pickup_order_service.register_checkout_rejection()
         record_audit_event(
             actor_id=auth.subject,
             action="orders.checkout.rejected",
@@ -72,6 +75,7 @@ def confirm_pickup_checkout(
         )
         raise HTTPException(status_code=409, detail=detail) from exc
     except KeyError as exc:
+        pickup_order_service.register_checkout_rejection()
         raise HTTPException(status_code=404, detail="PRODUCT_NOT_FOUND") from exc
 
     record_audit_event(
@@ -97,6 +101,22 @@ def confirm_pickup_checkout(
             for line in created.lines
         ],
     )
+
+
+@router.get("/orders/observability/metrics", response_model=OrderObservabilityResponse)
+def get_order_observability_metrics(
+    _: AuthContext = Depends(require_roles("admin", "cajero")),
+) -> OrderObservabilityResponse:
+    snapshot = pickup_order_service.get_observability_snapshot()
+    return OrderObservabilityResponse(**vars(snapshot))
+
+
+@router.get("/orders/consistency/report", response_model=OrderConsistencyReportResponse)
+def get_order_consistency_report(
+    _: AuthContext = Depends(require_roles("admin", "cajero")),
+) -> OrderConsistencyReportResponse:
+    report = pickup_order_service.run_consistency_report()
+    return OrderConsistencyReportResponse(**vars(report))
 
 
 @router.get("/orders/{order_id}", response_model=PickupOrderResponse)
@@ -161,6 +181,7 @@ def transition_pickup_order(
         elif "already" in detail:
             detail = "ORDER_ALREADY_IN_TARGET_STATE"
 
+        pickup_order_service.register_transition_rejection()
         record_audit_event(
             actor_id=auth.subject,
             action="orders.transition.rejected",
