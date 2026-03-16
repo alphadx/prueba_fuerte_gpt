@@ -14,7 +14,7 @@ Implementar un POS mínimo operable con flujo de caja confiable, asegurando que 
 - Levantar reglas funcionales obligatorias del flujo POS/caja.
 - Definir casos borde críticos (sesión cerrada, stock insuficiente, pago pendiente, etc.).
 - Acordar métricas de aceptación por subflujo (venta, caja, inventario).
-- **Salida de etapa:** documento de criterios + matriz de escenarios.
+- **Salida de etapa:** documento de criterios + matriz de escenarios. ✅ Completada (ver `docs/paso6_etapa1_analisis.md`).
 
 ### Etapa 2 — Contratos API del flujo POS + caja
 - Revisar y ajustar contratos de endpoints clave (`cash-sessions`, `sales`, `payments`).
@@ -53,6 +53,7 @@ Implementar un POS mínimo operable con flujo de caja confiable, asegurando que 
 - **Salida de etapa:** reporte de cierre con evidencia técnica y estado final.
 
 ## Estado de avance del paso
-- **Cumplimiento estimado:** **0%**
-- **Semáforo:** 🔴 Rojo (inicio de ejecución)
+- **Cumplimiento estimado:** **14%** (1/7 etapas cerradas)
+- **Semáforo:** 🟡 Amarillo (en ejecución controlada)
 - **Regla de ejecución:** se avanza etapa por etapa únicamente cuando el usuario dé la orden explícita.
+- **Etapa actual:** lista para iniciar **Etapa 2 — Contratos API del flujo POS + caja**.
