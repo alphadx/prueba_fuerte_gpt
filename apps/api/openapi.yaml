@@ -472,9 +472,13 @@ components:
         last_error:
           type: string
           nullable: true
+        retry_after_batches:
+          type: integer
+        dead_lettered:
+          type: boolean
     BillingWorkerProcessResponse:
       type: object
-      required: [enqueued, processed, succeeded, failed]
+      required: [enqueued, processed, succeeded, failed, dead_lettered]
       properties:
         enqueued:
           type: integer
@@ -483,6 +487,8 @@ components:
         succeeded:
           type: integer
         failed:
+          type: integer
+        dead_lettered:
           type: integer
 paths:
   /billing/documents/{sale_id}:

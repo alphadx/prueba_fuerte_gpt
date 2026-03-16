@@ -28,6 +28,8 @@ def _to_response(doc: BillingDocument) -> BillingDocumentResponse:
         raw_payload_ref=doc.raw_payload_ref,
         sii_status=doc.sii_status,
         last_error=doc.last_error,
+        retry_after_batches=doc.retry_after_batches,
+        dead_lettered=doc.dead_lettered,
     )
 
 
@@ -47,5 +49,7 @@ def process_billing_queue(
     payload: BillingProcessRequest,
     _: AuthContext = Depends(require_roles("admin")),
 ) -> BillingWorkerProcessResponse:
-    enqueued, processed, succeeded, failed = billing_service.process_worker_batch(limit=payload.limit)
-    return BillingWorkerProcessResponse(enqueued=enqueued, processed=processed, succeeded=succeeded, failed=failed)
+    enqueued, processed, succeeded, failed, dead_lettered = billing_service.process_worker_batch(limit=payload.limit)
+    return BillingWorkerProcessResponse(
+        enqueued=enqueued, processed=processed, succeeded=succeeded, failed=failed, dead_lettered=dead_lettered
+    )

@@ -89,6 +89,7 @@ def test_billing_document_status_flow() -> None:
     assert processed.status_code == 200
     payload_worker = processed.json()
     assert payload_worker["enqueued"] == 1
+    assert payload_worker["dead_lettered"] == 0
     assert payload_worker["succeeded"] == 1
 
     emitted = client.get(f"/billing/documents/{sale_id}", headers=cajero_headers)
@@ -121,8 +122,27 @@ def test_billing_sale_enqueue_is_async_until_worker_batch() -> None:
     processed = client.post("/billing/worker/process", json={"limit": 10}, headers=admin_headers)
     assert processed.status_code == 200
     assert processed.json()["enqueued"] == 1
+    assert processed.json()["dead_lettered"] == 0
 
     emitted = client.get(f"/billing/documents/{sale_id}", headers=cajero_headers)
     assert emitted.status_code == 200
     assert emitted.json()["attempts"] >= 1
     assert emitted.json()["track_id"] is not None
+
+
+def test_billing_worker_reports_dead_lettered_documents(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("BILLING_SANDBOX_FORCE_ERROR", "true")
+    admin_headers = _auth_header(roles=["admin"])
+    cajero_headers = _auth_header(roles=["cajero"])
+    sale_id = _create_sale(admin_headers, cajero_headers)
+
+    for _ in range(10):
+        client.post("/billing/worker/process", json={"limit": 10}, headers=admin_headers)
+
+    doc = client.get(f"/billing/documents/{sale_id}", headers=admin_headers)
+    assert doc.status_code == 200
+    assert doc.json()["dead_lettered"] is True
+
+    worker = client.post("/billing/worker/process", json={"limit": 10}, headers=admin_headers)
+    assert worker.status_code == 200
+    assert worker.json()["dead_lettered"] >= 1

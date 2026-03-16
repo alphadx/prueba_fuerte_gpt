@@ -15,8 +15,8 @@
 7. **Hardening documental** y checklist de cierre del paso.
 
 ## Estado actual del prototipo
-- **Etapa en ejecución:** **Etapa 4 de 7 (completada)**.
-- **Cumplimiento estimado del paso 7:** **57%** (4/7 completadas: análisis + contrato + adaptador + desacople POS/caja).
+- **Etapa en ejecución:** **Etapa 5 de 7 (completada)**.
+- **Cumplimiento estimado del paso 7:** **71%** (5/7 completadas: + resiliencia/reintentos/idempotencia).
 - **Semáforo:** 🟡 Amarillo (En progreso controlado por etapas).
 - **Observación:** Se asume enfoque iterativo; no se considera cierre definitivo del paso hasta completar 7/7 con aprobación explícita por etapa.
 
@@ -25,7 +25,7 @@
 - [x] Etapa 2 — contrato proveedor.
 - [x] Etapa 3 — adaptador sandbox.
 - [x] Etapa 4 — desacople asíncrono POS.
-- [ ] Etapa 5 — resiliencia/reintentos/idempotencia.
+- [x] Etapa 5 — resiliencia/reintentos/idempotencia.
 - [ ] Etapa 6 — consulta de estado + pruebas.
 - [ ] Etapa 7 — hardening documental.
 
@@ -61,3 +61,10 @@
 - `GET /billing/documents/{sale_id}` mantiene visibilidad de estado `queued` incluso antes del drenado por worker (placeholder derivado de cola).
 - `POST /billing/worker/process` ahora reporta `enqueued` + `processed/succeeded/failed` para observabilidad del desacople asincrónico.
 - Se agregaron pruebas para validar desacople: documento en `queued` con `attempts=0` antes del worker y transición luego de ejecutar batch.
+
+
+## Evidencia etapa 5
+- Se agregó backoff por lotes (`retry_after_batches`) para errores transitorios, evitando reintentos agresivos en cada ciclo de worker.
+- Se agregó marcación de dead-letter (`dead_lettered`) al agotar intentos máximos y contador global de documentos en dead-letter.
+- El endpoint del worker ahora reporta `dead_lettered` además de `enqueued/processed/succeeded/failed`.
+- Se añadieron pruebas unitarias y API para validar backoff, transición a dead-letter y observabilidad del contador.

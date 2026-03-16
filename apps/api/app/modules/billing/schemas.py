@@ -24,6 +24,8 @@ class BillingDocumentResponse(BaseModel):
     raw_payload_ref: str | None = None
     sii_status: str | None = None
     last_error: str | None = None
+    retry_after_batches: int = 0
+    dead_lettered: bool = False
 
 
 class BillingWorkerProcessResponse(BaseModel):
@@ -31,3 +33,4 @@ class BillingWorkerProcessResponse(BaseModel):
     processed: int
     succeeded: int
     failed: int
+    dead_lettered: int

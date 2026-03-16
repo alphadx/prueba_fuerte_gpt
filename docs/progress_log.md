@@ -115,3 +115,8 @@ Cada avance debe añadir:
 **Evolución etapa 4 (desacople POS/caja):**
 - Se desacopló confirmación de venta y creación efectiva de documento tributario mediante cola de eventos de emisión.
 - Worker de billing ahora ejecuta fase de drenado + fase de procesamiento, con métricas de lote (`enqueued`, `processed`, `succeeded`, `failed`).
+
+
+**Evolución etapa 5 (resiliencia e idempotencia):**
+- Se incorporó backoff acotado por ciclos de worker para retry de errores transitorios.
+- Se agregó estado/contador de dead-letter para errores no recuperables al agotar intentos.

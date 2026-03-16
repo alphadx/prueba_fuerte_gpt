@@ -28,6 +28,8 @@ class BillingDocument:
     raw_payload_ref: str | None = None
     sii_status: str | None = None
     last_error: str | None = None
+    retry_after_batches: int = 0
+    dead_lettered: bool = False
 
 
 @dataclass
@@ -47,6 +49,7 @@ class BillingService:
         self._documents: dict[tuple[str, str], BillingDocument] = {}
         self._emission_queue: list[BillingEmissionEvent] = []
         self._queued_index: dict[tuple[str, str], BillingEmissionEvent] = {}
+        self._dead_letter_keys: set[tuple[str, str]] = set()
 
     def enqueue_sale_emission_event(
         self,
@@ -93,7 +96,6 @@ class BillingService:
         company_id: str = "company-001",
         document_type: str = "boleta",
     ) -> BillingDocument:
-        """Backward-compatible direct enqueue (used in tests/prototype helpers)."""
         with self._lock:
             key = (sale_id, document_type)
             existing = self._documents.get(key)
@@ -119,27 +121,26 @@ class BillingService:
 
             queued = self._queued_index.get(key)
             if queued is not None:
-                placeholder = self._build_queued_document(
+                return self._build_queued_document(
                     sale_id=queued.sale_id,
                     company_id=queued.company_id,
                     branch_id=queued.branch_id,
                     total=queued.total,
                     document_type=queued.document_type,
                 )
-                return placeholder
 
             raise KeyError("billing document not found")
 
-    def process_worker_batch(self, *, limit: int = 20) -> tuple[int, int, int, int]:
+    def process_worker_batch(self, *, limit: int = 20) -> tuple[int, int, int, int, int]:
         enqueued = self.drain_emission_events(limit=limit)
         processed, succeeded, failed = self.process_pending(limit=limit)
-        return enqueued, processed, succeeded, failed
+        dead_lettered = self.dead_letter_count()
+        return enqueued, processed, succeeded, failed, dead_lettered
 
     def drain_emission_events(self, *, limit: int = 20) -> int:
         with self._lock:
             if limit <= 0:
                 return 0
-
             to_drain = self._emission_queue[:limit]
             self._emission_queue = self._emission_queue[limit:]
 
@@ -161,10 +162,14 @@ class BillingService:
 
     def process_pending(self, *, limit: int = 20) -> tuple[int, int, int]:
         with self._lock:
+            for doc in self._documents.values():
+                if doc.status == "retryable_error" and doc.retry_after_batches > 0:
+                    doc.retry_after_batches -= 1
+
             pending_keys = [
                 key
                 for key, doc in self._documents.items()
-                if doc.status in {"queued", "retryable_error"}
+                if doc.status in {"queued", "retryable_error"} and doc.retry_after_batches == 0
             ][:limit]
 
         processed = succeeded = failed = 0
@@ -183,7 +188,7 @@ class BillingService:
             if doc.status not in {"queued", "retryable_error"}:
                 return True
             if doc.attempts >= doc.max_attempts:
-                doc.status = "failed"
+                self._mark_dead_letter(doc, reason="max attempts exceeded before processing")
                 return False
 
             doc.status = "processing"
@@ -203,7 +208,11 @@ class BillingService:
             with self._lock:
                 doc = self._documents[key]
                 doc.last_error = str(exc)
-                doc.status = "failed" if doc.attempts >= doc.max_attempts else "retryable_error"
+                if doc.attempts >= doc.max_attempts:
+                    self._mark_dead_letter(doc, reason=str(exc))
+                else:
+                    doc.status = "retryable_error"
+                    doc.retry_after_batches = min(2 ** doc.attempts, 8)
             return False
 
         with self._lock:
@@ -217,13 +226,28 @@ class BillingService:
             doc.raw_payload_ref = response.raw_payload_ref
             doc.sii_status = self._provider.get_status(track_id=response.track_id)
             doc.last_error = None
+            doc.retry_after_batches = 0
+            doc.dead_lettered = False
+            self._dead_letter_keys.discard(key)
         return True
+
+    def dead_letter_count(self) -> int:
+        with self._lock:
+            return len(self._dead_letter_keys)
+
+    def _mark_dead_letter(self, doc: BillingDocument, *, reason: str) -> None:
+        doc.status = "failed"
+        doc.dead_lettered = True
+        doc.retry_after_batches = 0
+        doc.last_error = reason
+        self._dead_letter_keys.add((doc.sale_id, doc.document_type))
 
     def reset_state(self) -> None:
         with self._lock:
             self._documents.clear()
             self._emission_queue.clear()
             self._queued_index.clear()
+            self._dead_letter_keys.clear()
 
         reset_provider = getattr(self._provider, "reset_state", None)
         if callable(reset_provider):
