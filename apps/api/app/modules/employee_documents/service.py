@@ -12,6 +12,7 @@ class EmployeeDocument:
     id: str
     employee_id: str
     document_type_code: str
+    issue_on: str
     expires_on: str
     status: str
     metadata: dict[str, Any]
@@ -33,6 +34,7 @@ class EmployeeDocumentService:
         *,
         employee_id: str,
         document_type_code: str,
+        issue_on: str,
         expires_on: str,
         status: str,
         metadata: dict[str, Any],
@@ -47,6 +49,7 @@ class EmployeeDocumentService:
                 id=document_id,
                 employee_id=employee_id,
                 document_type_code=document_type_code,
+                issue_on=issue_on,
                 expires_on=expires_on,
                 status=status,
                 metadata=metadata,
@@ -65,6 +68,7 @@ class EmployeeDocumentService:
         self,
         document_id: str,
         *,
+        issue_on: str | None,
         expires_on: str | None,
         status: str | None,
         metadata: dict[str, Any] | None,
@@ -73,6 +77,8 @@ class EmployeeDocumentService:
             if document_id not in self._by_id:
                 raise KeyError("employee document not found")
             document = self._by_id[document_id]
+            if issue_on is not None:
+                document.issue_on = issue_on
             if expires_on is not None:
                 document.expires_on = expires_on
             if status is not None:

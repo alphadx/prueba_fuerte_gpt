@@ -1,9 +1,9 @@
 # Paso 10 — Implementar RRHH documental flexible y motor de alertas
 
 ## Estado de iteración
-- **Iteración actual:** Etapa 2 de 7 — contrato `DocumentType` con `JSON Schema` versionado y validación en escritura.
+- **Iteración actual:** Etapa 3 de 7 — flujo de carga documental (`archivo + metadatos + fechas`) con separación de almacenamiento y cumplimiento.
 - **Estado:** ✅ Completada.
-- **Regla de control aplicada:** no se inicia etapa 3 sin autorización explícita del usuario.
+- **Regla de control aplicada:** no se inicia etapa 4 sin autorización explícita del usuario.
 
 ## Checklist de indicadores
 - [ ] **Índice de cobertura documental** (meta: 100% fixture).
@@ -101,6 +101,23 @@ Dejar una definición cerrada del problema y de los criterios medibles que gober
 - Unitarias: validación de schema y validación de metadatos por tipo documental.
 - API: CRUD actualizado para contratos nuevos y rechazo de metadatos inválidos.
 
+
+## Implementación realizada en etapa 3
+
+### Flujo documental con fechas de cumplimiento
+- `EmployeeDocument` ahora registra explícitamente `issue_on` y `expires_on` como metadatos de cumplimiento.
+- Se mantuvo la validación de `metadata` contra `DocumentType.metadata_schema` al crear/editar documentos.
+
+### Separación almacenamiento vs cumplimiento
+- Se creó un servicio dedicado `EmployeeDocumentFileStorageService` para persistir metadatos de archivo (`file_name`, `content_type`, `storage_uri`, `uploaded_at`) desacoplados del modelo de cumplimiento documental.
+- Se agregaron endpoints para adjuntar y listar archivos de un documento:
+  - `POST /employee-documents/{document_id}/files`
+  - `GET /employee-documents/{document_id}/files`
+
+### Pruebas añadidas
+- Unitaria nueva para almacenamiento de archivos por documento.
+- API actualizada para validar el flujo completo create document + upload file + list files.
+
 ## Riesgos técnicos y mitigaciones iniciales
 - **Riesgo:** deriva de esquemas JSON no versionados.
   - **Mitigación:** versionado explícito por `DocumentType` y uso de schema activo.
@@ -110,15 +127,15 @@ Dejar una definición cerrada del problema y de los criterios medibles que gober
   - **Mitigación:** crear `AlarmEvent` como operación principal y desacoplar envío por adaptadores.
 
 ## Avance de cumplimiento del paso
-- **Cobertura documental:** 30% (contrato flexible implementado y validado).
-- **Precisión de alertas:** 15% (base contractual lista para motor de evaluación).
+- **Cobertura documental:** 50% (carga documental implementada con separación de almacenamiento/cumplimiento).
+- **Precisión de alertas:** 20% (datos de fechas listos para motor diario).
 - **Entrega de notificaciones:** 5% (sin adaptadores activos).
-- **Cumplimiento estimado total del paso 10:** **25%**.
-- **Semáforo:** 🟡 Amarillo (implementación parcial, faltan motor y notificaciones).
+- **Cumplimiento estimado total del paso 10:** **35%**.
+- **Semáforo:** 🟡 Amarillo (avance sólido de dominio, faltan motor y canales).
 
-## Próxima etapa propuesta (Etapa 3)
-Implementar flujo de carga documental (`archivo + metadatos + fechas`) con separación explícita entre almacenamiento de archivo y modelo de cumplimiento.
+## Próxima etapa propuesta (Etapa 4)
+Implementar motor diario de evaluación de vencimientos (30/15/7/1 días) con reglas determinísticas e idempotencia por ventana.
 
 ---
 
-**Solicitud de control:** etapa 2 finalizada. Indica “avanzar etapa 3” para continuar con la siguiente iteración.
+**Solicitud de control:** etapa 3 finalizada. Indica “avanzar etapa 4” para continuar con la siguiente iteración.
