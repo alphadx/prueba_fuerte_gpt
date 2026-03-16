@@ -61,3 +61,9 @@ go_live_checklist:
   decision: "GO|NO-GO|PENDIENTE_ENTORNO"
   open_critical_risks: []
 ```
+
+
+## Integración con rollback
+- Esta checklist se evalúa junto con `docs/release_rollback_contingency.md`.
+- Si un check bloqueante falla durante release, se activa `ABORT_RELEASE` y se ejecuta runbook de rollback.
+- La decisión final debe reflejar estado de rollback cuando aplique.

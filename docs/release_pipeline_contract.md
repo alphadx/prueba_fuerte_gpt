@@ -73,3 +73,13 @@ release_validation:
 - La corrida final de release debe incluir estado por check (`PASS|FAIL|PENDIENTE_ENTORNO`) y riesgos críticos abiertos.
 - No se permite declarar **GO** con riesgos críticos abiertos ni checks bloqueantes en estado `FAIL`.
 
+
+## Extensión de etapa 6: rollback y contingencia operativa
+- Estrategia oficial: `docs/release_rollback_contingency.md`.
+- Si se activa cualquier criterio `ABORT_RELEASE`, la corrida se cierra como **NO-GO** y se ejecuta rollback controlado.
+- Toda reversión debe adjuntar evidencia mínima de ejecución y validación post-rollback.
+
+## Acciones obligatorias para etapa 7
+1. Ejecutar corrida integral final con consolidación de evidencias (gates + SLO + checklist).
+2. Adjuntar estado de riesgos críticos abiertos/cerrados en la corrida.
+3. Validar decisión final bajo reglas de contingencia y rollback documentadas.
