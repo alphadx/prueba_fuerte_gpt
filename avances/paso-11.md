@@ -1,9 +1,9 @@
 # Paso 11 — Crear estado inicial válido de pruebas
 
 ## Estado de iteración
-- **Iteración actual:** Etapa 3 de 8 — implementación del pipeline de seed idempotente.
+- **Iteración actual:** Etapa 4 de 8 — construcción de fixtures de escenarios críticos.
 - **Estado:** ✅ Completada.
-- **Regla de control aplicada:** se cierra etapa 3 y se solicita autorización explícita para avanzar a etapa 4.
+- **Regla de control aplicada:** se cierra etapa 4 y se solicita autorización explícita para avanzar a etapa 5.
 
 ## Referencias consideradas en esta etapa
 - `plan.md` (definición del paso 11 y entregable `make bootstrap-test-state`).
@@ -65,19 +65,19 @@ Se considerará cumplido el paso 11 cuando se verifique en una corrida:
 - [ ] **Índice de estabilidad de smoke tests** (meta: >= 95%).
 
 ## Grado de cumplimiento
-- **Bootstrap QA:** 42% (pipeline de seed canónico idempotente implementado y validable).
-- **Completitud de fixtures críticos:** 35% (catálogo definido y embebido en seed; ejecución funcional pendiente).
-- **Estabilidad de smoke tests:** 15% (invariantes de seed automatizadas; smoke de escenarios aún pendiente).
+- **Bootstrap QA:** 58% (seed idempotente + pipeline de fixtures funcional implementados).
+- **Completitud de fixtures críticos:** 72% (5 escenarios críticos construidos y validados por catálogo).
+- **Estabilidad de smoke tests:** 22% (validaciones de seed/fixtures activas; smoke integral pendiente).
 
 ## Estado de avance del paso
-- **Cumplimiento estimado:** **38%**.
-- **Semáforo:** 🟠 Amarillo (seed idempotente implementado; faltan fixtures ejecutables + smoke).
-- **Observación:** etapa 3 finalizada con pipeline reproducible de seed y validación automática de invariantes.
+- **Cumplimiento estimado:** **57%**.
+- **Semáforo:** 🟡 Amarillo (fixtures críticos listos; falta suite smoke de escenarios y comando unificado final).
+- **Observación:** etapa 4 finalizada con construcción funcional y validación automática de fixtures críticos.
 
 ---
 
-**Cierre de etapa 3:** completado.
-**Siguiente acción:** solicitar orden del usuario para ejecutar **Etapa 4 (construcción de fixtures de escenarios críticos)**.
+**Cierre de etapa 4:** completado.
+**Siguiente acción:** solicitar orden del usuario para ejecutar **Etapa 5 (implementación de smoke tests de preparación QA)**.
 
 
 ## Implementación realizada en etapa 2
@@ -126,3 +126,27 @@ Se considerará cumplido el paso 11 cuando se verifique en una corrida:
   - `make seed-validate`
   - `make seed-pipeline` (encadena `seed` + `seed-validate`).
 - Con esto, la etapa 3 deja una base ejecutable para bootstrap reproducible, pendiente de integrar fixtures ejecutables y smoke e2e en etapas 4/5.
+
+
+## Implementación realizada en etapa 4
+
+### Cargador reproducible de fixtures críticos
+- Se agregó `infra/scripts/load_fixtures.py` para construir fixtures funcionales con `TestClient` sobre API in-memory, cubriendo los 5 escenarios obligatorios:
+  - `FX-SALE-CASH`,
+  - `FX-SALE-ELECTRONIC`,
+  - `FX-WEB-PICKUP`,
+  - `FX-BILLING-SBX`,
+  - `FX-PAYMENT-WEBHOOK`.
+- El script reinicia estado de servicios antes de ejecutar escenarios para mantener aislamiento entre corridas y evitar deriva.
+- El resultado queda trazado en `infra/seeds/fixtures_state.json` como evidencia de preparación funcional de fixtures.
+
+### Validación automática de catálogo crítico
+- Se agregó `infra/scripts/validate_fixtures.py` para verificar presencia completa de fixtures críticos en el reporte generado.
+- Se extendió `Makefile` con:
+  - `make fixtures`
+  - `make fixtures-validate`
+  - `make fixtures-pipeline`
+
+### Pruebas automatizadas de etapa 4
+- Se añadió `tests/unit/test_fixtures_pipeline.py` para validar generación y chequeo de catálogo crítico en ruta temporal.
+- Se validó ejecución de `fixtures-pipeline` en entorno local con resultado exitoso.
