@@ -132,3 +132,76 @@ def test_pos_rolls_back_when_stock_is_insufficient() -> None:
     assert sale_response.status_code == 409
     assert product_service.get_stock(product_id) == 1
     assert sale_service.list_sales() == []
+
+
+def test_pos_card_stub_keeps_sale_confirmed_and_payment_pending() -> None:
+    admin_headers = _auth_header(roles=["admin"])
+    cajero_headers = _auth_header(roles=["cajero"])
+
+    created_product = client.post(
+        "/products",
+        json={"sku": "POS-003", "name": "Bebida", "price": 1500},
+        headers=admin_headers,
+    )
+    assert created_product.status_code == 201
+    product_id = created_product.json()["id"]
+    product_service.set_stock(product_id, 5)
+
+    opened_session = client.post(
+        "/cash-sessions",
+        json={"branch_id": "br-001", "opened_by": "usr-001", "opening_amount": 0, "status": "open"},
+        headers=cajero_headers,
+    )
+    assert opened_session.status_code == 201
+
+    sale_response = client.post(
+        "/sales/complete",
+        json={
+            "branch_id": "br-001",
+            "cash_session_id": opened_session.json()["id"],
+            "sold_by": "usr-001",
+            "payment_method": "card_stub",
+            "lines": [{"product_id": product_id, "quantity": 1}],
+        },
+        headers=cajero_headers,
+    )
+    assert sale_response.status_code == 201
+    sale = sale_response.json()
+    assert sale["status"] == "confirmed"
+    assert sale["payment_status"] == "pending"
+    assert sale["billing_event_emitted"] is True
+
+
+def test_pos_rejects_sale_when_cash_session_branch_mismatch() -> None:
+    admin_headers = _auth_header(roles=["admin"])
+    cajero_headers = _auth_header(roles=["cajero"])
+
+    created_product = client.post(
+        "/products",
+        json={"sku": "POS-004", "name": "Queso", "price": 2500},
+        headers=admin_headers,
+    )
+    assert created_product.status_code == 201
+    product_id = created_product.json()["id"]
+    product_service.set_stock(product_id, 5)
+
+    opened_session = client.post(
+        "/cash-sessions",
+        json={"branch_id": "br-001", "opened_by": "usr-001", "opening_amount": 0, "status": "open"},
+        headers=cajero_headers,
+    )
+    assert opened_session.status_code == 201
+
+    sale_response = client.post(
+        "/sales/complete",
+        json={
+            "branch_id": "br-999",
+            "cash_session_id": opened_session.json()["id"],
+            "sold_by": "usr-001",
+            "payment_method": "cash",
+            "lines": [{"product_id": product_id, "quantity": 1}],
+        },
+        headers=cajero_headers,
+    )
+    assert sale_response.status_code == 409
+    assert "branch mismatch" in sale_response.json()["detail"]

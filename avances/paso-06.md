@@ -32,7 +32,7 @@ Implementar un POS mínimo operable con flujo de caja confiable, asegurando que 
 - Definir secuencia transaccional de venta completa.
 - Aplicar estados de pago determinísticos por medio de pago.
 - Integrar validaciones de sesión de caja activa + sucursal coherente.
-- **Salida de etapa:** venta confirmada con estados consistentes y auditables.
+- **Salida de etapa:** venta confirmada con estados consistentes y auditables. ✅ Completada (ver `docs/paso6_etapa4_ventas_pagos.md`).
 
 ### Etapa 5 — Consistencia stock/kardex y rollback
 - Garantizar descuento de stock por línea con trazabilidad de referencia de venta.
@@ -53,7 +53,7 @@ Implementar un POS mínimo operable con flujo de caja confiable, asegurando que 
 - **Salida de etapa:** reporte de cierre con evidencia técnica y estado final.
 
 ## Estado de avance del paso
-- **Cumplimiento estimado:** **42%** (3/7 etapas cerradas)
+- **Cumplimiento estimado:** **57%** (4/7 etapas cerradas)
 - **Semáforo:** 🟡 Amarillo (en ejecución controlada)
 - **Regla de ejecución:** se avanza etapa por etapa únicamente cuando el usuario dé la orden explícita.
-- **Etapa actual:** lista para iniciar **Etapa 4 — Confirmación de venta y estados de pago**.
+- **Etapa actual:** lista para iniciar **Etapa 5 — Consistencia stock/kardex y rollback**.

@@ -11,6 +11,11 @@ from app.modules.products.service import ProductService, product_service
 from app.services.queue import queue_client
 
 TWOPLACES = Decimal("0.01")
+PAYMENT_STATE_BY_METHOD: dict[str, tuple[str, str]] = {
+    "cash": ("approved", "paid"),
+    "card_stub": ("pending", "confirmed"),
+    "wallet_stub": ("pending", "confirmed"),
+}
 
 
 @dataclass
@@ -60,7 +65,7 @@ class SaleService:
         lines_payload: list[dict[str, float | str]],
         tax_rate: float = 0.19,
     ) -> Sale:
-        if payment_method not in {"cash", "card_stub", "wallet_stub"}:
+        if payment_method not in PAYMENT_STATE_BY_METHOD:
             raise ValueError("unsupported payment method")
         if not lines_payload:
             raise ValueError("sale requires at least one line")
@@ -117,14 +122,14 @@ class SaleService:
                     self._product_service.set_stock(movement.product_id, current + abs(movement.quantity_delta))
                 raise ValueError("stock update failed; sale rolled back") from exc
 
-            payment_status = "approved" if payment_method == "cash" else "pending"
+            payment_status, sale_status = PAYMENT_STATE_BY_METHOD[payment_method]
 
             sale = Sale(
                 id=sale_id,
                 branch_id=branch_id,
                 cash_session_id=cash_session_id,
                 sold_by=sold_by,
-                status="paid" if payment_status == "approved" else "confirmed",
+                status=sale_status,
                 subtotal=subtotal,
                 taxes=taxes,
                 total=total,
@@ -135,7 +140,7 @@ class SaleService:
             )
             self._by_id[sale_id] = sale
 
-            backend = queue_client.enqueue_alert(
+            queue_client.enqueue_alert(
                 {
                     "event_type": "billing.sale_confirmed",
                     "sale_id": sale.id,
@@ -144,8 +149,6 @@ class SaleService:
                 }
             )
             sale.billing_event_emitted = True
-            if backend:
-                return self._clone(sale)
             return self._clone(sale)
 
     def _clone(self, sale: Sale) -> Sale:
