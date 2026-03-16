@@ -110,13 +110,17 @@ Sí: **algunas tecnologías deben montarse como servicios** (PostgreSQL, Redis, 
 - **Entregable por etapa:** evidencia en `avances/paso-09.md` + solicitud explícita al usuario para autorizar la siguiente iteración.
 
 ## 10) Implementar RRHH documental flexible y motor de alertas
-- Configurar `DocumentType` con campos dinámicos (JSON schema).
-- Crear carga de documentos (archivo + metadatos + fechas).
-- Job diario en worker:
-  - evalúa umbrales (30/15/7/1 días),
-  - genera `AlarmEvent`,
-  - notifica (in-app + email en entorno de pruebas).
-- Entregable: alerta generada y visible para documento de prueba próximo a vencer.
+- **Estado operativo:** este paso se ejecuta como **prototipo iterativo en 7 etapas**.
+- **Regla de control:** al cierre de cada etapa, el equipo debe **solicitar orden de avance** antes de iniciar la siguiente.
+- **Etapas del prototipo (paso 10):**
+  1. análisis funcional/técnico RRHH documental + criterios de aceptación (cobertura documental, precisión de alertas, trazabilidad),
+  2. contrato de `DocumentType` flexible con `JSON Schema` versionado y validación de metadatos en escritura,
+  3. flujo de carga documental (`archivo + metadatos + fechas`) con separación de almacenamiento y modelo de cumplimiento,
+  4. motor diario de evaluación de vencimientos (30/15/7/1 días) con reglas determinísticas e idempotencia por ventana,
+  5. generación de `AlarmEvent` auditable + deduplicación de alertas por documento/umbral,
+  6. notificaciones desacopladas (in-app + email en entorno de pruebas) con tolerancia a fallas por canal,
+  7. hardening final (auditoría de evaluaciones/notificaciones, pruebas integrales, checklist de cierre del paso).
+- **Entregable por etapa:** evidencia en `avances/paso-10.md` + solicitud explícita al usuario para autorizar la siguiente iteración.
 
 ## 11) Crear estado inicial válido de pruebas (seed + fixtures + smoke tests)
 - Datos semilla mínimos:

@@ -8,6 +8,7 @@ Notas para desarrolladores y agentes GPT:
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
+from app.modules.alerts.router import router as alerts_router
 from app.modules.billing.router import router as billing_router
 from app.modules.branches.router import router as branches_router
 from app.modules.cash_sessions.router import router as cash_sessions_router
@@ -64,6 +65,8 @@ app.include_router(employees_router)
 app.include_router(document_types_router)
 
 app.include_router(employee_documents_router)
+
+app.include_router(alerts_router)
 
 app.include_router(payments_router)
 
