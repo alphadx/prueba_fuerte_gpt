@@ -97,14 +97,17 @@ Sí: **algunas tecnologías deben montarse como servicios** (PostgreSQL, Redis, 
 - **Entregable por etapa:** evidencia en `avances/paso-08.md` + solicitud explícita al usuario para autorizar la siguiente iteración.
 
 ## 9) Construir e-commerce básico con retiro en tienda
-- Frontend con:
-  - catálogo y stock por sucursal,
-  - carrito + checkout,
-  - selección de `PickupSlot`.
-- Backend de estados de pedido:
-  - `recibido -> preparado -> listo para retiro -> entregado`.
-- Integrar Bing Maps solo en vista pública de tienda.
-- Entregable: flujo e2e de compra web con retiro.
+- **Estado operativo:** este paso se ejecuta como **prototipo iterativo en 7 etapas**.
+- **Regla de control:** al cierre de cada etapa, el equipo debe **solicitar orden de avance** antes de iniciar la siguiente.
+- **Etapas del prototipo (paso 9):**
+  1. análisis funcional/técnico del canal web retiro + criterios de aceptación e2e (checkout éxito, consistencia stock sucursal, SLA de retiro),
+  2. diseño modular `catalog/cart/checkout/orders/inventory/pickup_slots` y contratos API (incluyendo errores normalizados),
+  3. frontend MVP de catálogo por sucursal + carrito + checkout con selección de `PickupSlot` y validaciones de UX responsive,
+  4. backend de creación de pedido con reserva/descuento de stock por sucursal e idempotencia en confirmación de checkout,
+  5. máquina de estados de pedido con transiciones válidas y auditables `recibido -> preparado -> listo_para_retiro -> entregado`,
+  6. integración de Bing Maps solo en vista pública de tienda + pruebas integrales/e2e del flujo completo web-to-store,
+  7. hardening final (consistencia stock web/tienda, observabilidad mínima, checklist de cierre y criterios de salida del paso).
+- **Entregable por etapa:** evidencia en `avances/paso-09.md` + solicitud explícita al usuario para autorizar la siguiente iteración.
 
 ## 10) Implementar RRHH documental flexible y motor de alertas
 - Configurar `DocumentType` con campos dinámicos (JSON schema).
