@@ -30,6 +30,13 @@ class CashSessionService:
 
     def create_session(self, *, branch_id: str, opened_by: str, opening_amount: float, status: str) -> CashSession:
         with self._lock:
+            if status != "open":
+                raise ValueError("cash session must start in open status")
+            if any(
+                existing.status == "open" and existing.branch_id == branch_id and existing.opened_by == opened_by
+                for existing in self._by_id.values()
+            ):
+                raise ValueError("operator already has an open cash session in this branch")
             self._seq += 1
             session_id = f"cash-{self._seq:04d}"
             session = CashSession(
@@ -56,14 +63,22 @@ class CashSessionService:
             if session_id not in self._by_id:
                 raise KeyError("cash session not found")
             session = self._by_id[session_id]
+
+            if session.status != "open" and (cash_delta is not None or closing_amount is not None or status is not None):
+                raise ValueError("only open cash sessions can be updated")
+
             if cash_delta is not None:
                 session.expected_amount += cash_delta
+
             if closing_amount is not None:
                 session.closing_amount = closing_amount
                 session.difference_amount = closing_amount - session.expected_amount
+
             if status is not None:
                 if status == "closed" and session.closing_amount is None:
                     raise ValueError("closing amount required")
+                if status not in {"open", "closed"}:
+                    raise ValueError("invalid cash session status")
                 session.status = status
             return CashSession(**vars(session))
 

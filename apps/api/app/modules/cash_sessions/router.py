@@ -41,12 +41,15 @@ def create_session(
     payload: CashSessionCreateRequest,
     auth: AuthContext = Depends(require_roles("admin", "cajero")),
 ) -> CashSessionResponse:
-    created = cash_session_service.create_session(
-        branch_id=payload.branch_id,
-        opened_by=payload.opened_by,
-        opening_amount=payload.opening_amount,
-        status=payload.status,
-    )
+    try:
+        created = cash_session_service.create_session(
+            branch_id=payload.branch_id,
+            opened_by=payload.opened_by,
+            opening_amount=payload.opening_amount,
+            status=payload.status,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
 
     record_audit_event(
         actor_id=auth.subject,

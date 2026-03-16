@@ -26,7 +26,7 @@ Implementar un POS mínimo operable con flujo de caja confiable, asegurando que 
 - Formalizar invariantes de apertura/cierre (una caja abierta por operador/sucursal, según regla acordada).
 - Implementar cálculo determinístico de `expected_amount` y `difference_amount`.
 - Asegurar cierre de caja con validaciones de estado y consistencia.
-- **Salida de etapa:** flujo de caja verificable extremo a extremo.
+- **Salida de etapa:** flujo de caja verificable extremo a extremo. ✅ Completada (ver `docs/paso6_etapa3_reglas_caja.md`).
 
 ### Etapa 4 — Confirmación de venta y estados de pago
 - Definir secuencia transaccional de venta completa.
@@ -53,7 +53,7 @@ Implementar un POS mínimo operable con flujo de caja confiable, asegurando que 
 - **Salida de etapa:** reporte de cierre con evidencia técnica y estado final.
 
 ## Estado de avance del paso
-- **Cumplimiento estimado:** **28%** (2/7 etapas cerradas)
+- **Cumplimiento estimado:** **42%** (3/7 etapas cerradas)
 - **Semáforo:** 🟡 Amarillo (en ejecución controlada)
 - **Regla de ejecución:** se avanza etapa por etapa únicamente cuando el usuario dé la orden explícita.
-- **Etapa actual:** lista para iniciar **Etapa 3 — Reglas de caja y arqueo mínimo operable**.
+- **Etapa actual:** lista para iniciar **Etapa 4 — Confirmación de venta y estados de pago**.
