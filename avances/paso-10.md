@@ -1,9 +1,9 @@
 # Paso 10 — Implementar RRHH documental flexible y motor de alertas
 
 ## Estado de iteración
-- **Iteración actual:** Etapa 3 de 7 — flujo de carga documental (`archivo + metadatos + fechas`) con separación de almacenamiento y cumplimiento.
+- **Iteración actual:** Etapa 4 de 7 — motor diario de evaluación de vencimientos (30/15/7/1) con idempotencia por ventana.
 - **Estado:** ✅ Completada.
-- **Regla de control aplicada:** no se inicia etapa 4 sin autorización explícita del usuario.
+- **Regla de control aplicada:** no se inicia etapa 5 sin autorización explícita del usuario.
 
 ## Checklist de indicadores
 - [ ] **Índice de cobertura documental** (meta: 100% fixture).
@@ -118,6 +118,26 @@ Dejar una definición cerrada del problema y de los criterios medibles que gober
 - Unitaria nueva para almacenamiento de archivos por documento.
 - API actualizada para validar el flujo completo create document + upload file + list files.
 
+
+## Implementación realizada en etapa 4
+
+### Motor diario determinístico
+- Se creó `AlarmEventService` para evaluar documentos contra umbrales `30/15/7/1` usando `evaluation_date` explícita.
+- La evaluación usa cálculo determinístico de `days_to_expire` desde `expires_on`.
+
+### Idempotencia por ventana
+- Se implementó deduplicación por clave `(employee_document_id, threshold_days, evaluation_date)`.
+- Re-ejecutar el job para la misma fecha no genera eventos duplicados.
+
+### Exposición API del evaluador
+- Nuevo endpoint `POST /alerts/evaluate` (roles `admin`, `rrhh`) para ejecutar la evaluación diaria.
+- Nuevo endpoint `GET /alerts/events` para revisar eventos generados.
+- Los eventos nuevos se encolan a `alerts_queue` vía `queue_client` para procesamiento asíncrono.
+
+### Pruebas añadidas
+- Unitarias para generación por umbral e idempotencia del motor.
+- API para evaluación con resultado idempotente y control RBAC en consulta de eventos.
+
 ## Riesgos técnicos y mitigaciones iniciales
 - **Riesgo:** deriva de esquemas JSON no versionados.
   - **Mitigación:** versionado explícito por `DocumentType` y uso de schema activo.
@@ -127,15 +147,15 @@ Dejar una definición cerrada del problema y de los criterios medibles que gober
   - **Mitigación:** crear `AlarmEvent` como operación principal y desacoplar envío por adaptadores.
 
 ## Avance de cumplimiento del paso
-- **Cobertura documental:** 50% (carga documental implementada con separación de almacenamiento/cumplimiento).
-- **Precisión de alertas:** 20% (datos de fechas listos para motor diario).
-- **Entrega de notificaciones:** 5% (sin adaptadores activos).
-- **Cumplimiento estimado total del paso 10:** **35%**.
-- **Semáforo:** 🟡 Amarillo (avance sólido de dominio, faltan motor y canales).
+- **Cobertura documental:** 60% (flujo documental y evaluación diaria integrados).
+- **Precisión de alertas:** 45% (motor por umbrales activo e idempotente por ventana).
+- **Entrega de notificaciones:** 10% (eventos ya encolados, faltan canales finales).
+- **Cumplimiento estimado total del paso 10:** **50%**.
+- **Semáforo:** 🟡 Amarillo (núcleo de alertas activo, faltan deduplicación auditable avanzada y notificaciones desacopladas finales).
 
-## Próxima etapa propuesta (Etapa 4)
-Implementar motor diario de evaluación de vencimientos (30/15/7/1 días) con reglas determinísticas e idempotencia por ventana.
+## Próxima etapa propuesta (Etapa 5)
+Implementar generación de `AlarmEvent` auditable con deduplicación ampliada por documento/umbral y trazabilidad de resultados de evaluación.
 
 ---
 
-**Solicitud de control:** etapa 3 finalizada. Indica “avanzar etapa 4” para continuar con la siguiente iteración.
+**Solicitud de control:** etapa 4 finalizada. Indica “avanzar etapa 5” para continuar con la siguiente iteración.
