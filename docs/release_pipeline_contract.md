@@ -57,3 +57,14 @@ release_validation:
 1. Corregir o aislar fallo de billing para llevar `make test` a verde.
 2. Ejecutar evidencia de `compose-smoke` en entorno con Docker.
 3. Versionar reporte consolidado de corrida final usando la plantilla de este contrato.
+
+## Extensión de etapa 4: SLO/SLI y ownership operativo
+- Las reglas de umbral, severidad, ventanas y responsables por dominio se definen en `docs/release_slo_ownership.md`.
+- La decisión de release debe validar, además de los gates, que no existan alertas P0/P1 activas fuera de tolerancia SLO.
+- Si un SLO crítico está fuera de umbral durante su ventana, la decisión final permanece en **NO-GO** aunque los gates de pruebas estén en verde.
+
+## Acciones obligatorias para etapa 5
+1. Convertir SLO/SLI definidos en checklist ejecutable de go-live MVP.
+2. Clasificar riesgos críticos/no críticos con due date y owner.
+3. Adjuntar evidencia de validación contra umbrales en la corrida integral.
+

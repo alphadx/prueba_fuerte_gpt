@@ -1,55 +1,57 @@
 # Paso 12 — Validación final, observabilidad y checklist de salida
 
 ## Estado de iteración
-- **Iteración actual:** Etapa 3 de 8 — instrumentación mínima de observabilidad.
+- **Iteración actual:** Etapa 4 de 8 — definición de umbrales SLO/SLI, owners y alertas accionables.
 - **Estado:** ✅ Completada.
-- **Regla de control aplicada:** etapa cerrada; se requiere autorización del usuario para iniciar etapa 4.
+- **Regla de control aplicada:** etapa cerrada; se requiere autorización del usuario para iniciar etapa 5.
 
 ## Referencias documentales consideradas
-- `plan.md` (definición de etapa 3 del paso 12).
+- `plan.md` (definición de etapa 4 del paso 12).
 - `docs/release_pipeline_contract.md` (gates y criterio GO/NO-GO/PENDIENTE_ENTORNO).
-- `apps/api/openapi.yaml` (contrato HTTP actualizado antes de exponer endpoints).
+- `docs/release_slo_ownership.md` (nuevo marco de SLO/SLI y ownership operativo).
+- `apps/api/openapi.yaml` (endpoints de observabilidad de etapa 3 utilizados como fuente SLI).
 
-## Objetivo de la etapa 3
-Implementar observabilidad mínima operable para release readiness en los flujos más críticos: emisión de boletas y pagos.
+## Objetivo de la etapa 4
+Definir umbrales operativos mínimos (SLO), reglas de alerta accionables y ownership explícito por dominio para endurecer la decisión de salida MVP.
 
 ## Implementación realizada
 
-### 1) Observabilidad de billing
-- Se agregó snapshot de métricas en `BillingService`:
-  - `queue_depth`, `queued_documents`, `processing_documents`, `dead_lettered_documents`, `total_documents`, `error_rate`.
-- Se expuso endpoint protegido `GET /billing/observability/metrics`.
+### 1) Matriz formal SLI/SLO por dominio
+Se creó `docs/release_slo_ownership.md` con:
+- SLI críticos del release: pipeline, salud API, billing y pagos.
+- Umbrales SLO con ventana temporal y severidad (P0/P1/P2).
+- Owners por dominio y acción inmediata ante incumplimiento.
 
-### 2) Observabilidad de pagos
-- Se agregó snapshot de métricas en `PaymentService`:
-  - `payments_total`, `approved_total`, `rejected_total`, `pending_total`, `webhook_events_processed`, `error_rate`.
-- Se expuso endpoint protegido `GET /payments/observability/metrics` con traza de auditoría.
+### 2) Reglas de alerta accionables
+Se definieron alertas mínimas y runbooks breves:
+- **A1:** bloqueo de release por gate rojo (P0).
+- **A2:** degradación de billing por error_rate/dead-letter (P1).
+- **A3:** degradación de pagos por error_rate/pending_total (P1/P2).
 
-### 3) Contrato API y pruebas
-- Se actualizaron schemas FastAPI para respuestas de observabilidad de billing y pagos.
-- Se actualizó `apps/api/openapi.yaml` con ambos endpoints y sus componentes.
-- Se agregaron pruebas API para validar payloads y cálculo base de métricas.
+### 3) Endurecimiento del contrato de release
+Se actualizó `docs/release_pipeline_contract.md` para que la decisión final valide también estado SLO:
+- Si hay SLO crítico fuera de umbral en su ventana, el release permanece en **NO-GO** aunque los tests estén verdes.
+- Se dejó backlog obligatorio para etapa 5 enfocado en checklist go-live y clasificación de riesgos.
 
-## Resultado de la etapa 3
-- **Cobertura funcional:** observabilidad mínima activa para dos dominios críticos del release.
-- **Estado release:** **NO-GO** se mantiene (hasta resolver gate `make test` completo y evidencia Docker en entorno compatible).
-- **Semáforo del paso:** 🟠 Ámbar con mejora en telemetría operativa.
+## Resultado de la etapa 4
+- **Cobertura funcional:** contrato de salida ahora incluye quality gates + señales operativas con ownership.
+- **Estado release:** **NO-GO** condicionado hasta evidencia de cumplimiento SLO + validación Docker en entorno compatible.
+- **Semáforo del paso:** 🟠 Ámbar con mejora en gobernanza operativa.
 
-## Evidencia de ejecución (etapa 3)
-- `pytest -q tests/api/test_billing.py tests/api/test_payments.py`
+## Evidencia de ejecución (etapa 4)
 - `make test`
 - `make bootstrap-validate`
 - `make smoke-test-state`
 - `make doctor-docker`
 
-## Avance del paso 12 tras etapa 3
-- **Salud de pipeline:** 55%.
-- **SLO técnico mínimo:** 40%.
-- **Preparación go-live:** 24%.
-- **Cumplimiento estimado total del paso:** **41%**.
+## Avance del paso 12 tras etapa 4
+- **Salud de pipeline:** 60%.
+- **SLO técnico mínimo:** 62% (umbrales y ownership definidos; falta evidencia sostenida por ventana).
+- **Preparación go-live:** 36%.
+- **Cumplimiento estimado total del paso:** **50%**.
 - **Semáforo:** 🟠 Ámbar.
 
 ---
 
-**Cierre de etapa 3:** completado.
-**Solicitud de control:** indícame si autorizas avanzar con la **Etapa 4 (definición de umbrales SLO + owners y alertas de operación)**.
+**Cierre de etapa 4:** completado.
+**Solicitud de control:** indícame si autorizas avanzar con la **Etapa 5 (checklist de go-live MVP con clasificación de riesgos críticos/no críticos)**.
