@@ -1,8 +1,18 @@
 const currency = new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 });
 
 const branches = [
-  { id: "br_01", name: "Sucursal Centro" },
-  { id: "br_02", name: "Sucursal Norte" },
+  {
+    id: "br_01",
+    name: "Sucursal Centro",
+    address: "Av. Libertador Bernardo O'Higgins 949, Santiago",
+    bingEmbedUrl: "https://www.bing.com/maps/embed?h=280&w=1024&cp=-33.4429~-70.6506&lvl=16&typ=d&sty=r&src=SHELL&FORM=MBEDV8",
+  },
+  {
+    id: "br_02",
+    name: "Sucursal Norte",
+    address: "Av. Independencia 565, Independencia, Santiago",
+    bingEmbedUrl: "https://www.bing.com/maps/embed?h=280&w=1024&cp=-33.4196~-70.6518&lvl=16&typ=d&sty=r&src=SHELL&FORM=MBEDV8",
+  },
 ];
 
 const catalogByBranch = {
@@ -33,6 +43,8 @@ const subtotal = document.querySelector("#subtotal");
 const checkoutForm = document.querySelector("#checkout-form");
 const pickupSlotSelect = document.querySelector("#pickup-slot");
 const checkoutStatus = document.querySelector("#checkout-status");
+const mapFrame = document.querySelector("#bing-map-frame");
+const storeAddress = document.querySelector("#store-address");
 
 function renderBranches() {
   branches.forEach((branch) => {
@@ -57,6 +69,14 @@ function renderCatalog() {
     card.querySelector("button")?.addEventListener("click", () => addToCart(product));
     catalog.append(card);
   });
+}
+
+
+function renderPublicStoreMap() {
+  const branch = branches.find((item) => item.id === selectedBranch);
+  if (!branch) return;
+  mapFrame.src = branch.bingEmbedUrl;
+  storeAddress.textContent = `${branch.name} · ${branch.address}`;
 }
 
 function renderPickupSlots() {
@@ -102,6 +122,7 @@ branchSelect.addEventListener("change", (event) => {
   checkoutStatus.className = "status";
   renderCatalog();
   renderPickupSlots();
+  renderPublicStoreMap();
   renderCart();
 });
 
@@ -127,4 +148,5 @@ checkoutForm.addEventListener("submit", (event) => {
 renderBranches();
 renderCatalog();
 renderPickupSlots();
+renderPublicStoreMap();
 renderCart();

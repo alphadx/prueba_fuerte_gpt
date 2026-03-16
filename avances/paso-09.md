@@ -2,7 +2,7 @@
 
 ## Estado operativo
 - **Ejecución:** iterativa en 7 etapas (según `plan.md`).
-- **Etapa actual:** ✅ **Etapa 5 completada** (máquina de estados + transiciones auditables).
+- **Etapa actual:** ✅ **Etapa 6 completada** (Bing Maps público + pruebas e2e integrales).
 - **Regla de control:** no se inicia la etapa siguiente sin autorización explícita del usuario.
 
 ## Checklist de indicadores del paso
@@ -10,10 +10,10 @@
 - [ ] **Índice de consistencia stock web/tienda** (meta: >= 99% sin quiebres por desalineación).
 - [ ] **Índice de transición válida de estados de pedido** (meta: 100%).
 
-## Grado de cumplimiento (al cierre de etapa 5)
-- **Éxito checkout retiro:** 70% (flujo backend estable + consulta de pedidos).
-- **Consistencia stock web/tienda:** 60% (descuento/rollback operativos en checkout).
-- **Transición de estados de pedido:** 80% (máquina de estados forward-only implementada y validada).
+## Grado de cumplimiento (al cierre de etapa 6)
+- **Éxito checkout retiro:** 82% (flujo e2e web-to-store validado en pruebas API).
+- **Consistencia stock web/tienda:** 72% (descuento y verificación post-entrega en escenario e2e).
+- **Transición de estados de pedido:** 90% (ciclo completo hasta `entregado` validado).
 
 ---
 
@@ -122,10 +122,30 @@ Se creó un frontend MVP estático en `apps/web`:
 - [x] Historial de cambios de estado persistido en memoria para trazabilidad.
 - [x] Pruebas API y unitarias cubriendo flujo válido, saltos inválidos y repetición de estado.
 
+
+## Etapa 6 — Bing Maps público + pruebas e2e integrales (completada)
+
+### Implementación realizada
+- Se añadió vista pública de ubicación de tienda en frontend con iframe de **Bing Maps** por sucursal.
+- El mapa cambia dinámicamente al cambiar la sucursal seleccionada.
+- Se muestra dirección pública de la sucursal junto al mapa, sin acoplar lógica de dominio de pedidos en el componente de mapa.
+- Se creó prueba e2e API del flujo completo web-to-store:
+  1) catálogo por sucursal,
+  2) consulta de pickup slots,
+  3) checkout pickup,
+  4) transición `recibido -> preparado -> listo_para_retiro -> entregado`,
+  5) verificación final de estado e impacto de stock.
+
+### DoD etapa 6 (cumplido)
+- [x] Bing Maps integrado solo en vista pública de tienda.
+- [x] Comportamiento responsive mantiene visualización del mapa.
+- [x] Prueba e2e integral del flujo pickup implementada y pasando.
+- [x] Evidencia de estado final `entregado` y consistencia de stock en test e2e.
+
 ## Estado de avance del paso
-- **Cumplimiento estimado total del paso 9:** **76%** (incluye máquina de estados y trazabilidad).
-- **Semáforo:** 🟡 Amarillo (núcleo de pedidos estable; faltan e2e integrales y Bing Maps).
-- **Próximo hito:** etapa 6 (integración Bing Maps en vista pública + pruebas e2e integrales).
+- **Cumplimiento estimado total del paso 9:** **88%** (incluye mapa público y e2e integral).
+- **Semáforo:** 🟢 Verde parcial (solo pendiente hardening final del paso).
+- **Próximo hito:** etapa 7 (hardening final: consistencia, observabilidad y checklist de cierre).
 
 ## Solicitud de control de avance
-**Etapa 5 finalizada.** Indica explícitamente si autorizas avanzar a la **Etapa 6**.
+**Etapa 6 finalizada.** Indica explícitamente si autorizas avanzar a la **Etapa 7**.

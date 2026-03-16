@@ -7,7 +7,8 @@ Frontend MVP del paso 9 (e-commerce con retiro en tienda).
 - catálogo con stock visible por sucursal,
 - carrito con subtotal,
 - checkout con selección de `PickupSlot`,
-- validaciones básicas y layout responsive.
+- validaciones básicas y layout responsive,
+- vista pública de ubicación con Bing Maps embebido por sucursal.
 
 ## Ejecutar localmente (modo estático)
 Desde este directorio:
