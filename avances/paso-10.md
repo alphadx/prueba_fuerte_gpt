@@ -1,9 +1,9 @@
 # Paso 10 — Implementar RRHH documental flexible y motor de alertas
 
 ## Estado de iteración
-- **Iteración actual:** Etapa 4 de 7 — motor diario de evaluación de vencimientos (30/15/7/1) con idempotencia por ventana.
+- **Iteración actual:** Etapa 5 de 7 — generación de `AlarmEvent` auditable con deduplicación ampliada y trazabilidad.
 - **Estado:** ✅ Completada.
-- **Regla de control aplicada:** no se inicia etapa 5 sin autorización explícita del usuario.
+- **Regla de control aplicada:** no se inicia etapa 6 sin autorización explícita del usuario.
 
 ## Checklist de indicadores
 - [ ] **Índice de cobertura documental** (meta: 100% fixture).
@@ -138,6 +138,25 @@ Dejar una definición cerrada del problema y de los criterios medibles que gober
 - Unitarias para generación por umbral e idempotencia del motor.
 - API para evaluación con resultado idempotente y control RBAC en consulta de eventos.
 
+
+## Implementación realizada en etapa 5
+
+### AlarmEvent auditable
+- Se amplió `AlarmEvent` con campos de trazabilidad: `dedupe_key`, `source`, `generated_at` y `rule_snapshot`.
+- Cada evento ahora conserva evidencia explícita de la regla aplicada en el momento de evaluación.
+
+### Deduplicación y trazabilidad de evaluaciones
+- Se mantuvo deduplicación por `(employee_document_id, threshold_days, evaluation_date)` y se expuso su representación en `dedupe_key`.
+- Se agregó `AlertEvaluationRun` para registrar cada corrida con métricas de control (`scanned_documents`, `matched_documents`, `duplicate_events`, `expired_documents`, `generated_events`).
+
+### Exposición API de auditoría
+- `POST /alerts/evaluate` ahora retorna resumen de la corrida (`run`) además de eventos generados.
+- Nuevo endpoint `GET /alerts/evaluations` para revisar historial de corridas del evaluador.
+
+### Pruebas añadidas
+- Unitarias para validar contadores de duplicados/expirados y estructura auditable del evento.
+- API para validar respuesta de `run`, deduplicación observable y listado de corridas.
+
 ## Riesgos técnicos y mitigaciones iniciales
 - **Riesgo:** deriva de esquemas JSON no versionados.
   - **Mitigación:** versionado explícito por `DocumentType` y uso de schema activo.
@@ -147,15 +166,15 @@ Dejar una definición cerrada del problema y de los criterios medibles que gober
   - **Mitigación:** crear `AlarmEvent` como operación principal y desacoplar envío por adaptadores.
 
 ## Avance de cumplimiento del paso
-- **Cobertura documental:** 60% (flujo documental y evaluación diaria integrados).
-- **Precisión de alertas:** 45% (motor por umbrales activo e idempotente por ventana).
-- **Entrega de notificaciones:** 10% (eventos ya encolados, faltan canales finales).
-- **Cumplimiento estimado total del paso 10:** **50%**.
-- **Semáforo:** 🟡 Amarillo (núcleo de alertas activo, faltan deduplicación auditable avanzada y notificaciones desacopladas finales).
+- **Cobertura documental:** 65% (dominio documental y almacenamiento separados, con trazabilidad de evaluación).
+- **Precisión de alertas:** 60% (eventos generados con auditoría de deduplicación y métricas por corrida).
+- **Entrega de notificaciones:** 15% (encolado activo, falta despacho por canal).
+- **Cumplimiento estimado total del paso 10:** **60%**.
+- **Semáforo:** 🟡 Amarillo (motor robustecido; pendiente notificación desacoplada y hardening final).
 
-## Próxima etapa propuesta (Etapa 5)
-Implementar generación de `AlarmEvent` auditable con deduplicación ampliada por documento/umbral y trazabilidad de resultados de evaluación.
+## Próxima etapa propuesta (Etapa 6)
+Implementar notificaciones desacopladas (in-app + email en pruebas) con tolerancia a fallas por canal y evidencia de entrega.
 
 ---
 
-**Solicitud de control:** etapa 4 finalizada. Indica “avanzar etapa 5” para continuar con la siguiente iteración.
+**Solicitud de control:** etapa 5 finalizada. Indica “avanzar etapa 6” para continuar con la siguiente iteración.

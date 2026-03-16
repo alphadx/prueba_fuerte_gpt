@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, datetime
 from threading import RLock
 
 from app.modules.employee_documents.service import EmployeeDocument
@@ -18,19 +18,48 @@ class AlarmEvent:
     threshold_days: int
     days_to_expire: int
     evaluation_date: str
+    dedupe_key: str
     status: str
+    source: str
+    generated_at: str
+    rule_snapshot: dict[str, object]
+
+
+@dataclass
+class AlertEvaluationRun:
+    id: str
+    evaluation_date: str
+    thresholds: tuple[int, ...]
+    scanned_documents: int
+    matched_documents: int
+    duplicate_events: int
+    expired_documents: int
+    generated_events: int
+    created_at: str
+
+
+@dataclass
+class AlertEvaluationResult:
+    events: list[AlarmEvent]
+    run: AlertEvaluationRun
 
 
 class AlarmEventService:
     def __init__(self) -> None:
         self._by_id: dict[str, AlarmEvent] = {}
         self._ids_by_key: dict[tuple[str, int, str], str] = {}
-        self._seq = 0
+        self._runs_by_id: dict[str, AlertEvaluationRun] = {}
+        self._event_seq = 0
+        self._run_seq = 0
         self._lock = RLock()
 
     def list_events(self) -> list[AlarmEvent]:
         with self._lock:
             return [AlarmEvent(**vars(item)) for item in self._by_id.values()]
+
+    def list_runs(self) -> list[AlertEvaluationRun]:
+        with self._lock:
+            return [AlertEvaluationRun(**vars(item)) for item in self._runs_by_id.values()]
 
     def evaluate_documents(
         self,
@@ -38,25 +67,33 @@ class AlarmEventService:
         documents: list[EmployeeDocument],
         evaluation_date: str,
         thresholds: tuple[int, ...] = (30, 15, 7, 1),
-    ) -> list[AlarmEvent]:
+    ) -> AlertEvaluationResult:
         today = date.fromisoformat(evaluation_date)
+        now = datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
+
         created_events: list[AlarmEvent] = []
+        matched_documents = 0
+        duplicate_events = 0
+        expired_documents = 0
 
         with self._lock:
             for doc in documents:
                 expiry = date.fromisoformat(doc.expires_on)
                 days_to_expire = (expiry - today).days
                 if days_to_expire < 0:
+                    expired_documents += 1
                     continue
                 if days_to_expire not in thresholds:
                     continue
 
+                matched_documents += 1
                 dedupe_key = (doc.id, days_to_expire, evaluation_date)
                 if dedupe_key in self._ids_by_key:
+                    duplicate_events += 1
                     continue
 
-                self._seq += 1
-                event_id = f"alarm-{self._seq:04d}"
+                self._event_seq += 1
+                event_id = f"alarm-{self._event_seq:04d}"
                 event = AlarmEvent(
                     id=event_id,
                     employee_document_id=doc.id,
@@ -65,19 +102,40 @@ class AlarmEventService:
                     threshold_days=days_to_expire,
                     days_to_expire=days_to_expire,
                     evaluation_date=evaluation_date,
+                    dedupe_key=f"{doc.id}:{days_to_expire}:{evaluation_date}",
                     status="pending",
+                    source="daily_evaluator",
+                    generated_at=now,
+                    rule_snapshot={"threshold_days": days_to_expire, "evaluation_date": evaluation_date},
                 )
                 self._by_id[event_id] = event
                 self._ids_by_key[dedupe_key] = event_id
                 created_events.append(AlarmEvent(**vars(event)))
 
-        return created_events
+            self._run_seq += 1
+            run_id = f"eval-{self._run_seq:04d}"
+            run = AlertEvaluationRun(
+                id=run_id,
+                evaluation_date=evaluation_date,
+                thresholds=thresholds,
+                scanned_documents=len(documents),
+                matched_documents=matched_documents,
+                duplicate_events=duplicate_events,
+                expired_documents=expired_documents,
+                generated_events=len(created_events),
+                created_at=now,
+            )
+            self._runs_by_id[run_id] = run
+
+        return AlertEvaluationResult(events=created_events, run=AlertEvaluationRun(**vars(run)))
 
     def reset_state(self) -> None:
         with self._lock:
             self._by_id.clear()
             self._ids_by_key.clear()
-            self._seq = 0
+            self._runs_by_id.clear()
+            self._event_seq = 0
+            self._run_seq = 0
 
 
 alarm_event_service = AlarmEventService()

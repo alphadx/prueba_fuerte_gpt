@@ -74,12 +74,26 @@ def test_alerts_evaluate_for_rrhh_and_idempotent_per_window() -> None:
     assert first_body["generated"] == 1
     assert first_body["queued"] == 1
     assert first_body["items"][0]["threshold_days"] == 7
+    assert first_body["items"][0]["dedupe_key"].endswith(":7:2025-01-24")
+    assert first_body["run"]["generated_events"] == 1
 
     second = client.post("/alerts/evaluate", json={"evaluation_date": "2025-01-24"}, headers=headers)
     assert second.status_code == 200
     second_body = second.json()
     assert second_body["generated"] == 0
     assert second_body["queued"] == 0
+    assert second_body["run"]["duplicate_events"] == 1
+
+
+def test_alerts_evaluations_list_for_rrhh() -> None:
+    headers = _auth_header(roles=["rrhh"])
+    client.post("/alerts/evaluate", json={"evaluation_date": "2025-01-24"}, headers=headers)
+
+    response = client.get("/alerts/evaluations", headers=headers)
+    assert response.status_code == 200
+    body = response.json()
+    assert len(body["items"]) == 1
+    assert body["items"][0]["evaluation_date"] == "2025-01-24"
 
 
 def test_alerts_events_forbidden_for_cajero() -> None:
