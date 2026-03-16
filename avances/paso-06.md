@@ -20,7 +20,7 @@ Implementar un POS mínimo operable con flujo de caja confiable, asegurando que 
 - Revisar y ajustar contratos de endpoints clave (`cash-sessions`, `sales`, `payments`).
 - Estandarizar códigos de error y mensajes por regla de dominio.
 - Definir payloads mínimos y campos obligatorios para trazabilidad.
-- **Salida de etapa:** contrato API validado y versionado.
+- **Salida de etapa:** contrato API validado y versionado. ✅ Completada (ver `docs/paso6_etapa2_contratos_api.md`).
 
 ### Etapa 3 — Reglas de caja y arqueo mínimo operable
 - Formalizar invariantes de apertura/cierre (una caja abierta por operador/sucursal, según regla acordada).
@@ -53,7 +53,7 @@ Implementar un POS mínimo operable con flujo de caja confiable, asegurando que 
 - **Salida de etapa:** reporte de cierre con evidencia técnica y estado final.
 
 ## Estado de avance del paso
-- **Cumplimiento estimado:** **14%** (1/7 etapas cerradas)
+- **Cumplimiento estimado:** **28%** (2/7 etapas cerradas)
 - **Semáforo:** 🟡 Amarillo (en ejecución controlada)
 - **Regla de ejecución:** se avanza etapa por etapa únicamente cuando el usuario dé la orden explícita.
-- **Etapa actual:** lista para iniciar **Etapa 2 — Contratos API del flujo POS + caja**.
+- **Etapa actual:** lista para iniciar **Etapa 3 — Reglas de caja y arqueo mínimo operable**.
