@@ -6,7 +6,8 @@ from dataclasses import dataclass
 from threading import RLock
 
 from app.modules.payments.cash_adapter import cash_payment_gateway
-from app.modules.payments.gateway import PaymentChannel, PaymentIntent
+from app.modules.payments.gateway import PaymentChannel, PaymentIntent, PaymentStatus
+from app.modules.payments.stub_adapters import gateway_registry
 
 
 @dataclass
@@ -112,6 +113,63 @@ class PaymentService:
                 idempotency_key=idempotency_key,
                 provider=result.provider,
                 provider_payment_id=result.provider_payment_id,
+                branch_id=branch_id,
+                channel=channel,
+                currency=currency,
+            )
+            self._by_id[payment_id] = payment
+            self._ids_by_idempotency_key[idempotency_key] = payment_id
+            return Payment(**vars(payment))
+
+
+    def create_stub_payment(
+        self,
+        *,
+        provider: str,
+        sale_id: str,
+        amount: float,
+        idempotency_key: str,
+        company_id: str,
+        branch_id: str,
+        channel: str,
+        currency: str = "CLP",
+        metadata: dict[str, str] | None = None,
+    ) -> Payment:
+        with self._lock:
+            if provider not in gateway_registry:
+                raise ValueError("unsupported provider")
+            if idempotency_key in self._ids_by_idempotency_key:
+                raise ValueError("idempotency key already exists")
+
+            intent = PaymentIntent(
+                idempotency_key=idempotency_key,
+                sale_id=sale_id,
+                company_id=company_id,
+                branch_id=branch_id,
+                channel=PaymentChannel(channel),
+                amount=amount,
+                currency=currency,
+                method=provider,
+                metadata=metadata or {},
+            )
+
+            gateway = gateway_registry[provider]
+            authorized = gateway.authorize(intent)
+            final_result = authorized
+            if authorized.status == PaymentStatus.PENDING_CONFIRMATION:
+                final_result = gateway.capture(intent)
+
+            self._seq += 1
+            payment_id = f"pay-{self._seq:04d}"
+            payment = Payment(
+                id=payment_id,
+                sale_id=sale_id,
+                amount=amount,
+                method=provider,
+                status=final_result.status.value,
+                idempotency_key=idempotency_key,
+                provider=final_result.provider,
+                provider_payment_id=final_result.provider_payment_id,
                 branch_id=branch_id,
                 channel=channel,
                 currency=currency,

@@ -139,3 +139,46 @@ def test_cash_payment_endpoint_and_reconciliation() -> None:
     assert body["approved_total"] == 1
     assert body["pending_total"] == 0
     assert body["amount_total"] == 17000
+
+
+def test_stub_payment_endpoints_for_transbank_and_mercadopago() -> None:
+    headers = _auth_header(roles=["cajero"])
+
+    for provider, idem in [("transbank_stub", "idem-tbk-001"), ("mercadopago_stub", "idem-mp-001")]:
+        response = client.post(
+            f"/payments/stubs/{provider}",
+            json={
+                "sale_id": f"sale-{provider}",
+                "company_id": "comp-001",
+                "branch_id": "branch-001",
+                "channel": "web",
+                "amount": 21000,
+                "currency": "CLP",
+                "idempotency_key": idem,
+                "metadata": {},
+            },
+            headers=headers,
+        )
+        assert response.status_code == 201
+        body = response.json()
+        assert body["method"] == provider
+        assert body["status"] == "approved"
+
+
+def test_stub_payment_rejects_unsupported_provider() -> None:
+    headers = _auth_header(roles=["cajero"])
+    response = client.post(
+        "/payments/stubs/bogus",
+        json={
+            "sale_id": "sale-bogus",
+            "company_id": "comp-001",
+            "branch_id": "branch-001",
+            "channel": "web",
+            "amount": 21000,
+            "currency": "CLP",
+            "idempotency_key": "idem-bogus-001",
+            "metadata": {},
+        },
+        headers=headers,
+    )
+    assert response.status_code == 400

@@ -14,15 +14,15 @@
 7. **Hardening final**: conciliación básica multi-medio, auditoría y checklist de salida.
 
 ## Estado actual del prototipo
-- **Etapa en ejecución:** **Etapa 3 de 7 (completada)**.
-- **Cumplimiento estimado del paso 8:** **45%** (3/7 con adaptador cash y conciliación mínima operativa).
+- **Etapa en ejecución:** **Etapa 4 de 7 (completada)**.
+- **Cumplimiento estimado del paso 8:** **60%** (4/7 con stubs de tarjetas/billetera simulados).
 - **Semáforo:** 🟡 Amarillo (en progreso, base de diseño lista).
 
 ## Checklist de control por etapa
 - [x] Etapa 1 — análisis y criterios iniciales.
 - [x] Etapa 2 — contrato `PaymentGateway` y DTOs canónicos.
 - [x] Etapa 3 — adaptador `cash` y conciliación de caja.
-- [ ] Etapa 4 — stubs `transbank_stub` y `mercadopago_stub`.
+- [x] Etapa 4 — stubs `transbank_stub` y `mercadopago_stub`.
 - [ ] Etapa 5 — webhook unificado idempotente.
 - [ ] Etapa 6 — feature flags + pruebas integrales.
 - [ ] Etapa 7 — hardening documental y cierre.
@@ -121,4 +121,23 @@ Se usó la skill local `payment-gateway-idempotency` y sus referencias:
 - Duplicidad de operaciones cash: se mantiene restricción por `idempotency_key`.
 - Inconsistencia de cierre por sucursal: reporte de conciliación segmentado por `branch_id`.
 
-**Solicitud de avance:** si estás de acuerdo, indícame **"avanzar etapa 4"** y continúo con `transbank_stub` y `mercadopago_stub`.
+## Evidencia Etapa 4 — `transbank_stub` y `mercadopago_stub`
+
+### Implementación realizada
+- Se creó `apps/api/app/modules/payments/stub_adapters.py` con `TransbankStubGateway` y `MercadopagoStubGateway` sobre el contrato `PaymentGateway`.
+- Se implementaron flujos simulados de `authorize` (estado `pending_confirmation`) y `capture` (estado `approved`), incluyendo rutas forzadas de rechazo/timeout por metadata.
+- Se añadió `gateway_registry` para resolución por nombre de proveedor y desacople de router/servicio respecto de implementaciones concretas.
+- Se extendió `PaymentService` con `create_stub_payment(...)` para ejecutar autorización + captura simulada y persistir resultado canónico.
+- Se expuso endpoint `POST /payments/stubs/{provider}` para generar pagos con `transbank_stub` y `mercadopago_stub`.
+
+### Criterios de aceptación de Etapa 4 (cumplidos)
+- [x] `transbank_stub` implementado con flujo de autorización/captura simulado.
+- [x] `mercadopago_stub` implementado con flujo de autorización/captura simulado.
+- [x] Estados canónicos normalizados en persistencia de pagos (`approved`/`rejected`).
+- [x] Cobertura de pruebas unitarias y API para providers soportados y provider inválido.
+
+### Riesgos controlados en esta etapa
+- Acoplamiento por proveedor: mitigado con `gateway_registry` y contrato único.
+- Errores de enrutamiento por proveedor inválido: controlado con validación y `400 unsupported provider`.
+
+**Solicitud de avance:** si estás de acuerdo, indícame **"avanzar etapa 5"** y continúo con webhook unificado, firma e idempotencia.

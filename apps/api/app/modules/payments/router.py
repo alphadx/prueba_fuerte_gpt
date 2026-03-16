@@ -14,6 +14,7 @@ from app.modules.payments.schemas import (
     PaymentListResponse,
     PaymentResponse,
     PaymentUpdateRequest,
+    StubPaymentCreateRequest,
 )
 from app.modules.payments.service import Payment, payment_service
 
@@ -78,6 +79,41 @@ def reconcile_cash_branch(
         metadata=report,
     )
     return CashReconciliationResponse(**report)
+
+
+
+@router.post("/stubs/{provider}", response_model=PaymentResponse, status_code=status.HTTP_201_CREATED)
+def create_stub_payment(
+    provider: str,
+    payload: StubPaymentCreateRequest,
+    auth: AuthContext = Depends(require_roles("admin", "cajero")),
+) -> PaymentResponse:
+    try:
+        created = payment_service.create_stub_payment(
+            provider=provider,
+            sale_id=payload.sale_id,
+            amount=payload.amount,
+            idempotency_key=payload.idempotency_key,
+            company_id=payload.company_id,
+            branch_id=payload.branch_id,
+            channel=payload.channel,
+            currency=payload.currency,
+            metadata=payload.metadata,
+        )
+    except ValueError as exc:
+        message = str(exc)
+        if message == "unsupported provider":
+            raise HTTPException(status_code=400, detail=message) from exc
+        raise HTTPException(status_code=409, detail=message) from exc
+
+    record_audit_event(
+        actor_id=auth.subject,
+        action="payments.stub.create",
+        entity=created.id,
+        metadata={"provider": provider, "sale_id": created.sale_id, "amount": created.amount},
+    )
+    return _to_response(created)
+
 
 @router.post("", response_model=PaymentResponse, status_code=status.HTTP_201_CREATED)
 def create_payment(
