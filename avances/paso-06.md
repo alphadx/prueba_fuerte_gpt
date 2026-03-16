@@ -1,16 +1,16 @@
 # Paso 06 — Implementar POS y flujo de caja mínimo operable
 
 ## Checklist de indicadores
-- [ ] **Índice de completitud de flujo POS** (meta: 100%).
-- [ ] **Índice de exactitud de caja** (meta: 0 o tolerancia definida).
-- [ ] **Índice de consistencia inventario-venta** (meta: 100%).
+- [x] **Índice de completitud de flujo POS** (meta: 100%).
+- [x] **Índice de exactitud de caja** (meta: 0 o tolerancia definida).
+- [x] **Índice de consistencia inventario-venta** (meta: 100%).
 
 ## Grado de cumplimiento
-- **Completitud de flujo POS:** 0% (flujo aún no implementado).
-- **Exactitud de caja:** No aplica por ahora (sin transacciones operativas).
-- **Consistencia inventario-venta:** 0% (no hay ejecuciones e2e del flujo).
+- **Completitud de flujo POS:** 100% en flujo mínimo (apertura, venta, pago, cierre).
+- **Exactitud de caja:** validada en integración con `difference_amount = 0` para caso happy path.
+- **Consistencia inventario-venta:** validada con descuento de stock y movimiento kardex por venta.
 
 ## Estado de avance del paso
-- **Cumplimiento estimado:** **0%**
-- **Semáforo:** 🔴 Rojo (No terminado)
-- **Observación:** Dependiente de pasos 4 y 5.
+- **Cumplimiento estimado:** **100%**
+- **Semáforo:** 🟢 Verde (Terminado)
+- **Observación:** Flujo implementado en API in-memory con pruebas de integración happy path y error por stock insuficiente.

@@ -13,6 +13,8 @@ class CashSession:
     opened_by: str
     opening_amount: float
     closing_amount: float | None
+    expected_amount: float
+    difference_amount: float | None
     status: str
 
 
@@ -36,6 +38,8 @@ class CashSessionService:
                 opened_by=opened_by,
                 opening_amount=opening_amount,
                 closing_amount=None,
+                expected_amount=opening_amount,
+                difference_amount=None,
                 status=status,
             )
             self._by_id[session_id] = session
@@ -47,14 +51,19 @@ class CashSessionService:
                 raise KeyError("cash session not found")
             return CashSession(**vars(self._by_id[session_id]))
 
-    def update_session(self, session_id: str, *, closing_amount: float | None, status: str | None) -> CashSession:
+    def update_session(self, session_id: str, *, closing_amount: float | None, status: str | None, cash_delta: float | None = None) -> CashSession:
         with self._lock:
             if session_id not in self._by_id:
                 raise KeyError("cash session not found")
             session = self._by_id[session_id]
+            if cash_delta is not None:
+                session.expected_amount += cash_delta
             if closing_amount is not None:
                 session.closing_amount = closing_amount
+                session.difference_amount = closing_amount - session.expected_amount
             if status is not None:
+                if status == "closed" and session.closing_amount is None:
+                    raise ValueError("closing amount required")
                 session.status = status
             return CashSession(**vars(session))
 

@@ -59,16 +59,20 @@ Sí: **algunas tecnologías deben montarse como servicios** (PostgreSQL, Redis, 
 - Entregable: endpoints CRUD y flujos principales documentados en Swagger.
 
 ## 6) Implementar POS y flujo de caja mínimo operable
-- Flujo POS:
-  - apertura de caja,
-  - creación de venta,
-  - registro de pago en efectivo o electrónico simulado,
-  - cierre de caja y arqueo simple.
+- Flujo POS implementado en API:
+  - apertura de caja (`POST /cash-sessions`),
+  - creación y confirmación de venta (`POST /sales/complete`),
+  - pago con estado determinístico (`cash -> approved`, `card_stub/wallet_stub -> pending`),
+  - cierre de caja y arqueo simple (`PATCH /cash-sessions/{id}` con `cash_delta`, `closing_amount`, `difference_amount`).
 - Al confirmar venta:
-  - descontar stock,
-  - persistir movimiento kardex,
-  - disparar evento para facturación electrónica.
-- Entregable: pruebas de integración del flujo “venta completa”.
+  - se descuenta stock por línea de venta,
+  - se registra movimiento kardex in-memory (`StockMovement` outbound con referencia a venta),
+  - se emite evento asíncrono de facturación (`billing.sale_confirmed`) vía cola.
+- Confiabilidad aplicada (skill `pos-cashflow-reliability`):
+  - validación de sesión abierta y sucursal consistente,
+  - rollback de stock ante fallo de confirmación,
+  - pruebas de integración para happy path y falla por stock insuficiente.
+- Entregable implementado: `tests/api/test_sales_pos_flow.py` cubriendo flujo “venta completa”.
 
 ## 7) Integrar boleta electrónica vía proveedor (sandbox)
 - Crear adaptador `BillingProvider` desacoplado.

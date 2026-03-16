@@ -25,6 +25,8 @@ def _to_response(session: CashSession) -> CashSessionResponse:
         opened_by=session.opened_by,
         opening_amount=session.opening_amount,
         closing_amount=session.closing_amount,
+        expected_amount=session.expected_amount,
+        difference_amount=session.difference_amount,
         status=session.status,
     )
 
@@ -61,6 +63,8 @@ def get_session(session_id: str, _: AuthContext = Depends(require_roles("admin",
         return _to_response(cash_session_service.get_session(session_id))
     except KeyError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
 
 
 @router.patch("/{session_id}", response_model=CashSessionResponse)
@@ -74,9 +78,12 @@ def update_session(
             session_id,
             closing_amount=payload.closing_amount,
             status=payload.status,
+            cash_delta=payload.cash_delta,
         )
     except KeyError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
 
     record_audit_event(
         actor_id=auth.subject,
@@ -93,6 +100,8 @@ def delete_session(session_id: str, auth: AuthContext = Depends(require_roles("a
         cash_session_service.delete_session(session_id)
     except KeyError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
 
     record_audit_event(actor_id=auth.subject, action="cash_sessions.delete", entity=session_id, metadata={})
     return Response(status_code=status.HTTP_204_NO_CONTENT)

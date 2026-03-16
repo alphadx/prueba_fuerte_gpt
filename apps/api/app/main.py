@@ -15,6 +15,7 @@ from app.modules.employee_documents.router import router as employee_documents_r
 from app.modules.payments.router import router as payments_router
 from app.modules.employees.router import router as employees_router
 from app.modules.products.router import router as products_router
+from app.modules.sales.router import router as sales_router
 from app.modules.users.router import router as users_router
 from app.services.queue import queue_client
 
@@ -65,3 +66,5 @@ app.include_router(employee_documents_router)
 app.include_router(payments_router)
 
 app.include_router(cash_sessions_router)
+
+app.include_router(sales_router)
