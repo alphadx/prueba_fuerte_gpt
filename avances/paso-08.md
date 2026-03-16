@@ -14,14 +14,14 @@
 7. **Hardening final**: conciliación básica multi-medio, auditoría y checklist de salida.
 
 ## Estado actual del prototipo
-- **Etapa en ejecución:** **Etapa 2 de 7 (completada)**.
-- **Cumplimiento estimado del paso 8:** **30%** (2/7 con análisis + contrato canónico implementado).
+- **Etapa en ejecución:** **Etapa 3 de 7 (completada)**.
+- **Cumplimiento estimado del paso 8:** **45%** (3/7 con adaptador cash y conciliación mínima operativa).
 - **Semáforo:** 🟡 Amarillo (en progreso, base de diseño lista).
 
 ## Checklist de control por etapa
 - [x] Etapa 1 — análisis y criterios iniciales.
 - [x] Etapa 2 — contrato `PaymentGateway` y DTOs canónicos.
-- [ ] Etapa 3 — adaptador `cash` y conciliación de caja.
+- [x] Etapa 3 — adaptador `cash` y conciliación de caja.
 - [ ] Etapa 4 — stubs `transbank_stub` y `mercadopago_stub`.
 - [ ] Etapa 5 — webhook unificado idempotente.
 - [ ] Etapa 6 — feature flags + pruebas integrales.
@@ -101,5 +101,24 @@ Se usó la skill local `payment-gateway-idempotency` y sus referencias:
 - El adaptador `cash` usará `PaymentIntent/PaymentResult` sin acoplarse al API surface actual de CRUD.
 - La conciliación de caja podrá operar sobre estados canónicos (`approved`, `reconciled`) con semántica consistente entre medios.
 
+## Evidencia Etapa 3 — Adaptador `cash` y conciliación mínima
 
-**Solicitud de avance:** si estás de acuerdo, indícame **"avanzar etapa 3"** y continúo con el adaptador `cash` + conciliación de caja mínima.
+### Implementación realizada
+- Se creó `apps/api/app/modules/payments/cash_adapter.py` con `CashPaymentGateway`, implementando el contrato canónico (`authorize`, `capture`, `parse_webhook`, `validate_signature`).
+- Se extendió `PaymentService` para crear cobros cash vía modelo canónico (`create_cash_payment`) y para emitir reporte de conciliación por sucursal (`reconcile_cash_by_branch`).
+- Se habilitaron endpoints:
+  - `POST /payments/cash` para registrar pago cash usando `PaymentIntent` canónico.
+  - `GET /payments/cash/reconciliation/{branch_id}` para conciliación básica de caja por sucursal.
+- Se añadieron schemas dedicados para request/respuesta de cash y reconciliación.
+
+### Criterios de aceptación de Etapa 3 (cumplidos)
+- [x] Adaptador `cash` implementado sin acoplar reglas al core de ventas.
+- [x] Confirmación local de pago cash con estado canónico `approved`.
+- [x] Conciliación mínima por sucursal disponible (totales, aprobados, pendientes, montos).
+- [x] Cobertura de pruebas unitarias y API para flujo cash + conciliación.
+
+### Riesgos controlados en esta etapa
+- Duplicidad de operaciones cash: se mantiene restricción por `idempotency_key`.
+- Inconsistencia de cierre por sucursal: reporte de conciliación segmentado por `branch_id`.
+
+**Solicitud de avance:** si estás de acuerdo, indícame **"avanzar etapa 4"** y continúo con `transbank_stub` y `mercadopago_stub`.

@@ -109,3 +109,33 @@ def test_payments_reject_duplicate_idempotency_key() -> None:
         headers=headers,
     )
     assert second.status_code == 409
+
+
+def test_cash_payment_endpoint_and_reconciliation() -> None:
+    headers = _auth_header(roles=["cajero"])
+
+    create_response = client.post(
+        "/payments/cash",
+        json={
+            "sale_id": "sale-cash-001",
+            "company_id": "comp-001",
+            "branch_id": "branch-001",
+            "channel": "pos",
+            "amount": 17000,
+            "currency": "CLP",
+            "idempotency_key": "idem-cash-001",
+        },
+        headers=headers,
+    )
+    assert create_response.status_code == 201
+    assert create_response.json()["method"] == "cash"
+    assert create_response.json()["status"] == "approved"
+
+    reconciliation = client.get("/payments/cash/reconciliation/branch-001", headers=headers)
+    assert reconciliation.status_code == 200
+    body = reconciliation.json()
+    assert body["branch_id"] == "branch-001"
+    assert body["payments_total"] == 1
+    assert body["approved_total"] == 1
+    assert body["pending_total"] == 0
+    assert body["amount_total"] == 17000

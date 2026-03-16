@@ -7,7 +7,14 @@ from fastapi import APIRouter, Depends, HTTPException, Response, status
 from app.core.audit import record_audit_event
 from app.core.auth import AuthContext
 from app.core.permissions import require_roles
-from app.modules.payments.schemas import PaymentCreateRequest, PaymentListResponse, PaymentResponse, PaymentUpdateRequest
+from app.modules.payments.schemas import (
+    CashPaymentCreateRequest,
+    CashReconciliationResponse,
+    PaymentCreateRequest,
+    PaymentListResponse,
+    PaymentResponse,
+    PaymentUpdateRequest,
+)
 from app.modules.payments.service import Payment, payment_service
 
 router = APIRouter(prefix="/payments", tags=["payments"])
@@ -28,6 +35,49 @@ def _to_response(payment: Payment) -> PaymentResponse:
 def list_payments(_: AuthContext = Depends(require_roles("admin", "cajero"))) -> PaymentListResponse:
     return PaymentListResponse(items=[_to_response(item) for item in payment_service.list_payments()])
 
+
+
+
+@router.post("/cash", response_model=PaymentResponse, status_code=status.HTTP_201_CREATED)
+def create_cash_payment(
+    payload: CashPaymentCreateRequest,
+    auth: AuthContext = Depends(require_roles("admin", "cajero")),
+) -> PaymentResponse:
+    try:
+        created = payment_service.create_cash_payment(
+            sale_id=payload.sale_id,
+            amount=payload.amount,
+            idempotency_key=payload.idempotency_key,
+            company_id=payload.company_id,
+            branch_id=payload.branch_id,
+            channel=payload.channel,
+            currency=payload.currency,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+    record_audit_event(
+        actor_id=auth.subject,
+        action="payments.cash.create",
+        entity=created.id,
+        metadata={"sale_id": created.sale_id, "branch_id": payload.branch_id, "amount": created.amount},
+    )
+    return _to_response(created)
+
+
+@router.get("/cash/reconciliation/{branch_id}", response_model=CashReconciliationResponse)
+def reconcile_cash_branch(
+    branch_id: str,
+    auth: AuthContext = Depends(require_roles("admin", "cajero")),
+) -> CashReconciliationResponse:
+    report = payment_service.reconcile_cash_by_branch(branch_id=branch_id)
+    record_audit_event(
+        actor_id=auth.subject,
+        action="payments.cash.reconciliation",
+        entity=branch_id,
+        metadata=report,
+    )
+    return CashReconciliationResponse(**report)
 
 @router.post("", response_model=PaymentResponse, status_code=status.HTTP_201_CREATED)
 def create_payment(
