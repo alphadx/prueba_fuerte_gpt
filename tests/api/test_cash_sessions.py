@@ -10,6 +10,7 @@ import json
 from fastapi.testclient import TestClient
 
 from app.main import app
+from app.modules.cash_sessions import router as cash_sessions_router
 from app.modules.cash_sessions.service import cash_session_service
 
 
@@ -117,3 +118,28 @@ def test_cash_sessions_reject_update_when_already_closed() -> None:
     )
     assert second_update.status_code == 409
     assert "only open cash sessions can be updated" in second_update.json()["detail"]
+
+
+def test_cash_sessions_audit_rejected_on_duplicate_open(monkeypatch: pytest.MonkeyPatch) -> None:
+    events: list[dict[str, object]] = []
+
+    def _capture(**kwargs):
+        events.append(kwargs)
+
+    monkeypatch.setattr(cash_sessions_router, "record_audit_event", _capture)
+
+    headers = _auth_header(roles=["cajero"])
+    first = client.post(
+        "/cash-sessions",
+        json={"branch_id": "br-001", "opened_by": "usr-001", "opening_amount": 100000, "status": "open"},
+        headers=headers,
+    )
+    assert first.status_code == 201
+
+    duplicate = client.post(
+        "/cash-sessions",
+        json={"branch_id": "br-001", "opened_by": "usr-001", "opening_amount": 50000, "status": "open"},
+        headers=headers,
+    )
+    assert duplicate.status_code == 409
+    assert any(event["action"] == "cash_sessions.create.rejected" for event in events)

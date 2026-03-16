@@ -12,6 +12,7 @@ from fastapi.testclient import TestClient
 from app.main import app
 from app.modules.cash_sessions.service import cash_session_service
 from app.modules.products.service import product_service
+from app.modules.sales import router as sales_router
 from app.modules.sales.service import sale_service
 
 client = TestClient(app)
@@ -257,3 +258,45 @@ def test_pos_rolls_back_partial_multi_line_failure_without_kardex_residue() -> N
     assert product_service.get_stock(product_fail_id) == 1
     assert sale_service.list_sales() == []
     assert product_service.list_stock_movements() == []
+
+
+def test_pos_audit_rejected_on_branch_mismatch(monkeypatch: pytest.MonkeyPatch) -> None:
+    events: list[dict[str, object]] = []
+
+    def _capture(**kwargs):
+        events.append(kwargs)
+
+    monkeypatch.setattr(sales_router, "record_audit_event", _capture)
+
+    admin_headers = _auth_header(roles=["admin"])
+    cajero_headers = _auth_header(roles=["cajero"])
+
+    created_product = client.post(
+        "/products",
+        json={"sku": "POS-007", "name": "Huevos", "price": 3000},
+        headers=admin_headers,
+    )
+    assert created_product.status_code == 201
+    product_id = created_product.json()["id"]
+    product_service.set_stock(product_id, 3)
+
+    opened_session = client.post(
+        "/cash-sessions",
+        json={"branch_id": "br-001", "opened_by": "usr-001", "opening_amount": 0, "status": "open"},
+        headers=cajero_headers,
+    )
+    assert opened_session.status_code == 201
+
+    sale_response = client.post(
+        "/sales/complete",
+        json={
+            "branch_id": "br-002",
+            "cash_session_id": opened_session.json()["id"],
+            "sold_by": "usr-001",
+            "payment_method": "cash",
+            "lines": [{"product_id": product_id, "quantity": 1}],
+        },
+        headers=cajero_headers,
+    )
+    assert sale_response.status_code == 409
+    assert any(event["action"] == "sales.complete.rejected" for event in events)

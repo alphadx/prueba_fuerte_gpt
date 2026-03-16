@@ -49,6 +49,12 @@ def create_session(
             status=payload.status,
         )
     except ValueError as exc:
+        record_audit_event(
+            actor_id=auth.subject,
+            action="cash_sessions.create.rejected",
+            entity=payload.branch_id,
+            metadata={"reason": str(exc), "opened_by": payload.opened_by},
+        )
         raise HTTPException(status_code=409, detail=str(exc)) from exc
 
     record_audit_event(
@@ -66,8 +72,6 @@ def get_session(session_id: str, _: AuthContext = Depends(require_roles("admin",
         return _to_response(cash_session_service.get_session(session_id))
     except KeyError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
-    except ValueError as exc:
-        raise HTTPException(status_code=409, detail=str(exc)) from exc
 
 
 @router.patch("/{session_id}", response_model=CashSessionResponse)
@@ -86,6 +90,12 @@ def update_session(
     except KeyError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except ValueError as exc:
+        record_audit_event(
+            actor_id=auth.subject,
+            action="cash_sessions.update.rejected",
+            entity=session_id,
+            metadata={"reason": str(exc), "status": payload.status},
+        )
         raise HTTPException(status_code=409, detail=str(exc)) from exc
 
     record_audit_event(

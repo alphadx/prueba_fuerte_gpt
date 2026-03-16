@@ -50,10 +50,10 @@ Implementar un POS mínimo operable con flujo de caja confiable, asegurando que 
 - Reforzar auditoría en operaciones sensibles (apertura, cierre, confirmación de venta).
 - Verificar observabilidad mínima (logs de eventos y fallos de negocio).
 - Consolidar checklist de aceptación final del paso 6.
-- **Salida de etapa:** reporte de cierre con evidencia técnica y estado final.
+- **Salida de etapa:** reporte de cierre con evidencia técnica y estado final. ✅ Completada (ver `docs/paso6_etapa7_hardening_cierre.md`).
 
 ## Estado de avance del paso
-- **Cumplimiento estimado:** **86%** (6/7 etapas cerradas)
-- **Semáforo:** 🟡 Amarillo (en ejecución controlada)
+- **Cumplimiento estimado:** **100%** (7/7 etapas cerradas)
+- **Semáforo:** 🟢 Verde (paso cerrado)
 - **Regla de ejecución:** se avanza etapa por etapa únicamente cuando el usuario dé la orden explícita.
-- **Etapa actual:** lista para iniciar **Etapa 7 — Hardening y cierre del paso**.
+- **Etapa actual:** **Paso 6 finalizado**.

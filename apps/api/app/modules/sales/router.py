@@ -59,6 +59,12 @@ def complete_sale(
             lines_payload=[line.model_dump() for line in payload.lines],
         )
     except (ValueError, KeyError) as exc:
+        record_audit_event(
+            actor_id=auth.subject,
+            action="sales.complete.rejected",
+            entity=payload.cash_session_id,
+            metadata={"reason": str(exc), "branch_id": payload.branch_id, "payment_method": payload.payment_method},
+        )
         raise HTTPException(status_code=409, detail=str(exc)) from exc
 
     record_audit_event(
