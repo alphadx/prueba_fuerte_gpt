@@ -139,6 +139,10 @@ class BillingService:
         with self._lock:
             self._documents.clear()
 
+        reset_provider = getattr(self._provider, "reset_state", None)
+        if callable(reset_provider):
+            reset_provider()
+
     @staticmethod
     def _clone(doc: BillingDocument) -> BillingDocument:
         return BillingDocument(**vars(doc))

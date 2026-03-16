@@ -105,3 +105,8 @@ Cada avance debe añadir:
 - Se considera avance parcial por etapa (1/7, 2/7, ... 7/7).
 - Al cierre de cada etapa se solicita autorización explícita para continuar.
 - El paso se marca completado sólo al finalizar 7/7 con evidencia y checklist.
+
+**Evolución etapa 3 (adaptador sandbox):**
+- Se reforzó el adaptador con modos de simulación de fallas transitorias y estados (`accepted/processing/rejected`).
+- Se agregó transición de estado progresiva para pruebas de reconciliación (`processing -> accepted`).
+- Se amplió trazabilidad de payload y pruebas unitarias específicas del adaptador.
