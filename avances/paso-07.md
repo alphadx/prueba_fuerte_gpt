@@ -15,9 +15,9 @@
 7. **Hardening documental** y checklist de cierre del paso.
 
 ## Estado actual del prototipo
-- **Etapa en ejecución:** **Etapa 6 de 7 (completada)**.
-- **Cumplimiento estimado del paso 7:** **86%** (6/7 completadas: + consulta de estado y pruebas ampliadas).
-- **Semáforo:** 🟡 Amarillo (En progreso controlado por etapas).
+- **Etapa en ejecución:** **Etapa 7 de 7 (completada)**.
+- **Cumplimiento estimado del paso 7:** **100%** (7/7 completadas; hardening y checklist final cerrados).
+- **Semáforo:** 🟢 Verde (Terminado).
 - **Observación:** Se asume enfoque iterativo; no se considera cierre definitivo del paso hasta completar 7/7 con aprobación explícita por etapa.
 
 ## Checklist de control por etapa
@@ -27,7 +27,7 @@
 - [x] Etapa 4 — desacople asíncrono POS.
 - [x] Etapa 5 — resiliencia/reintentos/idempotencia.
 - [x] Etapa 6 — consulta de estado + pruebas.
-- [ ] Etapa 7 — hardening documental.
+- [x] Etapa 7 — hardening documental.
 
 ## Protocolo de interacción
 1. Ejecutar una etapa.
@@ -74,3 +74,9 @@
 - La consulta de documento ahora soporta `document_type` por query param para evitar ambigüedad entre boleta/factura de una misma venta.
 - Se agregó endpoint de reconciliación `POST /billing/documents/{sale_id}/refresh-status` para actualizar estado observado en proveedor/SII.
 - Se amplió la batería de pruebas API con casos de refresh progresivo y búsqueda por tipo documental.
+
+
+## Evidencia etapa 7
+- Se consolidó checklist de hardening y salida en `docs/paso7_hardening_checklist.md`.
+- Se validó cobertura de confiabilidad: desacople POS, retries/backoff, dead-letter y reconciliación de estado.
+- Se cerró formalmente el paso 7 como prototipo completo (7/7).
