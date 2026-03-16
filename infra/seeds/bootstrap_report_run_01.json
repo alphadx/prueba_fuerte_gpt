@@ -1,0 +1,112 @@
+{
+  "started_at": "2026-03-16T15:16:23.523333+00:00",
+  "finished_at": "2026-03-16T15:16:25.127034+00:00",
+  "max_seconds": 600.0,
+  "step_timeout_seconds": 240.0,
+  "retries": 1,
+  "total_seconds": 1.604,
+  "within_target": true,
+  "all_steps_passed": true,
+  "steps": [
+    {
+      "name": "seed",
+      "command": "/workspace/prueba_fuerte_gpt/.venv/bin/python infra/scripts/seed.py",
+      "attempts": [
+        {
+          "name": "seed",
+          "command": "/workspace/prueba_fuerte_gpt/.venv/bin/python infra/scripts/seed.py",
+          "returncode": 0,
+          "duration_seconds": 0.094,
+          "started_at": "2026-03-16T15:16:23.523366+00:00",
+          "timed_out": false,
+          "stdout": "Seed canónico generado en infra/seeds/dev_seed.json\nSHA256=0b69d0cfa809bc51714265e2138aed5a2add1d69145b545c5d358d87b8f8981c\n",
+          "stderr": "",
+          "attempt": 1
+        }
+      ],
+      "returncode": 0,
+      "duration_seconds": 0.094,
+      "timed_out": false
+    },
+    {
+      "name": "seed-validate",
+      "command": "/workspace/prueba_fuerte_gpt/.venv/bin/python infra/scripts/validate_seed.py",
+      "attempts": [
+        {
+          "name": "seed-validate",
+          "command": "/workspace/prueba_fuerte_gpt/.venv/bin/python infra/scripts/validate_seed.py",
+          "returncode": 0,
+          "duration_seconds": 0.079,
+          "started_at": "2026-03-16T15:16:23.617145+00:00",
+          "timed_out": false,
+          "stdout": "[seed-check] company base OK\n[seed-check] branch base OK\n[seed-check] roles base OK\n[seed-check] productos base OK\n[seed-check] empleados y documentos base OK\n[seed-check] reglas de alerta base OK\n[seed-check] ventana de vencimiento cercana OK\n[seed-check] OK: invariantes cumplidos\n",
+          "stderr": "",
+          "attempt": 1
+        }
+      ],
+      "returncode": 0,
+      "duration_seconds": 0.079,
+      "timed_out": false
+    },
+    {
+      "name": "fixtures",
+      "command": "/workspace/prueba_fuerte_gpt/.venv/bin/python infra/scripts/load_fixtures.py",
+      "attempts": [
+        {
+          "name": "fixtures",
+          "command": "/workspace/prueba_fuerte_gpt/.venv/bin/python infra/scripts/load_fixtures.py",
+          "returncode": 0,
+          "duration_seconds": 1.283,
+          "started_at": "2026-03-16T15:16:23.696035+00:00",
+          "timed_out": false,
+          "stdout": "Fixtures críticos cargados y reportados en infra/seeds/fixtures_state.json\n",
+          "stderr": "",
+          "attempt": 1
+        }
+      ],
+      "returncode": 0,
+      "duration_seconds": 1.283,
+      "timed_out": false
+    },
+    {
+      "name": "fixtures-validate",
+      "command": "/workspace/prueba_fuerte_gpt/.venv/bin/python infra/scripts/validate_fixtures.py",
+      "attempts": [
+        {
+          "name": "fixtures-validate",
+          "command": "/workspace/prueba_fuerte_gpt/.venv/bin/python infra/scripts/validate_fixtures.py",
+          "returncode": 0,
+          "duration_seconds": 0.073,
+          "started_at": "2026-03-16T15:16:24.979108+00:00",
+          "timed_out": false,
+          "stdout": "[fixtures] OK: catálogo crítico completo\n",
+          "stderr": "",
+          "attempt": 1
+        }
+      ],
+      "returncode": 0,
+      "duration_seconds": 0.073,
+      "timed_out": false
+    },
+    {
+      "name": "smoke-test-state",
+      "command": "/workspace/prueba_fuerte_gpt/.venv/bin/python infra/scripts/smoke_test_state.py",
+      "attempts": [
+        {
+          "name": "smoke-test-state",
+          "command": "/workspace/prueba_fuerte_gpt/.venv/bin/python infra/scripts/smoke_test_state.py",
+          "returncode": 0,
+          "duration_seconds": 0.075,
+          "started_at": "2026-03-16T15:16:25.051983+00:00",
+          "timed_out": false,
+          "stdout": "[smoke] OK: estado QA ejecutable\n",
+          "stderr": "",
+          "attempt": 1
+        }
+      ],
+      "returncode": 0,
+      "duration_seconds": 0.075,
+      "timed_out": false
+    }
+  ]
+}
