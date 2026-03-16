@@ -94,3 +94,8 @@ release_validation:
 1. Hardening de cierre documental del paso 12 con reporte final de salida.
 2. Cerrar/actualizar riesgos críticos abiertos con owner y ETA final.
 3. Emitir resumen ejecutivo final del paso con estado GO/NO-GO/PENDIENTE_ENTORNO.
+
+## Resultado etapa 8 (cierre documental final)
+- Reporte final del paso: `docs/release_final_report_step12.md`.
+- Estado final del paso 12: completado (8/8 etapas).
+- Dictamen de salida al cierre: **NO-GO** hasta remediar riesgos críticos y ejecutar evidencia en entorno Docker compatible.
