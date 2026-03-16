@@ -21,8 +21,6 @@ class CashPaymentCreateRequest(BaseModel):
     idempotency_key: str = Field(min_length=1)
 
 
-
-
 class StubPaymentCreateRequest(BaseModel):
     sale_id: str = Field(min_length=1)
     company_id: str = Field(min_length=1)
@@ -32,6 +30,21 @@ class StubPaymentCreateRequest(BaseModel):
     currency: str = Field(default="CLP", min_length=3, max_length=3)
     idempotency_key: str = Field(min_length=1)
     metadata: dict[str, str] = Field(default_factory=dict)
+
+
+class PaymentWebhookRequest(BaseModel):
+    payload: dict[str, str] = Field(default_factory=dict)
+    signature: str | None = None
+
+
+class PaymentWebhookResponse(BaseModel):
+    provider: str
+    event_id: str
+    duplicated: bool
+    payment_id: str | None
+    previous_status: str | None
+    current_status: str | None
+
 
 class PaymentUpdateRequest(BaseModel):
     status: str | None = Field(default=None, min_length=1)

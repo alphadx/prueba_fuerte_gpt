@@ -14,6 +14,8 @@ from app.modules.payments.schemas import (
     PaymentListResponse,
     PaymentResponse,
     PaymentUpdateRequest,
+    PaymentWebhookRequest,
+    PaymentWebhookResponse,
     StubPaymentCreateRequest,
 )
 from app.modules.payments.service import Payment, payment_service
@@ -113,6 +115,49 @@ def create_stub_payment(
         metadata={"provider": provider, "sale_id": created.sale_id, "amount": created.amount},
     )
     return _to_response(created)
+
+
+
+
+@router.post("/webhooks/{provider}", response_model=PaymentWebhookResponse)
+def process_payment_webhook(
+    provider: str,
+    payload: PaymentWebhookRequest,
+    auth: AuthContext = Depends(require_roles("admin", "cajero")),
+) -> PaymentWebhookResponse:
+    try:
+        result = payment_service.process_webhook_event(
+            provider=provider,
+            payload=payload.payload,
+            signature=payload.signature,
+        )
+    except ValueError as exc:
+        message = str(exc)
+        if message == "unsupported provider":
+            raise HTTPException(status_code=400, detail=message) from exc
+        if message == "invalid signature":
+            raise HTTPException(status_code=401, detail=message) from exc
+        raise HTTPException(status_code=409, detail=message) from exc
+
+    record_audit_event(
+        actor_id=auth.subject,
+        action="payments.webhook.process",
+        entity=result.event_id,
+        metadata={
+            "provider": result.provider,
+            "duplicated": result.duplicated,
+            "payment_id": result.payment_id,
+            "current_status": result.current_status,
+        },
+    )
+    return PaymentWebhookResponse(
+        provider=result.provider,
+        event_id=result.event_id,
+        duplicated=result.duplicated,
+        payment_id=result.payment_id,
+        previous_status=result.previous_status,
+        current_status=result.current_status,
+    )
 
 
 @router.post("", response_model=PaymentResponse, status_code=status.HTTP_201_CREATED)

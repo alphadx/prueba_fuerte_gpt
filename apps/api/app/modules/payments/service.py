@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from threading import RLock
 
 from app.modules.payments.cash_adapter import cash_payment_gateway
-from app.modules.payments.gateway import PaymentChannel, PaymentIntent, PaymentStatus
+from app.modules.payments.gateway import PaymentChannel, PaymentIntent, PaymentStatus, can_transition
 from app.modules.payments.stub_adapters import gateway_registry
 
 
@@ -25,12 +25,27 @@ class Payment:
     currency: str = "CLP"
 
 
+@dataclass
+class WebhookProcessResult:
+    provider: str
+    event_id: str
+    duplicated: bool
+    payment_id: str | None
+    previous_status: str | None
+    current_status: str | None
+
+
 class PaymentService:
     def __init__(self) -> None:
         self._by_id: dict[str, Payment] = {}
         self._ids_by_idempotency_key: dict[str, str] = {}
+        self._ids_by_provider_payment_id: dict[str, str] = {}
+        self._processed_webhook_events: set[str] = set()
         self._seq = 0
         self._lock = RLock()
+
+    def _all_gateways(self):
+        return {"cash": cash_payment_gateway, **gateway_registry}
 
     def list_payments(self) -> list[Payment]:
         with self._lock:
@@ -71,8 +86,9 @@ class PaymentService:
             )
             self._by_id[payment_id] = payment
             self._ids_by_idempotency_key[idempotency_key] = payment_id
+            if provider_payment_id:
+                self._ids_by_provider_payment_id[provider_payment_id] = payment_id
             return Payment(**vars(payment))
-
 
     def create_cash_payment(
         self,
@@ -119,8 +135,9 @@ class PaymentService:
             )
             self._by_id[payment_id] = payment
             self._ids_by_idempotency_key[idempotency_key] = payment_id
+            if result.provider_payment_id:
+                self._ids_by_provider_payment_id[result.provider_payment_id] = payment_id
             return Payment(**vars(payment))
-
 
     def create_stub_payment(
         self,
@@ -176,7 +193,65 @@ class PaymentService:
             )
             self._by_id[payment_id] = payment
             self._ids_by_idempotency_key[idempotency_key] = payment_id
+            if final_result.provider_payment_id:
+                self._ids_by_provider_payment_id[final_result.provider_payment_id] = payment_id
             return Payment(**vars(payment))
+
+    def process_webhook_event(
+        self,
+        *,
+        provider: str,
+        payload: dict[str, str],
+        signature: str | None,
+    ) -> WebhookProcessResult:
+        with self._lock:
+            gateways = self._all_gateways()
+            if provider not in gateways:
+                raise ValueError("unsupported provider")
+
+            gateway = gateways[provider]
+            if not gateway.validate_signature(payload, signature=signature):
+                raise ValueError("invalid signature")
+
+            event = gateway.parse_webhook(payload, signature=signature)
+            event_dedupe_key = f"{provider}:{event.event_id}"
+            if event_dedupe_key in self._processed_webhook_events:
+                return WebhookProcessResult(
+                    provider=provider,
+                    event_id=event.event_id,
+                    duplicated=True,
+                    payment_id=None,
+                    previous_status=None,
+                    current_status=None,
+                )
+
+            self._processed_webhook_events.add(event_dedupe_key)
+
+            payment_id = self._ids_by_provider_payment_id.get(event.provider_payment_id)
+            if payment_id is None:
+                return WebhookProcessResult(
+                    provider=provider,
+                    event_id=event.event_id,
+                    duplicated=False,
+                    payment_id=None,
+                    previous_status=None,
+                    current_status=None,
+                )
+
+            payment = self._by_id[payment_id]
+            previous_status = payment.status
+            target_status = event.status.value
+            if can_transition(PaymentStatus(previous_status), event.status):
+                payment.status = target_status
+
+            return WebhookProcessResult(
+                provider=provider,
+                event_id=event.event_id,
+                duplicated=False,
+                payment_id=payment_id,
+                previous_status=previous_status,
+                current_status=payment.status,
+            )
 
     def reconcile_cash_by_branch(self, *, branch_id: str) -> dict[str, int | float | str]:
         with self._lock:
@@ -218,11 +293,15 @@ class PaymentService:
             payment = self.get_payment(payment_id)
             del self._by_id[payment_id]
             del self._ids_by_idempotency_key[payment.idempotency_key]
+            if payment.provider_payment_id:
+                self._ids_by_provider_payment_id.pop(payment.provider_payment_id, None)
 
     def reset_state(self) -> None:
         with self._lock:
             self._by_id.clear()
             self._ids_by_idempotency_key.clear()
+            self._ids_by_provider_payment_id.clear()
+            self._processed_webhook_events.clear()
             self._seq = 0
 
 

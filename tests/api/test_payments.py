@@ -182,3 +182,70 @@ def test_stub_payment_rejects_unsupported_provider() -> None:
         headers=headers,
     )
     assert response.status_code == 400
+
+
+def test_webhook_endpoint_idempotent_and_signature_checked() -> None:
+    headers = _auth_header(roles=["cajero"])
+
+    created = client.post(
+        "/payments/stubs/transbank_stub",
+        json={
+            "sale_id": "sale-webhook-1",
+            "company_id": "comp-001",
+            "branch_id": "branch-001",
+            "channel": "web",
+            "amount": 20000,
+            "currency": "CLP",
+            "idempotency_key": "idem-webhook-001",
+            "metadata": {},
+        },
+        headers=headers,
+    )
+    assert created.status_code == 201
+
+    first = client.post(
+        "/payments/webhooks/transbank_stub",
+        json={
+            "signature": "transbank_stub:test",
+            "payload": {
+                "event_id": "evt-webhook-1",
+                "idempotency_key": "idem-webhook-001",
+                "provider_payment_id": "transbank_stub-idem-webhook-001",
+                "status": "reconciled",
+            },
+        },
+        headers=headers,
+    )
+    assert first.status_code == 200
+    assert first.json()["duplicated"] is False
+    assert first.json()["current_status"] == "reconciled"
+
+    second = client.post(
+        "/payments/webhooks/transbank_stub",
+        json={
+            "signature": "transbank_stub:test",
+            "payload": {
+                "event_id": "evt-webhook-1",
+                "idempotency_key": "idem-webhook-001",
+                "provider_payment_id": "transbank_stub-idem-webhook-001",
+                "status": "reconciled",
+            },
+        },
+        headers=headers,
+    )
+    assert second.status_code == 200
+    assert second.json()["duplicated"] is True
+
+    invalid_signature = client.post(
+        "/payments/webhooks/transbank_stub",
+        json={
+            "signature": "bad",
+            "payload": {
+                "event_id": "evt-webhook-2",
+                "provider_payment_id": "transbank_stub-idem-webhook-001",
+                "status": "approved",
+            },
+        },
+        headers=headers,
+    )
+    assert invalid_signature.status_code == 401

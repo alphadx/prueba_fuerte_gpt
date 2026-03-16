@@ -14,8 +14,8 @@
 7. **Hardening final**: conciliación básica multi-medio, auditoría y checklist de salida.
 
 ## Estado actual del prototipo
-- **Etapa en ejecución:** **Etapa 4 de 7 (completada)**.
-- **Cumplimiento estimado del paso 8:** **60%** (4/7 con stubs de tarjetas/billetera simulados).
+- **Etapa en ejecución:** **Etapa 5 de 7 (completada)**.
+- **Cumplimiento estimado del paso 8:** **75%** (5/7 con webhook unificado, firma e idempotencia).
 - **Semáforo:** 🟡 Amarillo (en progreso, base de diseño lista).
 
 ## Checklist de control por etapa
@@ -23,7 +23,7 @@
 - [x] Etapa 2 — contrato `PaymentGateway` y DTOs canónicos.
 - [x] Etapa 3 — adaptador `cash` y conciliación de caja.
 - [x] Etapa 4 — stubs `transbank_stub` y `mercadopago_stub`.
-- [ ] Etapa 5 — webhook unificado idempotente.
+- [x] Etapa 5 — webhook unificado idempotente.
 - [ ] Etapa 6 — feature flags + pruebas integrales.
 - [ ] Etapa 7 — hardening documental y cierre.
 
@@ -140,4 +140,24 @@ Se usó la skill local `payment-gateway-idempotency` y sus referencias:
 - Acoplamiento por proveedor: mitigado con `gateway_registry` y contrato único.
 - Errores de enrutamiento por proveedor inválido: controlado con validación y `400 unsupported provider`.
 
-**Solicitud de avance:** si estás de acuerdo, indícame **"avanzar etapa 5"** y continúo con webhook unificado, firma e idempotencia.
+## Evidencia Etapa 5 — Webhook unificado, firma e idempotencia
+
+### Implementación realizada
+- Se incorporó procesamiento de webhook unificado en `PaymentService.process_webhook_event(...)`, con soporte multi-provider y mapeo por `provider_payment_id`.
+- Se añadió validación de firma vía `PaymentGateway.validate_signature(...)` por proveedor, devolviendo error explícito para firmas inválidas.
+- Se implementó deduplicación por evento (`provider:event_id`) para garantizar idempotencia y evitar mutaciones repetidas de estado.
+- Se aplicó transición monotónica con `can_transition(...)` para ignorar transiciones stale y mantener trazabilidad de estado previo/actual.
+- Se expuso endpoint `POST /payments/webhooks/{provider}` con respuesta canónica de procesamiento (`duplicated`, `payment_id`, `previous_status`, `current_status`).
+
+### Criterios de aceptación de Etapa 5 (cumplidos)
+- [x] Webhook único disponible para confirmación/rechazo por proveedor.
+- [x] Validación de firma/metadata activa en ingestión del webhook.
+- [x] Idempotencia de evento aplicada y comprobada con duplicados.
+- [x] Trazabilidad del efecto del webhook disponible en respuesta y auditoría.
+
+### Riesgos controlados en esta etapa
+- Reentrega de callbacks: controlada por deduplicación persistida en memoria.
+- Callbacks fuera de orden: mitigado con transiciones monotónicas de estado.
+- Inyección de callbacks inválidos: mitigada por validación de firma por provider.
+
+**Solicitud de avance:** si estás de acuerdo, indícame **"avanzar etapa 6"** y continúo con feature flags por sucursal/canal + pruebas integrales.
