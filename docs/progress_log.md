@@ -120,3 +120,8 @@ Cada avance debe añadir:
 **Evolución etapa 5 (resiliencia e idempotencia):**
 - Se incorporó backoff acotado por ciclos de worker para retry de errores transitorios.
 - Se agregó estado/contador de dead-letter para errores no recuperables al agotar intentos.
+
+
+**Evolución etapa 6 (consulta y pruebas):**
+- Se habilitó consulta por tipo documental y endpoint de refresh de estado para reconciliación explícita.
+- Se amplió cobertura API para escenarios de estado progresivo y ambigüedad por tipo documental.

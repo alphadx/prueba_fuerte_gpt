@@ -15,8 +15,8 @@
 7. **Hardening documental** y checklist de cierre del paso.
 
 ## Estado actual del prototipo
-- **Etapa en ejecución:** **Etapa 5 de 7 (completada)**.
-- **Cumplimiento estimado del paso 7:** **71%** (5/7 completadas: + resiliencia/reintentos/idempotencia).
+- **Etapa en ejecución:** **Etapa 6 de 7 (completada)**.
+- **Cumplimiento estimado del paso 7:** **86%** (6/7 completadas: + consulta de estado y pruebas ampliadas).
 - **Semáforo:** 🟡 Amarillo (En progreso controlado por etapas).
 - **Observación:** Se asume enfoque iterativo; no se considera cierre definitivo del paso hasta completar 7/7 con aprobación explícita por etapa.
 
@@ -26,7 +26,7 @@
 - [x] Etapa 3 — adaptador sandbox.
 - [x] Etapa 4 — desacople asíncrono POS.
 - [x] Etapa 5 — resiliencia/reintentos/idempotencia.
-- [ ] Etapa 6 — consulta de estado + pruebas.
+- [x] Etapa 6 — consulta de estado + pruebas.
 - [ ] Etapa 7 — hardening documental.
 
 ## Protocolo de interacción
@@ -68,3 +68,9 @@
 - Se agregó marcación de dead-letter (`dead_lettered`) al agotar intentos máximos y contador global de documentos en dead-letter.
 - El endpoint del worker ahora reporta `dead_lettered` además de `enqueued/processed/succeeded/failed`.
 - Se añadieron pruebas unitarias y API para validar backoff, transición a dead-letter y observabilidad del contador.
+
+
+## Evidencia etapa 6
+- La consulta de documento ahora soporta `document_type` por query param para evitar ambigüedad entre boleta/factura de una misma venta.
+- Se agregó endpoint de reconciliación `POST /billing/documents/{sale_id}/refresh-status` para actualizar estado observado en proveedor/SII.
+- Se amplió la batería de pruebas API con casos de refresh progresivo y búsqueda por tipo documental.

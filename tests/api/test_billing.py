@@ -146,3 +146,33 @@ def test_billing_worker_reports_dead_lettered_documents(monkeypatch: pytest.Monk
     worker = client.post("/billing/worker/process", json={"limit": 10}, headers=admin_headers)
     assert worker.status_code == 200
     assert worker.json()["dead_lettered"] >= 1
+
+
+def test_billing_refresh_status_endpoint(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("BILLING_SANDBOX_EMIT_STATUS", "processing")
+    monkeypatch.setenv("BILLING_SANDBOX_STATUS_MODE", "progressive")
+    admin_headers = _auth_header(roles=["admin"])
+    cajero_headers = _auth_header(roles=["cajero"])
+    sale_id = _create_sale(admin_headers, cajero_headers)
+
+    client.post("/billing/worker/process", json={"limit": 10}, headers=admin_headers)
+
+    first = client.post(f"/billing/documents/{sale_id}/refresh-status", headers=cajero_headers)
+    assert first.status_code == 200
+    assert first.json()["sii_status"] == "processing"
+
+    second = client.post(f"/billing/documents/{sale_id}/refresh-status", headers=cajero_headers)
+    assert second.status_code == 200
+    assert second.json()["sii_status"] == "accepted"
+
+
+def test_billing_document_type_query_param() -> None:
+    admin_headers = _auth_header(roles=["admin"])
+    billing_service.enqueue_sale_document(sale_id="sale-q-01", branch_id="br-001", total=1000, document_type="factura")
+
+    found = client.get("/billing/documents/sale-q-01?document_type=factura", headers=admin_headers)
+    assert found.status_code == 200
+    assert found.json()["document_type"] == "factura"
+
+    missing = client.get("/billing/documents/sale-q-01", headers=admin_headers)
+    assert missing.status_code == 404

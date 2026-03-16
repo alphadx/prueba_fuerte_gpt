@@ -502,11 +502,63 @@ paths:
       tags: [billing]
       summary: Obtiene estado de boleta electrónica por venta
       operationId: getBillingDocumentBySaleId
+      parameters:
+        - in: query
+          name: document_type
+          required: false
+          schema:
+            type: string
+            default: boleta
       security:
         - bearerAuth: []
       responses:
         '200':
           description: Documento tributario encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BillingDocumentResponse'
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Documento tributario no existe para la venta
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /billing/documents/{sale_id}/refresh-status:
+    parameters:
+      - in: path
+        name: sale_id
+        required: true
+        schema:
+          type: string
+      - in: query
+        name: document_type
+        required: false
+        schema:
+          type: string
+          default: boleta
+    post:
+      tags: [billing]
+      summary: Refresca estado SII/proveedor de un documento emitido
+      operationId: postBillingDocumentRefreshStatus
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Estado actualizado
           content:
             application/json:
               schema:

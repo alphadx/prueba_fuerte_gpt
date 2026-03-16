@@ -131,6 +131,25 @@ class BillingService:
 
             raise KeyError("billing document not found")
 
+
+    def refresh_status(self, *, sale_id: str, document_type: str = "boleta") -> BillingDocument:
+        with self._lock:
+            key = (sale_id, document_type)
+            doc = self._documents.get(key)
+            if doc is None:
+                raise KeyError("billing document not found")
+            if doc.track_id is None:
+                return self._clone(doc)
+
+        status = self._provider.get_status(track_id=doc.track_id)
+
+        with self._lock:
+            doc = self._documents[key]
+            doc.sii_status = status
+            if doc.status == "processing" and status == "accepted":
+                doc.status = "accepted"
+            return self._clone(doc)
+
     def process_worker_batch(self, *, limit: int = 20) -> tuple[int, int, int, int, int]:
         enqueued = self.drain_emission_events(limit=limit)
         processed, succeeded, failed = self.process_pending(limit=limit)
