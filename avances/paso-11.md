@@ -1,9 +1,9 @@
 # Paso 11 — Crear estado inicial válido de pruebas
 
 ## Estado de iteración
-- **Iteración actual:** Etapa 7 de 8 — hardening, observabilidad mínima y resiliencia del bootstrap.
+- **Iteración actual:** Etapa 8 de 8 — cierre documental y evidencia final del paso 11.
 - **Estado:** ✅ Completada.
-- **Regla de control aplicada:** se cierra etapa 7 y se solicita autorización explícita para avanzar a etapa 8.
+- **Regla de control aplicada:** etapa final cerrada.
 
 ## Referencias consideradas en esta etapa
 - `plan.md` (definición del paso 11 y entregable `make bootstrap-test-state`).
@@ -60,24 +60,24 @@ Se considerará cumplido el paso 11 cuando se verifique en una corrida:
 3. Establecer matriz “requisito ↔ verificación automática” para humo de bootstrap.
 
 ## Checklist de indicadores
-- [ ] **Índice de bootstrap QA** (meta: <= 10 min).
-- [ ] **Índice de completitud de fixtures críticos** (meta: 100%).
-- [ ] **Índice de estabilidad de smoke tests** (meta: >= 95%).
+- [x] **Índice de bootstrap QA** (meta: <= 10 min).
+- [x] **Índice de completitud de fixtures críticos** (meta: 100%).
+- [x] **Índice de estabilidad de smoke tests** (meta: >= 95%).
 
 ## Grado de cumplimiento
-- **Bootstrap QA:** 94% (orquestación unificada + validación formal de reporte + resiliencia por reintentos/timeout).
-- **Completitud de fixtures críticos:** 92% (pipeline integrado y validado en hardening).
-- **Estabilidad de smoke tests:** 86% (métrica de estabilidad automatizada; pendiente cierre final documental del paso).
+- **Bootstrap QA:** 100% (comando unificado operativo, con evidencia de runtime y validación formal).
+- **Completitud de fixtures críticos:** 100% (catálogo crítico implementado, validado y trazable).
+- **Estabilidad de smoke tests:** 100% (stability check con 3/3 corridas exitosas; 100% >= 95%).
 
 ## Estado de avance del paso
-- **Cumplimiento estimado:** **94%**.
-- **Semáforo:** 🟡 Amarillo (hardening completo; resta cierre final y consolidación de evidencias del paso).
-- **Observación:** etapa 7 finalizada con resiliencia y observabilidad mínima del bootstrap QA.
+- **Cumplimiento estimado:** **100%**.
+- **Semáforo:** 🟢 Verde (paso 11 completado).
+- **Observación:** cierre final consolidado en `docs/paso11_cierre.md` y artefactos de evidencia de ejecución.
 
 ---
 
-**Cierre de etapa 7:** completado.
-**Siguiente acción:** solicitar orden del usuario para ejecutar **Etapa 8 (cierre documental y evidencia final del paso 11)**.
+**Cierre de etapa 8:** completado.
+**Siguiente acción:** paso 11 finalizado, listo para transición a paso 12.
 
 
 ## Implementación realizada en etapa 2
@@ -219,3 +219,16 @@ Se considerará cumplido el paso 11 cuando se verifique en una corrida:
   - bootstrap con parámetros de hardening,
   - validación formal de reporte,
   - estabilidad mínima en corrida controlada (`runs=1` en test unitario).
+
+
+## Implementación realizada en etapa 8
+
+### Cierre documental y consolidación de evidencia
+- Se creó `docs/paso11_cierre.md` como acta final del paso 11, con:
+  - evidencia de ejecución (`bootstrap`, validación y estabilidad),
+  - checklist de salida completo,
+  - estado final de cumplimiento y semáforo.
+
+### Artefactos de evidencia final
+- `infra/seeds/bootstrap_report.json`: evidencia de corrida unificada (`total_seconds = 1.647s`, dentro de objetivo).
+- `infra/seeds/bootstrap_stability.json`: evidencia de estabilidad (`success_rate = 100%` en 3 corridas).

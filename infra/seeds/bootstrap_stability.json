@@ -1,0 +1,27 @@
+{
+  "runs": 3,
+  "successes": 3,
+  "success_rate": 100.0,
+  "min_success_rate": 95.0,
+  "passes_threshold": true,
+  "results": [
+    {
+      "run": 1,
+      "returncode": 0,
+      "ok": true,
+      "report_path": "infra/seeds/bootstrap_report_run_01.json"
+    },
+    {
+      "run": 2,
+      "returncode": 0,
+      "ok": true,
+      "report_path": "infra/seeds/bootstrap_report_run_02.json"
+    },
+    {
+      "run": 3,
+      "returncode": 0,
+      "ok": true,
+      "report_path": "infra/seeds/bootstrap_report_run_03.json"
+    }
+  ]
+}
