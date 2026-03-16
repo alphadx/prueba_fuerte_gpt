@@ -23,6 +23,7 @@ class AlarmEvent:
     source: str
     generated_at: str
     rule_snapshot: dict[str, object]
+    notification_statuses: dict[str, str]
 
 
 @dataclass
@@ -60,6 +61,23 @@ class AlarmEventService:
     def list_runs(self) -> list[AlertEvaluationRun]:
         with self._lock:
             return [AlertEvaluationRun(**vars(item)) for item in self._runs_by_id.values()]
+
+    def list_pending_events(self) -> list[AlarmEvent]:
+        with self._lock:
+            return [AlarmEvent(**vars(item)) for item in self._by_id.values() if item.status == "pending"]
+
+    def update_notification_status(self, *, event_id: str, channel: str, status: str) -> AlarmEvent:
+        with self._lock:
+            if event_id not in self._by_id:
+                raise KeyError("alarm event not found")
+            event = self._by_id[event_id]
+            event.notification_statuses[channel] = status
+            channel_states = set(event.notification_statuses.values())
+            if "failed" in channel_states:
+                event.status = "partially_failed" if "sent" in channel_states else "failed"
+            elif channel_states and channel_states == {"sent"}:
+                event.status = "sent"
+            return AlarmEvent(**vars(event))
 
     def evaluate_documents(
         self,
@@ -107,6 +125,7 @@ class AlarmEventService:
                     source="daily_evaluator",
                     generated_at=now,
                     rule_snapshot={"threshold_days": days_to_expire, "evaluation_date": evaluation_date},
+                    notification_statuses={},
                 )
                 self._by_id[event_id] = event
                 self._ids_by_key[dedupe_key] = event_id

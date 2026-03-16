@@ -10,6 +10,7 @@ import json
 from fastapi.testclient import TestClient
 
 from app.main import app
+from app.modules.alerts.notifications import alert_notification_service
 from app.modules.alerts.service import alarm_event_service
 from app.modules.document_types.service import document_type_service
 from app.modules.employee_documents.service import employee_document_service
@@ -23,6 +24,7 @@ def _test_setup(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("JWT_HS256_SECRET", "test-secret")
     monkeypatch.delenv("JWT_ALLOW_INSECURE_TOKENS", raising=False)
     alarm_event_service.reset_state()
+    alert_notification_service.reset_state()
     employee_document_service.reset_state()
     document_type_service.reset_state()
 
@@ -83,6 +85,33 @@ def test_alerts_evaluate_for_rrhh_and_idempotent_per_window() -> None:
     assert second_body["generated"] == 0
     assert second_body["queued"] == 0
     assert second_body["run"]["duplicate_events"] == 1
+
+
+def test_alerts_dispatch_pending_tolerates_channel_failure(monkeypatch: pytest.MonkeyPatch) -> None:
+    headers = _auth_header(roles=["rrhh"])
+    client.post("/alerts/evaluate", json={"evaluation_date": "2025-01-24"}, headers=headers)
+
+    original = alert_notification_service._deliver
+
+    def _patched_deliver(*, channel: str, event):
+        if channel == "email":
+            return "failed", "simulated email outage"
+        return original(channel=channel, event=event)
+
+    monkeypatch.setattr(alert_notification_service, "_deliver", _patched_deliver)
+
+    dispatch = client.post("/alerts/dispatch-pending", headers=headers)
+    assert dispatch.status_code == 200
+    body = dispatch.json()
+    assert body["processed_events"] == 1
+    assert body["sent_attempts"] == 1
+    assert body["failed_attempts"] == 1
+
+    events = client.get("/alerts/events", headers=headers).json()["items"]
+    assert events[0]["status"] == "partially_failed"
+
+    attempts = client.get("/alerts/notifications", headers=headers).json()["items"]
+    assert len(attempts) == 2
 
 
 def test_alerts_evaluations_list_for_rrhh() -> None:

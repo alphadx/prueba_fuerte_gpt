@@ -20,6 +20,26 @@ class AlarmEventResponse(BaseModel):
     source: str
     generated_at: str
     rule_snapshot: dict[str, object]
+    notification_statuses: dict[str, str]
+
+
+class NotificationAttemptResponse(BaseModel):
+    id: str
+    event_id: str
+    channel: str
+    status: str
+    detail: str
+    attempted_at: str
+
+
+class NotificationAttemptListResponse(BaseModel):
+    items: list[NotificationAttemptResponse]
+
+
+class DispatchPendingNotificationsResponse(BaseModel):
+    processed_events: int
+    sent_attempts: int
+    failed_attempts: int
 
 
 class AlertEvaluationRunResponse(BaseModel):

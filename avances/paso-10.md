@@ -1,9 +1,9 @@
 # Paso 10 — Implementar RRHH documental flexible y motor de alertas
 
 ## Estado de iteración
-- **Iteración actual:** Etapa 5 de 7 — generación de `AlarmEvent` auditable con deduplicación ampliada y trazabilidad.
+- **Iteración actual:** Etapa 6 de 7 — notificaciones desacopladas (in-app + email pruebas) con tolerancia a fallas por canal.
 - **Estado:** ✅ Completada.
-- **Regla de control aplicada:** no se inicia etapa 6 sin autorización explícita del usuario.
+- **Regla de control aplicada:** no se inicia etapa 7 sin autorización explícita del usuario.
 
 ## Checklist de indicadores
 - [ ] **Índice de cobertura documental** (meta: 100% fixture).
@@ -157,6 +157,25 @@ Dejar una definición cerrada del problema y de los criterios medibles que gober
 - Unitarias para validar contadores de duplicados/expirados y estructura auditable del evento.
 - API para validar respuesta de `run`, deduplicación observable y listado de corridas.
 
+
+## Implementación realizada en etapa 6
+
+### Notificaciones desacopladas por canal
+- Se agregó `AlertNotificationService` para despachar eventos por `in_app` y `email` en entorno de pruebas.
+- El despacho no bloquea la creación del `AlarmEvent`; opera sobre eventos pendientes de forma posterior (post-evaluación).
+
+### Tolerancia a fallas
+- Se incorporó endpoint `POST /alerts/dispatch-pending` que procesa eventos `pending` y registra resultados por canal.
+- Si un canal falla (por ejemplo `email`), el evento queda en estado `partially_failed` sin perder la evidencia ni afectar otros canales.
+
+### Evidencia de entrega
+- Se agregó registro de intentos (`NotificationAttempt`) y endpoint `GET /alerts/notifications` para trazabilidad operativa en pruebas.
+- Cada `AlarmEvent` expone `notification_statuses` por canal para seguimiento de cumplimiento de entrega.
+
+### Pruebas añadidas
+- Unitaria para servicio de notificaciones con envío `in_app`/`email`.
+- API para validar dispatch de pendientes, tolerancia a falla de canal y consulta de intentos registrados.
+
 ## Riesgos técnicos y mitigaciones iniciales
 - **Riesgo:** deriva de esquemas JSON no versionados.
   - **Mitigación:** versionado explícito por `DocumentType` y uso de schema activo.
@@ -166,15 +185,15 @@ Dejar una definición cerrada del problema y de los criterios medibles que gober
   - **Mitigación:** crear `AlarmEvent` como operación principal y desacoplar envío por adaptadores.
 
 ## Avance de cumplimiento del paso
-- **Cobertura documental:** 65% (dominio documental y almacenamiento separados, con trazabilidad de evaluación).
-- **Precisión de alertas:** 60% (eventos generados con auditoría de deduplicación y métricas por corrida).
-- **Entrega de notificaciones:** 15% (encolado activo, falta despacho por canal).
-- **Cumplimiento estimado total del paso 10:** **60%**.
-- **Semáforo:** 🟡 Amarillo (motor robustecido; pendiente notificación desacoplada y hardening final).
+- **Cobertura documental:** 70% (flujo documental estable con trazabilidad de evaluación y entrega).
+- **Precisión de alertas:** 65% (motor con deduplicación y auditoría de corrida operativa).
+- **Entrega de notificaciones:** 55% (despacho multicanal activo con tolerancia a fallas y evidencia).
+- **Cumplimiento estimado total del paso 10:** **72%**.
+- **Semáforo:** 🟡 Amarillo (núcleo funcional completo; falta hardening final y cierre).
 
-## Próxima etapa propuesta (Etapa 6)
-Implementar notificaciones desacopladas (in-app + email en pruebas) con tolerancia a fallas por canal y evidencia de entrega.
+## Próxima etapa propuesta (Etapa 7)
+Hardening final: auditoría integral de evaluaciones/notificaciones, pruebas integrales de salida y checklist de cierre del paso 10.
 
 ---
 
-**Solicitud de control:** etapa 5 finalizada. Indica “avanzar etapa 6” para continuar con la siguiente iteración.
+**Solicitud de control:** etapa 6 finalizada. Indica “avanzar etapa 7” para continuar con la siguiente iteración.
