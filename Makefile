@@ -1,4 +1,4 @@
-.PHONY: doctor-docker up test seed seed-validate seed-pipeline fixtures fixtures-validate fixtures-pipeline smoke-test-state smoke-pipeline bootstrap-test-state migrate-up migrate-down migrate-status verify-step4 verify-step5 compose-up compose-up-full compose-down compose-smoke architecture-review
+.PHONY: doctor-docker up test seed seed-validate seed-pipeline fixtures fixtures-validate fixtures-pipeline smoke-test-state smoke-pipeline bootstrap-test-state bootstrap-validate bootstrap-stability migrate-up migrate-down migrate-status verify-step4 verify-step5 compose-up compose-up-full compose-down compose-smoke architecture-review
 
 doctor-docker:
 	@echo "[doctor] Verificando Docker y Docker Compose..."
@@ -52,7 +52,15 @@ smoke-pipeline: seed-pipeline fixtures-pipeline smoke-test-state
 bootstrap-test-state:
 	python3 -m venv .venv
 	. .venv/bin/activate && pip install -r apps/api/requirements.txt -r apps/api/requirements-dev.txt
-	. .venv/bin/activate && python infra/scripts/bootstrap_test_state.py --max-seconds 600
+	. .venv/bin/activate && python infra/scripts/bootstrap_test_state.py --max-seconds 600 --retries 1 --step-timeout-seconds 240 --verbose
+
+bootstrap-validate:
+	python3 infra/scripts/validate_bootstrap_report.py --path infra/seeds/bootstrap_report.json --max-seconds 600
+
+bootstrap-stability:
+	python3 -m venv .venv
+	. .venv/bin/activate && pip install -r apps/api/requirements.txt -r apps/api/requirements-dev.txt
+	. .venv/bin/activate && python infra/scripts/bootstrap_stability.py --runs 3 --min-success-rate 95 --max-seconds 600
 
 migrate-up:
 	python3 -m venv .venv

@@ -1,9 +1,9 @@
 # Paso 11 — Crear estado inicial válido de pruebas
 
 ## Estado de iteración
-- **Iteración actual:** Etapa 6 de 8 — orquestación con `make bootstrap-test-state`.
+- **Iteración actual:** Etapa 7 de 8 — hardening, observabilidad mínima y resiliencia del bootstrap.
 - **Estado:** ✅ Completada.
-- **Regla de control aplicada:** se cierra etapa 6 y se solicita autorización explícita para avanzar a etapa 7.
+- **Regla de control aplicada:** se cierra etapa 7 y se solicita autorización explícita para avanzar a etapa 8.
 
 ## Referencias consideradas en esta etapa
 - `plan.md` (definición del paso 11 y entregable `make bootstrap-test-state`).
@@ -65,19 +65,19 @@ Se considerará cumplido el paso 11 cuando se verifique en una corrida:
 - [ ] **Índice de estabilidad de smoke tests** (meta: >= 95%).
 
 ## Grado de cumplimiento
-- **Bootstrap QA:** 88% (comando unificado `make bootstrap-test-state` operativo con reporte de runtime).
-- **Completitud de fixtures críticos:** 90% (seed+fixtures+smoke integrados en orquestación única).
-- **Estabilidad de smoke tests:** 72% (smoke automatizado en pipeline; pendiente corrida repetida hardening).
+- **Bootstrap QA:** 94% (orquestación unificada + validación formal de reporte + resiliencia por reintentos/timeout).
+- **Completitud de fixtures críticos:** 92% (pipeline integrado y validado en hardening).
+- **Estabilidad de smoke tests:** 86% (métrica de estabilidad automatizada; pendiente cierre final documental del paso).
 
 ## Estado de avance del paso
-- **Cumplimiento estimado:** **88%**.
-- **Semáforo:** 🟡 Amarillo (comando unificado listo; resta hardening/checklist final del paso).
-- **Observación:** etapa 6 finalizada con bootstrap QA end-to-end en un único comando.
+- **Cumplimiento estimado:** **94%**.
+- **Semáforo:** 🟡 Amarillo (hardening completo; resta cierre final y consolidación de evidencias del paso).
+- **Observación:** etapa 7 finalizada con resiliencia y observabilidad mínima del bootstrap QA.
 
 ---
 
-**Cierre de etapa 6:** completado.
-**Siguiente acción:** solicitar orden del usuario para ejecutar **Etapa 7 (hardening, observabilidad mínima y resiliencia del bootstrap)**.
+**Cierre de etapa 7:** completado.
+**Siguiente acción:** solicitar orden del usuario para ejecutar **Etapa 8 (cierre documental y evidencia final del paso 11)**.
 
 
 ## Implementación realizada en etapa 2
@@ -191,3 +191,31 @@ Se considerará cumplido el paso 11 cuando se verifique en una corrida:
 ### Pruebas automatizadas de etapa 6
 - Se añadió `tests/unit/test_bootstrap_test_state.py` para validar ejecución exitosa del orquestador y estructura del reporte generado.
 - Se validó `make bootstrap-test-state` en local con cumplimiento de tiempo objetivo.
+
+
+## Implementación realizada en etapa 7
+
+### Hardening de resiliencia en bootstrap
+- Se robusteció `infra/scripts/bootstrap_test_state.py` con:
+  - reintentos por paso (`--retries`),
+  - timeout por paso (`--step-timeout-seconds`),
+  - trazabilidad por intento (`attempts[]`, `started_at`, `timed_out`) en reporte JSON.
+- Se mantuvo falla explícita cuando:
+  - una etapa retorna error,
+  - el runtime total excede objetivo configurado.
+
+### Observabilidad mínima y validación de reporte
+- Se agregó `infra/scripts/validate_bootstrap_report.py` para validar estructura y criterios de éxito del reporte de bootstrap (`all_steps_passed`, `within_target`, orden de pasos, return codes).
+- Se agregaron objetivos Makefile:
+  - `make bootstrap-validate`
+  - `make bootstrap-stability`
+
+### Estabilidad repetida del bootstrap
+- Se agregó `infra/scripts/bootstrap_stability.py` para ejecutar N corridas y calcular `success_rate`, con umbral mínimo configurable (default 95%).
+- Esto habilita medición objetiva del KPI de estabilidad de smoke/bootstrap en corridas consecutivas.
+
+### Pruebas automatizadas de etapa 7
+- Se añadió `tests/unit/test_bootstrap_hardening.py` para validar:
+  - bootstrap con parámetros de hardening,
+  - validación formal de reporte,
+  - estabilidad mínima en corrida controlada (`runs=1` en test unitario).
