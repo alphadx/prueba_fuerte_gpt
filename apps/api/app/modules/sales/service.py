@@ -136,7 +136,7 @@ class SaleService:
             )
             self._by_id[sale_id] = sale
 
-            billing_service.enqueue_sale_document(
+            billing_service.enqueue_sale_emission_event(
                 sale_id=sale.id,
                 branch_id=sale.branch_id,
                 total=sale.total,

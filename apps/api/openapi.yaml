@@ -474,8 +474,10 @@ components:
           nullable: true
     BillingWorkerProcessResponse:
       type: object
-      required: [processed, succeeded, failed]
+      required: [enqueued, processed, succeeded, failed]
       properties:
+        enqueued:
+          type: integer
         processed:
           type: integer
         succeeded:

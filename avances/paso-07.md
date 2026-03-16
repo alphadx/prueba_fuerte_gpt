@@ -15,8 +15,8 @@
 7. **Hardening documental** y checklist de cierre del paso.
 
 ## Estado actual del prototipo
-- **Etapa en ejecución:** **Etapa 3 de 7 (completada)**.
-- **Cumplimiento estimado del paso 7:** **43%** (3/7 completadas: análisis + contrato + adaptador sandbox reforzado).
+- **Etapa en ejecución:** **Etapa 4 de 7 (completada)**.
+- **Cumplimiento estimado del paso 7:** **57%** (4/7 completadas: análisis + contrato + adaptador + desacople POS/caja).
 - **Semáforo:** 🟡 Amarillo (En progreso controlado por etapas).
 - **Observación:** Se asume enfoque iterativo; no se considera cierre definitivo del paso hasta completar 7/7 con aprobación explícita por etapa.
 
@@ -24,7 +24,7 @@
 - [x] Etapa 1 — análisis y criterios iniciales.
 - [x] Etapa 2 — contrato proveedor.
 - [x] Etapa 3 — adaptador sandbox.
-- [ ] Etapa 4 — desacople asíncrono POS.
+- [x] Etapa 4 — desacople asíncrono POS.
 - [ ] Etapa 5 — resiliencia/reintentos/idempotencia.
 - [ ] Etapa 6 — consulta de estado + pruebas.
 - [ ] Etapa 7 — hardening documental.
@@ -53,3 +53,11 @@
 - Se agregó marco documental y referencias técnicas SII en `docs/sii_billing_compliance.md`.
 - Se añadieron comentarios con referencias SII en el adaptador sandbox para trazabilidad de diseño durante el prototipo.
 - Este refuerzo se considera prerequisito de gobernanza antes de iniciar la siguiente etapa (Etapa 4).
+
+
+## Evidencia etapa 4
+- El flujo POS ahora encola eventos de emisión (`enqueue_sale_emission_event`) en vez de crear documento tributario directamente en la confirmación de venta.
+- Se agregó cola interna de emisión en `BillingService` con `drain_emission_events` y procesamiento en lote de worker (`process_worker_batch`).
+- `GET /billing/documents/{sale_id}` mantiene visibilidad de estado `queued` incluso antes del drenado por worker (placeholder derivado de cola).
+- `POST /billing/worker/process` ahora reporta `enqueued` + `processed/succeeded/failed` para observabilidad del desacople asincrónico.
+- Se agregaron pruebas para validar desacople: documento en `queued` con `attempts=0` antes del worker y transición luego de ejecutar batch.

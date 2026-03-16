@@ -110,3 +110,8 @@ Cada avance debe añadir:
 - Se reforzó el adaptador con modos de simulación de fallas transitorias y estados (`accepted/processing/rejected`).
 - Se agregó transición de estado progresiva para pruebas de reconciliación (`processing -> accepted`).
 - Se amplió trazabilidad de payload y pruebas unitarias específicas del adaptador.
+
+
+**Evolución etapa 4 (desacople POS/caja):**
+- Se desacopló confirmación de venta y creación efectiva de documento tributario mediante cola de eventos de emisión.
+- Worker de billing ahora ejecuta fase de drenado + fase de procesamiento, con métricas de lote (`enqueued`, `processed`, `succeeded`, `failed`).

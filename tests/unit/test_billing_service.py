@@ -51,3 +51,21 @@ def test_billing_service_supports_multiple_document_types_for_same_sale(monkeypa
 
     assert billing_service.get_by_sale_id("sale-03", document_type="boleta").status == "accepted"
     assert billing_service.get_by_sale_id("sale-03", document_type="factura").status == "accepted"
+
+
+def test_billing_service_event_queue_drains_then_processes(monkeypatch):
+    monkeypatch.delenv("BILLING_SANDBOX_FORCE_ERROR", raising=False)
+    billing_service.reset_state()
+
+    billing_service.enqueue_sale_emission_event(sale_id="sale-04", branch_id="br-1", total=1200)
+
+    queued = billing_service.get_by_sale_id("sale-04")
+    assert queued.status == "queued"
+    assert queued.attempts == 0
+
+    enqueued, processed, succeeded, failed = billing_service.process_worker_batch(limit=10)
+    assert (enqueued, processed, succeeded, failed) == (1, 1, 1, 0)
+
+    final = billing_service.get_by_sale_id("sale-04")
+    assert final.status == "accepted"
+    assert final.track_id is not None

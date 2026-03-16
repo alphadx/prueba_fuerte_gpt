@@ -87,7 +87,9 @@ def test_billing_document_status_flow() -> None:
 
     processed = client.post("/billing/worker/process", json={"limit": 10}, headers=admin_headers)
     assert processed.status_code == 200
-    assert processed.json()["succeeded"] == 1
+    payload_worker = processed.json()
+    assert payload_worker["enqueued"] == 1
+    assert payload_worker["succeeded"] == 1
 
     emitted = client.get(f"/billing/documents/{sale_id}", headers=cajero_headers)
     payload = emitted.json()
@@ -102,3 +104,25 @@ def test_billing_status_query_returns_404_for_unknown_sale() -> None:
     admin_headers = _auth_header(roles=["admin"])
     not_found = client.get("/billing/documents/sale-404", headers=admin_headers)
     assert not_found.status_code == 404
+
+
+def test_billing_sale_enqueue_is_async_until_worker_batch() -> None:
+    admin_headers = _auth_header(roles=["admin"])
+    cajero_headers = _auth_header(roles=["cajero"])
+    sale_id = _create_sale(admin_headers, cajero_headers)
+
+    queued = client.get(f"/billing/documents/{sale_id}", headers=cajero_headers)
+    assert queued.status_code == 200
+    queued_payload = queued.json()
+    assert queued_payload["status"] == "queued"
+    assert queued_payload["attempts"] == 0
+    assert queued_payload["track_id"] is None
+
+    processed = client.post("/billing/worker/process", json={"limit": 10}, headers=admin_headers)
+    assert processed.status_code == 200
+    assert processed.json()["enqueued"] == 1
+
+    emitted = client.get(f"/billing/documents/{sale_id}", headers=cajero_headers)
+    assert emitted.status_code == 200
+    assert emitted.json()["attempts"] >= 1
+    assert emitted.json()["track_id"] is not None

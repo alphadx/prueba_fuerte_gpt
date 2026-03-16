@@ -27,6 +27,7 @@ class BillingDocumentResponse(BaseModel):
 
 
 class BillingWorkerProcessResponse(BaseModel):
+    enqueued: int
     processed: int
     succeeded: int
     failed: int

@@ -47,5 +47,5 @@ def process_billing_queue(
     payload: BillingProcessRequest,
     _: AuthContext = Depends(require_roles("admin")),
 ) -> BillingWorkerProcessResponse:
-    processed, succeeded, failed = billing_service.process_pending(limit=payload.limit)
-    return BillingWorkerProcessResponse(processed=processed, succeeded=succeeded, failed=failed)
+    enqueued, processed, succeeded, failed = billing_service.process_worker_batch(limit=payload.limit)
+    return BillingWorkerProcessResponse(enqueued=enqueued, processed=processed, succeeded=succeeded, failed=failed)
