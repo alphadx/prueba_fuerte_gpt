@@ -1,4 +1,4 @@
-.PHONY: doctor-docker up test seed migrate-up migrate-down migrate-status verify-step4 verify-step5 compose-up compose-up-full compose-down compose-smoke architecture-review
+.PHONY: doctor-docker up test seed seed-validate seed-pipeline migrate-up migrate-down migrate-status verify-step4 verify-step5 compose-up compose-up-full compose-down compose-smoke architecture-review
 
 doctor-docker:
 	@echo "[doctor] Verificando Docker y Docker Compose..."
@@ -24,6 +24,12 @@ test:
 
 seed:
 	python3 infra/scripts/seed.py
+
+seed-validate:
+	python3 infra/scripts/validate_seed.py
+
+seed-pipeline: seed seed-validate
+	@echo "[seed] Pipeline idempotente OK"
 
 migrate-up:
 	python3 -m venv .venv

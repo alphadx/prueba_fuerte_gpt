@@ -1,20 +1,265 @@
 {
+  "alarm_rules": [
+    {
+      "id": "arule-030",
+      "is_active": true,
+      "threshold_days": 30
+    },
+    {
+      "id": "arule-015",
+      "is_active": true,
+      "threshold_days": 15
+    },
+    {
+      "id": "arule-007",
+      "is_active": true,
+      "threshold_days": 7
+    },
+    {
+      "id": "arule-001",
+      "is_active": true,
+      "threshold_days": 1
+    }
+  ],
+  "branch": {
+    "code": "BR-001",
+    "company_id": "comp-001",
+    "id": "branch-001",
+    "name": "Casa Matriz"
+  },
   "company": {
+    "id": "comp-001",
     "name": "Demo ERP Barrio",
     "rut": "76.123.456-7"
   },
-  "branch": {
-    "name": "Casa Matriz",
-    "code": "BR-001"
+  "document_types": [
+    {
+      "code": "CONTRATO",
+      "name": "Contrato de trabajo",
+      "requires_expiry": true,
+      "schema_version": 1
+    }
+  ],
+  "employee_documents": [
+    {
+      "document_type_code": "CONTRATO",
+      "employee_id": "emp-001",
+      "expires_on": "2025-01-22",
+      "id": "edoc-001",
+      "issue_on": "2025-01-15",
+      "status": "vigente"
+    },
+    {
+      "document_type_code": "CONTRATO",
+      "employee_id": "emp-002",
+      "expires_on": "2025-04-15",
+      "id": "edoc-002",
+      "issue_on": "2025-01-15",
+      "status": "vigente"
+    }
+  ],
+  "employees": [
+    {
+      "full_name": "Ana Pérez",
+      "id": "emp-001",
+      "rut": "12.345.678-5"
+    },
+    {
+      "full_name": "Juan Soto",
+      "id": "emp-002",
+      "rut": "10.111.222-3"
+    }
+  ],
+  "fixtures_catalog": [
+    {
+      "id": "FX-SALE-CASH",
+      "scenario": "cash_sale"
+    },
+    {
+      "id": "FX-SALE-ELECTRONIC",
+      "scenario": "electronic_sale"
+    },
+    {
+      "id": "FX-WEB-PICKUP",
+      "scenario": "web_pickup_order"
+    },
+    {
+      "id": "FX-BILLING-SBX",
+      "scenario": "billing_sandbox"
+    },
+    {
+      "id": "FX-PAYMENT-WEBHOOK",
+      "scenario": "payment_webhook"
+    }
+  ],
+  "meta": {
+    "deterministic": true,
+    "generated_at": "2025-01-15",
+    "seed_reference_date": "2025-01-15",
+    "seed_version": "step11-v1"
   },
+  "products": [
+    {
+      "id": "prod-001",
+      "name": "Producto Semilla 01",
+      "price": 1100,
+      "sku": "SKU-001",
+      "stock": 16
+    },
+    {
+      "id": "prod-002",
+      "name": "Producto Semilla 02",
+      "price": 1200,
+      "sku": "SKU-002",
+      "stock": 17
+    },
+    {
+      "id": "prod-003",
+      "name": "Producto Semilla 03",
+      "price": 1300,
+      "sku": "SKU-003",
+      "stock": 18
+    },
+    {
+      "id": "prod-004",
+      "name": "Producto Semilla 04",
+      "price": 1400,
+      "sku": "SKU-004",
+      "stock": 19
+    },
+    {
+      "id": "prod-005",
+      "name": "Producto Semilla 05",
+      "price": 1500,
+      "sku": "SKU-005",
+      "stock": 20
+    },
+    {
+      "id": "prod-006",
+      "name": "Producto Semilla 06",
+      "price": 1600,
+      "sku": "SKU-006",
+      "stock": 21
+    },
+    {
+      "id": "prod-007",
+      "name": "Producto Semilla 07",
+      "price": 1700,
+      "sku": "SKU-007",
+      "stock": 22
+    },
+    {
+      "id": "prod-008",
+      "name": "Producto Semilla 08",
+      "price": 1800,
+      "sku": "SKU-008",
+      "stock": 23
+    },
+    {
+      "id": "prod-009",
+      "name": "Producto Semilla 09",
+      "price": 1900,
+      "sku": "SKU-009",
+      "stock": 24
+    },
+    {
+      "id": "prod-010",
+      "name": "Producto Semilla 10",
+      "price": 2000,
+      "sku": "SKU-010",
+      "stock": 25
+    },
+    {
+      "id": "prod-011",
+      "name": "Producto Semilla 11",
+      "price": 2100,
+      "sku": "SKU-011",
+      "stock": 26
+    },
+    {
+      "id": "prod-012",
+      "name": "Producto Semilla 12",
+      "price": 2200,
+      "sku": "SKU-012",
+      "stock": 27
+    },
+    {
+      "id": "prod-013",
+      "name": "Producto Semilla 13",
+      "price": 2300,
+      "sku": "SKU-013",
+      "stock": 28
+    },
+    {
+      "id": "prod-014",
+      "name": "Producto Semilla 14",
+      "price": 2400,
+      "sku": "SKU-014",
+      "stock": 29
+    },
+    {
+      "id": "prod-015",
+      "name": "Producto Semilla 15",
+      "price": 2500,
+      "sku": "SKU-015",
+      "stock": 30
+    },
+    {
+      "id": "prod-016",
+      "name": "Producto Semilla 16",
+      "price": 2600,
+      "sku": "SKU-016",
+      "stock": 31
+    },
+    {
+      "id": "prod-017",
+      "name": "Producto Semilla 17",
+      "price": 2700,
+      "sku": "SKU-017",
+      "stock": 32
+    },
+    {
+      "id": "prod-018",
+      "name": "Producto Semilla 18",
+      "price": 2800,
+      "sku": "SKU-018",
+      "stock": 33
+    },
+    {
+      "id": "prod-019",
+      "name": "Producto Semilla 19",
+      "price": 2900,
+      "sku": "SKU-019",
+      "stock": 34
+    },
+    {
+      "id": "prod-020",
+      "name": "Producto Semilla 20",
+      "price": 3000,
+      "sku": "SKU-020",
+      "stock": 35
+    }
+  ],
   "users": [
     {
       "email": "admin@example.com",
+      "id": "usr-admin-001",
       "role": "admin"
     },
     {
       "email": "cajero@example.com",
+      "id": "usr-cajero-001",
       "role": "cajero"
+    },
+    {
+      "email": "bodega@example.com",
+      "id": "usr-bodega-001",
+      "role": "bodega"
+    },
+    {
+      "email": "rrhh@example.com",
+      "id": "usr-rrhh-001",
+      "role": "rrhh"
     }
   ]
 }
