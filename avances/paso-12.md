@@ -1,60 +1,60 @@
 # Paso 12 — Validación final, observabilidad y checklist de salida
 
 ## Estado de iteración
-- **Iteración actual:** Etapa 8 de 8 — hardening de cierre documental + reporte final de salida.
+- **Iteración actual:** Etapa 9 (adenda post-cierre) — remediación de señales SLO y reevaluación de dictamen.
 - **Estado:** ✅ Completada.
-- **Regla de control aplicada:** ciclo iterativo del paso 12 cerrado.
+- **Regla de control aplicada:** adenda cerrada; paso 12 permanece cerrado con estado de salida actualizado.
 
 ## Referencias documentales consideradas
-- `plan.md` (definición de etapa 8 del paso 12).
-- `docs/release_pipeline_contract.md` (contrato de gates y reglas de decisión).
-- `docs/release_go_live_checklist.md` (checklist ejecutable y riesgos).
-- `docs/release_rollback_contingency.md` (contingencia y ABORT_RELEASE).
-- `docs/release_validation_stage7.yaml` (corrida integral consolidada previa).
+- `docs/release_final_report_step12.md` (reporte final y adenda).
+- `docs/release_pipeline_contract.md` (reglas de decisión y extensiones).
+- `docs/release_validation_stage7.yaml` (baseline integral previa).
+- `docs/release_validation_stage9.yaml` (nueva corrida consolidada).
+- `docs/release_observability_snapshot_stage9.json` (snapshot operativo de remediación).
 
-## Objetivo de la etapa 8
-Cerrar documentalmente el paso 12 con reporte final de salida, estatus de riesgos críticos y dictamen ejecutivo GO/NO-GO/PENDIENTE_ENTORNO.
+## Objetivo de la etapa 9
+Ejecutar una adenda post-cierre para remediar la señal SLO de pagos, consolidar nueva evidencia y reevaluar el estado de salida del paso 12.
 
 ## Implementación realizada
 
-### 1) Hardening documental final
-Se creó `docs/release_final_report_step12.md` como artefacto de cierre que consolida:
-- resumen ejecutivo del paso,
-- estado por objetivo,
-- resultados de calidad (gates + SLO),
-- riesgos críticos abiertos con owner/ETA,
-- decisión final de release,
-- plan de acción inmediato post-cierre.
+### 1) Corrida de remediación y snapshot actualizado
+- Se ejecutó muestra operativa controlada con pagos aprobados para validar comportamiento de observabilidad en estado saludable.
+- Se versionó `docs/release_observability_snapshot_stage9.json`.
 
-### 2) Cierre de estado operativo
-Con base en la corrida integral de etapa 7 y reglas contractuales:
-- se mantiene `NO-GO` por riesgo crítico de pagos (`error_rate` fuera de SLO),
-- se mantiene condición de infraestructura pendiente por ausencia de Docker/Compose,
-- se requiere rerun integral en entorno compatible para reevaluar salida.
+### 2) Consolidación de validación stage 9
+Se creó `docs/release_validation_stage9.yaml` con:
+- estado por gates,
+- SLO críticos actualizados,
+- checklist C1..C10,
+- riesgo crítico remanente,
+- decisión de release.
 
-### 3) Cierre del paso 12
-- Se completa la secuencia de 8/8 etapas.
-- Quedan explícitos los pendientes para habilitar una futura decisión `GO`.
+### 3) Reevaluación de dictamen ejecutivo
+- Se añadió adenda en `docs/release_final_report_step12.md`.
+- `payments.error_rate` pasa a umbral (0.0 <= 3.0).
+- Riesgo crítico pendiente: infraestructura Docker/Compose no validada en entorno compatible.
+- **Dictamen actualizado:** **PENDIENTE_ENTORNO**.
 
-## Resultado final del paso 12
-- **Estado del paso:** ✅ Completado documental y operativamente.
-- **Estado release al cierre:** **NO-GO**.
-- **Semáforo:** 🟠 Ámbar (listo para remediación dirigida).
+## Resultado de la etapa 9
+- **Cobertura funcional:** remediación SLO de pagos evidenciada.
+- **Estado release actualizado:** **PENDIENTE_ENTORNO**.
+- **Semáforo:** 🟡 Amarillo (bloqueo exclusivo de infraestructura).
 
-## Evidencia de ejecución (etapa 8)
+## Evidencia de ejecución (etapa 9)
 - `make test`
 - `make bootstrap-validate`
 - `make smoke-test-state`
 - `make doctor-docker`
+- `. .venv/bin/activate && JWT_HS256_SECRET=test-secret PYTHONPATH=apps/api python ...` (genera `docs/release_observability_snapshot_stage9.json`)
 
-## Métricas finales del paso 12
-- **Salud de pipeline:** 74%.
-- **SLO técnico mínimo:** 74%.
-- **Preparación go-live:** 78%.
-- **Cumplimiento estimado total del paso:** **80%**.
-- **Semáforo final:** 🟠 Ámbar.
+## Métricas finales actualizadas del paso 12
+- **Salud de pipeline:** 76%.
+- **SLO técnico mínimo:** 82%.
+- **Preparación go-live:** 86%.
+- **Cumplimiento estimado total del paso:** **84%**.
+- **Semáforo final actualizado:** 🟡 Amarillo.
 
 ---
 
-**Cierre de etapa 8:** completado.
-**Cierre del paso 12:** completado con dictamen **NO-GO** y plan de remediación documentado en `docs/release_final_report_step12.md`.
+**Cierre de etapa 9:** completado.
+**Estado final actualizado del paso 12:** cerrado con dictamen **PENDIENTE_ENTORNO** hasta validar Docker/Compose en entorno compatible.

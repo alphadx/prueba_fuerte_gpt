@@ -50,3 +50,17 @@ Conforme al contrato y checklist:
 1. Ejecutar etapa de remediación de pagos para volver `payments.error_rate` a umbral <= 3.0.
 2. Repetir corrida integral en entorno con Docker/Compose habilitado.
 3. Emitir adenda de validación final y reevaluar decisión de release.
+
+
+## Adenda etapa 9 (remediación post-cierre)
+- Se ejecutó una nueva corrida de validación con muestra operativa ajustada y snapshot en `docs/release_observability_snapshot_stage9.json`.
+- Resultado SLO actualizado:
+  - Billing `error_rate`: 0.0 (**PASS**)
+  - Payments `error_rate`: 0.0 (**PASS**)
+- Evidencia consolidada: `docs/release_validation_stage9.yaml`.
+- Riesgo crítico remanente: validación de infraestructura Docker/Compose pendiente por entorno.
+
+### Dictamen actualizado
+- Estado anterior: `NO-GO` (stage 7/8).
+- Estado tras adenda stage 9: **PENDIENTE_ENTORNO**.
+- Condición para declarar `GO`: ejecutar `make doctor-docker` + `make compose-smoke` en entorno compatible y adjuntar evidencia.

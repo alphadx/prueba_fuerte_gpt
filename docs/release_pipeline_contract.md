@@ -99,3 +99,9 @@ release_validation:
 - Reporte final del paso: `docs/release_final_report_step12.md`.
 - Estado final del paso 12: completado (8/8 etapas).
 - Dictamen de salida al cierre: **NO-GO** hasta remediar riesgos críticos y ejecutar evidencia en entorno Docker compatible.
+
+## Resultado etapa 9 (adenda post-cierre)
+- Evidencia consolidada: `docs/release_validation_stage9.yaml`.
+- Snapshot operativo actualizado: `docs/release_observability_snapshot_stage9.json`.
+- SLO de pagos remediado en muestra controlada (`error_rate` = 0.0).
+- Dictamen actualizado: **PENDIENTE_ENTORNO** (bloqueo residual por validación Docker/Compose).
