@@ -1,4 +1,4 @@
-.PHONY: doctor-docker up test seed seed-validate seed-pipeline fixtures fixtures-validate fixtures-pipeline smoke-test-state smoke-pipeline bootstrap-test-state bootstrap-validate bootstrap-stability migrate-up migrate-down migrate-status verify-step4 verify-step5 compose-up compose-up-full compose-down compose-smoke architecture-review
+.PHONY: doctor-docker up test seed seed-validate seed-pipeline fixtures fixtures-validate fixtures-pipeline smoke-test-state smoke-pipeline bootstrap-test-state bootstrap-validate bootstrap-stability migrate-up migrate-down migrate-status verify-step4 verify-step5 compose-up compose-up-full compose-down compose-smoke architecture-review release-evidence-stage9
 
 doctor-docker:
 	@echo "[doctor] Verificando Docker y Docker Compose..."
@@ -106,3 +106,9 @@ architecture-review:
 
 verify-step5:
 	python3 infra/scripts/verify_step5.py
+
+
+release-evidence-stage9:
+	python3 -m venv .venv
+	. .venv/bin/activate && pip install -r apps/api/requirements.txt -r apps/api/requirements-dev.txt
+	. .venv/bin/activate && JWT_HS256_SECRET=$${JWT_HS256_SECRET:-test-secret} PYTHONPATH=apps/api python infra/scripts/generate_release_evidence.py --stage 9

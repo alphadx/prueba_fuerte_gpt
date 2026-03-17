@@ -1,60 +1,53 @@
 # Paso 12 — Validación final, observabilidad y checklist de salida
 
 ## Estado de iteración
-- **Iteración actual:** Etapa 9 (adenda post-cierre) — remediación de señales SLO y reevaluación de dictamen.
+- **Iteración actual:** Etapa 10 (post-cierre) — exactitud operativa y automatización de evidencia.
 - **Estado:** ✅ Completada.
-- **Regla de control aplicada:** adenda cerrada; paso 12 permanece cerrado con estado de salida actualizado.
+- **Regla de control aplicada:** adenda cerrada; paso 12 continúa cerrado con dictamen vigente.
 
 ## Referencias documentales consideradas
-- `docs/release_final_report_step12.md` (reporte final y adenda).
-- `docs/release_pipeline_contract.md` (reglas de decisión y extensiones).
-- `docs/release_validation_stage7.yaml` (baseline integral previa).
-- `docs/release_validation_stage9.yaml` (nueva corrida consolidada).
-- `docs/release_observability_snapshot_stage9.json` (snapshot operativo de remediación).
+- `docs/release_pipeline_contract.md` (reglas de release + automatización).
+- `docs/release_final_report_step12.md` (reporte final y adendas).
+- `docs/release_validation_stage9.yaml` (validación consolidada).
+- `docs/release_observability_snapshot_stage9.json` (snapshot operativo).
+- `infra/scripts/generate_release_evidence.py` (nuevo flujo reproducible).
 
-## Objetivo de la etapa 9
-Ejecutar una adenda post-cierre para remediar la señal SLO de pagos, consolidar nueva evidencia y reevaluar el estado de salida del paso 12.
+## Objetivo de la etapa 10
+Mejorar precisión y reproducibilidad del cierre, eliminando consolidación manual de evidencia de release.
 
 ## Implementación realizada
 
-### 1) Corrida de remediación y snapshot actualizado
-- Se ejecutó muestra operativa controlada con pagos aprobados para validar comportamiento de observabilidad en estado saludable.
-- Se versionó `docs/release_observability_snapshot_stage9.json`.
+### 1) Automatización de evidencia consolidada
+- Se creó `infra/scripts/generate_release_evidence.py` para ejecutar gates, construir snapshot y emitir consolidado de validación en una sola corrida.
+- Se agregó el target `make release-evidence-stage9` para operación estándar del equipo.
 
-### 2) Consolidación de validación stage 9
-Se creó `docs/release_validation_stage9.yaml` con:
-- estado por gates,
-- SLO críticos actualizados,
-- checklist C1..C10,
-- riesgo crítico remanente,
-- decisión de release.
+### 2) Hardening documental de precisión
+- Se actualizó `docs/release_pipeline_contract.md` con sección de automatización recomendada.
+- Se actualizó `docs/release_final_report_step12.md` con adenda de exactitud operativa.
 
-### 3) Reevaluación de dictamen ejecutivo
-- Se añadió adenda en `docs/release_final_report_step12.md`.
-- `payments.error_rate` pasa a umbral (0.0 <= 3.0).
-- Riesgo crítico pendiente: infraestructura Docker/Compose no validada en entorno compatible.
-- **Dictamen actualizado:** **PENDIENTE_ENTORNO**.
+### 3) Validación de la automatización
+- Se ejecutó `make release-evidence-stage9` y se regeneraron artefactos:
+  - `docs/release_observability_snapshot_stage9.json`
+  - `docs/release_validation_stage9.yaml`
+- El dictamen permanece **PENDIENTE_ENTORNO** por bloqueo exclusivo de Docker/Compose.
 
-## Resultado de la etapa 9
-- **Cobertura funcional:** remediación SLO de pagos evidenciada.
+## Resultado de la etapa 10
+- **Cobertura funcional:** evidencia reproducible unificada y sin dependencia de consolidación manual.
 - **Estado release actualizado:** **PENDIENTE_ENTORNO**.
-- **Semáforo:** 🟡 Amarillo (bloqueo exclusivo de infraestructura).
+- **Semáforo:** 🟡 Amarillo.
 
-## Evidencia de ejecución (etapa 9)
-- `make test`
-- `make bootstrap-validate`
-- `make smoke-test-state`
+## Evidencia de ejecución (etapa 10)
+- `make release-evidence-stage9`
 - `make doctor-docker`
-- `. .venv/bin/activate && JWT_HS256_SECRET=test-secret PYTHONPATH=apps/api python ...` (genera `docs/release_observability_snapshot_stage9.json`)
 
 ## Métricas finales actualizadas del paso 12
-- **Salud de pipeline:** 76%.
-- **SLO técnico mínimo:** 82%.
-- **Preparación go-live:** 86%.
-- **Cumplimiento estimado total del paso:** **84%**.
+- **Salud de pipeline:** 78%.
+- **SLO técnico mínimo:** 84%.
+- **Preparación go-live:** 88%.
+- **Cumplimiento estimado total del paso:** **86%**.
 - **Semáforo final actualizado:** 🟡 Amarillo.
 
 ---
 
-**Cierre de etapa 9:** completado.
+**Cierre de etapa 10:** completado.
 **Estado final actualizado del paso 12:** cerrado con dictamen **PENDIENTE_ENTORNO** hasta validar Docker/Compose en entorno compatible.

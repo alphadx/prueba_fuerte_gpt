@@ -105,3 +105,8 @@ release_validation:
 - Snapshot operativo actualizado: `docs/release_observability_snapshot_stage9.json`.
 - SLO de pagos remediado en muestra controlada (`error_rate` = 0.0).
 - Dictamen actualizado: **PENDIENTE_ENTORNO** (bloqueo residual por validación Docker/Compose).
+
+## Automatización de evidencia (precisión operativa)
+- Comando recomendado: `make release-evidence-stage9`.
+- Script: `infra/scripts/generate_release_evidence.py` (genera snapshot + consolidado YAML en una sola corrida).
+- Beneficio: reduce desalineación manual entre evidencias (`snapshot`, `validation`) y decisión final.

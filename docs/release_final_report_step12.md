@@ -64,3 +64,9 @@ Conforme al contrato y checklist:
 - Estado anterior: `NO-GO` (stage 7/8).
 - Estado tras adenda stage 9: **PENDIENTE_ENTORNO**.
 - Condición para declarar `GO`: ejecutar `make doctor-docker` + `make compose-smoke` en entorno compatible y adjuntar evidencia.
+
+
+## Adenda etapa 10 (exactitud y automatización de evidencia)
+- Se incorporó generación automatizada de evidencia con `make release-evidence-stage9`.
+- Artefacto técnico: `infra/scripts/generate_release_evidence.py`.
+- Estado del dictamen se mantiene en **PENDIENTE_ENTORNO**, eliminando el riesgo de inconsistencia manual entre snapshot y consolidado YAML.
