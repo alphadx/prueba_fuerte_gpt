@@ -110,3 +110,12 @@ release_validation:
 - Comando recomendado: `make release-evidence-stage9`.
 - Script: `infra/scripts/generate_release_evidence.py` (genera snapshot + consolidado YAML en una sola corrida).
 - Beneficio: reduce desalineación manual entre evidencias (`snapshot`, `validation`) y decisión final.
+
+## Resultado etapa 11 (handoff de entorno compatible)
+- Guía de ejecución en entorno Docker: `docs/release_env_handoff_stage11.md`.
+- Objetivo: eliminar causa `PENDIENTE_ENTORNO` mediante corrida reproducible en infraestructura compatible.
+
+## Acciones obligatorias para etapa 12
+1. Ejecutar handoff stage 11 en runner con Docker/Compose.
+2. Regenerar evidencia stage 9 y actualizar dictamen final (`GO|NO-GO`).
+3. Cerrar paso con acta final de salida sin bloqueos de entorno.
