@@ -89,3 +89,12 @@ class CashReconciliationResponse(BaseModel):
     pending_total: int
     amount_total: float
     amount_approved: float
+
+
+class PaymentObservabilityResponse(BaseModel):
+    payments_total: int
+    approved_total: int
+    rejected_total: int
+    pending_total: int
+    webhook_events_processed: int
+    error_rate: float

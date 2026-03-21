@@ -15,6 +15,7 @@ from app.modules.payments.schemas import (
     PaymentMethodFlagListResponse,
     PaymentMethodFlagResponse,
     PaymentMethodFlagUpsertRequest,
+    PaymentObservabilityResponse,
     PaymentResponse,
     PaymentUpdateRequest,
     PaymentWebhookRequest,
@@ -40,6 +41,20 @@ def _to_response(payment: Payment) -> PaymentResponse:
 @router.get("", response_model=PaymentListResponse)
 def list_payments(_: AuthContext = Depends(require_roles("admin", "cajero"))) -> PaymentListResponse:
     return PaymentListResponse(items=[_to_response(item) for item in payment_service.list_payments()])
+
+
+@router.get("/observability/metrics", response_model=PaymentObservabilityResponse)
+def get_payment_observability_metrics(
+    auth: AuthContext = Depends(require_roles("admin", "cajero")),
+) -> PaymentObservabilityResponse:
+    snapshot = payment_service.get_observability_snapshot()
+    record_audit_event(
+        actor_id=auth.subject,
+        action="payments.observability.metrics",
+        entity="payments",
+        metadata={"payments_total": snapshot.payments_total, "error_rate": snapshot.error_rate},
+    )
+    return PaymentObservabilityResponse(**vars(snapshot))
 
 
 

@@ -371,3 +371,41 @@ def test_stub_integral_reject_timeout_and_duplicate_idempotency() -> None:
         headers=headers,
     )
     assert duplicate.status_code == 409
+
+
+def test_payments_observability_metrics_endpoint() -> None:
+    headers = _auth_header(roles=["cajero"])
+
+    create_pending = client.post(
+        "/payments",
+        json={
+            "sale_id": "sale-metrics-1",
+            "amount": 10000,
+            "method": "efectivo",
+            "status": "pending",
+            "idempotency_key": "idem-metrics-1",
+        },
+        headers=headers,
+    )
+    assert create_pending.status_code == 201
+
+    create_rejected = client.post(
+        "/payments",
+        json={
+            "sale_id": "sale-metrics-2",
+            "amount": 12000,
+            "method": "efectivo",
+            "status": "rejected",
+            "idempotency_key": "idem-metrics-2",
+        },
+        headers=headers,
+    )
+    assert create_rejected.status_code == 201
+
+    metrics = client.get("/payments/observability/metrics", headers=headers)
+    assert metrics.status_code == 200
+    body = metrics.json()
+    assert body["payments_total"] == 2
+    assert body["rejected_total"] == 1
+    assert body["pending_total"] == 1
+    assert body["error_rate"] == 50.0
