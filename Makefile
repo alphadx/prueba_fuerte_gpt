@@ -123,7 +123,9 @@ release-evidence-pipeline-stage9: release-evidence-stage9 release-validate-stage
 	@echo "[release-evidence] Pipeline stage9 consistente"
 
 release-closure-acta-stage9:
-	python infra/scripts/generate_release_closure_acta.py --input docs/release_validation_stage9.yaml --output docs/release_stage12_closure_acta.md
+	python3 -m venv .venv
+	. .venv/bin/activate && pip install -r apps/api/requirements.txt -r apps/api/requirements-dev.txt
+	. .venv/bin/activate && python infra/scripts/generate_release_closure_acta.py --input docs/release_validation_stage9.yaml --output docs/release_stage12_closure_acta.md
 
 release-closure-pipeline-stage9: release-evidence-pipeline-stage9 release-closure-acta-stage9
 	@echo "[release-closure-acta] Acta stage12 generada"

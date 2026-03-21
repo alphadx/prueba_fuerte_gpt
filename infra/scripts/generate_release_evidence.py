@@ -9,8 +9,15 @@ import hmac
 import json
 import os
 import subprocess
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+
+from release_artifacts import write_release_artifact
 
 
 DOCKER_GATE_NAME = "make doctor-docker && make compose-smoke"
@@ -234,7 +241,7 @@ def main() -> None:
     }
 
     validation_path = output_dir / f"release_validation_stage{args.stage}.yaml"
-    validation_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
+    write_release_artifact(validation_path, payload)
     print(f"[release-evidence] OK: {validation_path} y {snapshot_path}")
 
 

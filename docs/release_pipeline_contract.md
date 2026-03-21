@@ -129,5 +129,5 @@ release_validation:
 ## Resultado etapa 13 (validación automática de consistencia)
 - Nuevo validador: `infra/scripts/validate_release_evidence.py`.
 - Pipeline de cierre recomendado: `make release-closure-pipeline-stage9` (genera evidencia, valida consistencia y emite acta).
-- Robustez adicional: el gate `make doctor-docker && make compose-smoke` se ejecuta como secuencia real, y el validador cruza gates/SLO contra el checklist consolidado antes de aceptar el dictamen.
-- Beneficio: asegura consistencia entre gates, SLO, checklist, decisión final y acta emitida.
+- Robustez adicional: el gate `make doctor-docker && make compose-smoke` se ejecuta como secuencia real, el consolidado stage 9 se emite como YAML real y el validador cruza gates/SLO contra el checklist consolidado antes de aceptar el dictamen.
+- Beneficio: asegura consistencia entre formato del artefacto, gates, SLO, checklist, decisión final y acta emitida.

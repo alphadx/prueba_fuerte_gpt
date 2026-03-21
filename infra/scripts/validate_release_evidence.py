@@ -3,8 +3,14 @@
 from __future__ import annotations
 
 import argparse
-import json
+import sys
 from pathlib import Path
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+
+from release_artifacts import load_release_artifact
 
 
 GATE_TO_CHECK_ID = {
@@ -51,7 +57,7 @@ def main() -> None:
     path = Path(args.path)
     _assert(path.exists(), f"no existe {path}")
 
-    payload = json.loads(path.read_text(encoding="utf-8"))
+    payload = load_release_artifact(path)
     _assert("release_validation" in payload, "falta clave release_validation")
     rv = payload["release_validation"]
 

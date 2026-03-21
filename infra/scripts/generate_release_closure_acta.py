@@ -3,15 +3,21 @@
 from __future__ import annotations
 
 import argparse
-import json
 import os
 import socket
 import subprocess
+import sys
 from pathlib import Path
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+
+from release_artifacts import load_release_artifact
 
 
 def _load_payload(path: Path) -> dict[str, object]:
-    payload = json.loads(path.read_text(encoding="utf-8"))
+    payload = load_release_artifact(path)
     if "release_validation" not in payload:
         raise SystemExit("[release-closure-acta] ERROR: falta clave release_validation")
     return payload["release_validation"]

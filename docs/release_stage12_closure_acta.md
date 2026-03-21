@@ -6,9 +6,9 @@
 Formalizar el estado de cierre del proceso de salida usando la evidencia consolidada más reciente, incluyendo bloqueos de infraestructura y decisión final vigente.
 
 ## Datos de ejecución
-- Timestamp UTC de evidencia: `2026-03-21T05:36:59Z`
-- Commit validado: `a512bc8`
-- Entorno ejecutor: `f6945110d48c`
+- Timestamp UTC de evidencia: `2026-03-21T20:03:55Z`
+- Commit validado: `3074a3f`
+- Entorno ejecutor: `6123da79bae6`
 - Responsable de validación: `Release captain`
 
 ## Checklist de cierre

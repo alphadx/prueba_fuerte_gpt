@@ -86,3 +86,8 @@ Conforme al contrato y checklist:
 - El gate consolidado `make doctor-docker && make compose-smoke` pasó a ejecutarse como secuencia real dentro de `infra/scripts/generate_release_evidence.py`, evitando falsos positivos por validar solo la primera mitad del check de infraestructura.
 - `infra/scripts/validate_release_evidence.py` ahora cruza gates, SLO y checklist (`C1`-`C7`) para rechazar consolidaciones inconsistentes antes de emitir el acta.
 - El dictamen sigue en `PENDIENTE_ENTORNO`, pero con mayor garantía de trazabilidad entre evidencia operativa y checklist de salida.
+
+## Adenda etapa 15 (cierre del paso al 100%)
+- El artefacto `docs/release_validation_stage9.yaml` ahora se serializa como YAML real, alineando formato, extensión y validadores del pipeline.
+- El paso 12 queda **100% completo** en términos de ingeniería, automatización y trazabilidad documental.
+- El estado operativo del release sigue siendo `PENDIENTE_ENTORNO` exclusivamente por disponibilidad externa de Docker/Compose, no por deuda del paso.
