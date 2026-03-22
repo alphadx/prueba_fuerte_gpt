@@ -12,10 +12,10 @@ Este repositorio implementa los **pasos 2, 3 y 4 del plan**: arquitectura base e
 
 ## Requisitos
 
-- Python 3.11+
-- Node.js 20+ (para `apps/web`)
+- Docker Engine + Docker Compose v2
 - GNU Make
-- Docker + Docker Compose
+
+> Nota: Python/Node locales quedan opcionales para flujos legacy. El flujo principal del repo se ejecuta con Docker.
 
 ## Comandos principales
 
@@ -35,13 +35,13 @@ make architecture-review
 
 ### Qué hace cada comando
 
-- `make up`: instala dependencias de API y levanta FastAPI localmente en `http://127.0.0.1:8000`.
-- `make test`: ejecuta los tests base de API.
-- `make seed`: genera datos semilla iniciales en `infra/seeds/dev_seed.json`.
-- `make migrate-up`: aplica migraciones SQL versionadas contra PostgreSQL.
-- `make migrate-status`: lista versiones de migración aplicadas.
-- `make verify-step4`: ejecuta validaciones estáticas de cobertura/requisitos del paso 4.
-- `make compose-up`: levanta perfil `core` (`postgres`, `redis`, `api`, `worker`, `web`).
+- `make up`: levanta stack `core` con Docker Compose (`postgres`, `redis`, `api`, `worker`, `web`, `tooling`).
+- `make test`: ejecuta tests en contenedor `tooling` (sin `venv` local).
+- `make seed`: genera datos semilla iniciales en `infra/seeds/dev_seed.json` desde `tooling`.
+- `make migrate-up`: aplica migraciones SQL versionadas desde `tooling` contra PostgreSQL de Compose.
+- `make migrate-status`: lista versiones de migración aplicadas desde `tooling`.
+- `make verify-step4`: ejecuta validaciones estáticas desde `tooling`.
+- `make compose-up`: levanta perfil `core` (`postgres`, `redis`, `api`, `worker`, `web`, `tooling`).
 - `make compose-up-full`: levanta perfil `full` (core + `mailhog`, `greenmail`, `minio`, `keycloak`, `keycloak-db`).
 - `make compose-down`: baja servicios Docker Compose.
 - `make compose-smoke`: valida endpoints `/health` y `/ready` de la API levantada por Compose.
@@ -70,6 +70,7 @@ El contrato vive en `apps/api/openapi.yaml`. Cualquier endpoint nuevo debe decla
 - En cada sesión técnica se debe validar Docker al inicio con `make doctor-docker`.
 - Si Docker no está instalado/disponible, **primero se debe instalar/habilitar** antes de ejecutar pruebas reales con Compose.
 - Para pruebas integradas de servicios usar `make compose-up` (o `make compose-up-full`).
+- Para ejecución de tests/scripts Python usar el servicio `tooling` vía targets `make`.
 
 
 ## Control de usuarios y SSO

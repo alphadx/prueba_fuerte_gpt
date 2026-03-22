@@ -1,5 +1,8 @@
 .PHONY: doctor-docker up test seed seed-validate seed-pipeline fixtures fixtures-validate fixtures-pipeline smoke-test-state smoke-pipeline bootstrap-test-state bootstrap-validate bootstrap-stability migrate-up migrate-down migrate-status verify-step4 verify-step5 compose-up compose-up-full compose-down compose-smoke architecture-review release-evidence-stage9 release-validate-stage9 release-evidence-pipeline-stage9
 
+COMPOSE = docker compose --env-file .env.example
+RUN_TOOLING = $(COMPOSE) run --rm tooling
+
 doctor-docker:
 	@echo "[doctor] Verificando Docker y Docker Compose..."
 	@if command -v docker >/dev/null 2>&1; then \
@@ -13,81 +16,65 @@ doctor-docker:
 	fi
 
 up:
-	python3 -m venv .venv
-	. .venv/bin/activate && pip install -r apps/api/requirements.txt
-	. .venv/bin/activate && uvicorn app.main:app --app-dir apps/api --host 127.0.0.1 --port 8000
+	$(COMPOSE) --profile core up -d --build
 
 test:
-	python3 -m venv .venv
-	. .venv/bin/activate && pip install -r apps/api/requirements.txt -r apps/api/requirements-dev.txt
-	. .venv/bin/activate && pytest -q
+	$(RUN_TOOLING) pytest -q
 
 seed:
-	python3 infra/scripts/seed.py
+	$(RUN_TOOLING) python infra/scripts/seed.py
 
 seed-validate:
-	python3 infra/scripts/validate_seed.py
+	$(RUN_TOOLING) python infra/scripts/validate_seed.py
 
 seed-pipeline: seed seed-validate
 	@echo "[seed] Pipeline idempotente OK"
 
 fixtures:
-	python3 -m venv .venv
-	. .venv/bin/activate && pip install -r apps/api/requirements.txt -r apps/api/requirements-dev.txt
-	. .venv/bin/activate && python infra/scripts/load_fixtures.py
+	$(RUN_TOOLING) python infra/scripts/load_fixtures.py
 
 fixtures-validate:
-	python3 infra/scripts/validate_fixtures.py
+	$(RUN_TOOLING) python infra/scripts/validate_fixtures.py
 
 
 fixtures-pipeline: fixtures fixtures-validate
 	@echo "[fixtures] Pipeline crítico OK"
 
 smoke-test-state:
-	python3 infra/scripts/smoke_test_state.py
+	$(RUN_TOOLING) python infra/scripts/smoke_test_state.py
 
 smoke-pipeline: seed-pipeline fixtures-pipeline smoke-test-state
 	@echo "[smoke] Pipeline de estado QA OK"
 
 bootstrap-test-state:
-	python3 -m venv .venv
-	. .venv/bin/activate && pip install -r apps/api/requirements.txt -r apps/api/requirements-dev.txt
-	. .venv/bin/activate && python infra/scripts/bootstrap_test_state.py --max-seconds 600 --retries 1 --step-timeout-seconds 240 --verbose
+	$(RUN_TOOLING) python infra/scripts/bootstrap_test_state.py --max-seconds 600 --retries 1 --step-timeout-seconds 240 --verbose
 
 bootstrap-validate:
-	python3 infra/scripts/validate_bootstrap_report.py --path infra/seeds/bootstrap_report.json --max-seconds 600
+	$(RUN_TOOLING) python infra/scripts/validate_bootstrap_report.py --path infra/seeds/bootstrap_report.json --max-seconds 600
 
 bootstrap-stability:
-	python3 -m venv .venv
-	. .venv/bin/activate && pip install -r apps/api/requirements.txt -r apps/api/requirements-dev.txt
-	. .venv/bin/activate && python infra/scripts/bootstrap_stability.py --runs 3 --min-success-rate 95 --max-seconds 600
+	$(RUN_TOOLING) python infra/scripts/bootstrap_stability.py --runs 3 --min-success-rate 95 --max-seconds 600
 
 migrate-up:
-	python3 -m venv .venv
-	. .venv/bin/activate && pip install -r apps/api/requirements.txt
-	. .venv/bin/activate && python infra/scripts/migrate.py up
+	$(RUN_TOOLING) python infra/scripts/migrate.py up
 
 migrate-down:
-	python3 -m venv .venv
-	. .venv/bin/activate && pip install -r apps/api/requirements.txt
-	. .venv/bin/activate && python infra/scripts/migrate.py down --version $${VERSION:-0001}
+	$(RUN_TOOLING) python infra/scripts/migrate.py down --version $${VERSION:-0001}
 
 migrate-status:
-	python3 -m venv .venv
-	. .venv/bin/activate && pip install -r apps/api/requirements.txt
-	. .venv/bin/activate && python infra/scripts/migrate.py status
+	$(RUN_TOOLING) python infra/scripts/migrate.py status
 
 verify-step4:
-	python3 infra/scripts/verify_step4.py
+	$(RUN_TOOLING) python infra/scripts/verify_step4.py
 
 compose-up:
-	docker compose --profile core --env-file .env.example up -d --build
+	$(COMPOSE) --profile core up -d --build
 
 compose-up-full:
-	docker compose --profile full --env-file .env.example up -d --build
+	$(COMPOSE) --profile full up -d --build
 
 compose-down:
-	docker compose --env-file .env.example down
+	$(COMPOSE) down
 
 
 compose-smoke:
@@ -105,27 +92,21 @@ architecture-review:
 
 
 verify-step5:
-	python3 infra/scripts/verify_step5.py
+	$(RUN_TOOLING) python infra/scripts/verify_step5.py
 
 
 release-evidence-stage9:
-	python3 -m venv .venv
-	. .venv/bin/activate && pip install -r apps/api/requirements.txt -r apps/api/requirements-dev.txt
-	. .venv/bin/activate && JWT_HS256_SECRET=$${JWT_HS256_SECRET:-test-secret} PYTHONPATH=apps/api python infra/scripts/generate_release_evidence.py --stage 9
+	$(RUN_TOOLING) sh -c 'JWT_HS256_SECRET=$${JWT_HS256_SECRET:-test-secret} PYTHONPATH=apps/api python infra/scripts/generate_release_evidence.py --stage 9'
 
 
 release-validate-stage9:
-	python3 -m venv .venv
-	. .venv/bin/activate && pip install -r apps/api/requirements.txt -r apps/api/requirements-dev.txt
-	. .venv/bin/activate && python infra/scripts/validate_release_evidence.py --path docs/release_validation_stage9.yaml
+	$(RUN_TOOLING) python infra/scripts/validate_release_evidence.py --path docs/release_validation_stage9.yaml
 
 release-evidence-pipeline-stage9: release-evidence-stage9 release-validate-stage9
 	@echo "[release-evidence] Pipeline stage9 consistente"
 
 release-closure-acta-stage9:
-	python3 -m venv .venv
-	. .venv/bin/activate && pip install -r apps/api/requirements.txt -r apps/api/requirements-dev.txt
-	. .venv/bin/activate && python infra/scripts/generate_release_closure_acta.py --input docs/release_validation_stage9.yaml --output docs/release_stage12_closure_acta.md
+	$(RUN_TOOLING) python infra/scripts/generate_release_closure_acta.py --input docs/release_validation_stage9.yaml --output docs/release_stage12_closure_acta.md
 
 release-closure-pipeline-stage9: release-evidence-pipeline-stage9 release-closure-acta-stage9
 	@echo "[release-closure-acta] Acta stage12 generada"
