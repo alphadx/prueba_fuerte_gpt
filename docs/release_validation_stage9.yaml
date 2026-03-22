@@ -1,0 +1,61 @@
+release_validation:
+  timestamp_utc: '2026-03-21T20:03:55Z'
+  commit: 3074a3f
+  gates:
+  - name: make test
+    status: pass
+    notes: 'make test: ok'
+  - name: make bootstrap-validate
+    status: pass
+    notes: 'make bootstrap-validate: ok'
+  - name: make smoke-test-state
+    status: pass
+    notes: 'make smoke-test-state: ok'
+  - name: make doctor-docker && make compose-smoke
+    status: warning_env
+    notes: Docker/Compose no disponible en entorno actual
+  observability_snapshot_file: docs/release_observability_snapshot_stage9.json
+  slo_checks:
+  - name: billing.error_rate <= 2.0
+    observed: 0.0
+    status: pass
+  - name: payments.error_rate <= 3.0
+    observed: 0.0
+    status: pass
+  - name: api health/readiness
+    observed: ok/ready
+    status: pass
+  go_live_checklist:
+  - id: C1
+    status: PASS
+    notes: suite principal
+  - id: C2
+    status: PASS
+    notes: bootstrap report
+  - id: C3
+    status: PASS
+    notes: smoke estado QA
+  - id: C4
+    status: PENDIENTE_ENTORNO
+    notes: infraestructura docker
+  - id: C5
+    status: PASS
+    notes: billing.error_rate <= 2.0
+  - id: C6
+    status: PASS
+    notes: payments.error_rate <= 3.0
+  - id: C7
+    status: PASS
+    notes: health/readiness
+  - id: C8
+    status: PASS
+    notes: runbooks y owners
+  - id: C9
+    status: PASS
+    notes: evidencia versionada
+  - id: C10
+    status: PASS
+    notes: sin secretos en diff
+  decision: PENDIENTE_ENTORNO
+  critical_risks_open:
+  - No disponibilidad de Docker en entorno validación

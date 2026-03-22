@@ -25,6 +25,8 @@ def _to_response(session: CashSession) -> CashSessionResponse:
         opened_by=session.opened_by,
         opening_amount=session.opening_amount,
         closing_amount=session.closing_amount,
+        expected_amount=session.expected_amount,
+        difference_amount=session.difference_amount,
         status=session.status,
     )
 
@@ -39,12 +41,21 @@ def create_session(
     payload: CashSessionCreateRequest,
     auth: AuthContext = Depends(require_roles("admin", "cajero")),
 ) -> CashSessionResponse:
-    created = cash_session_service.create_session(
-        branch_id=payload.branch_id,
-        opened_by=payload.opened_by,
-        opening_amount=payload.opening_amount,
-        status=payload.status,
-    )
+    try:
+        created = cash_session_service.create_session(
+            branch_id=payload.branch_id,
+            opened_by=payload.opened_by,
+            opening_amount=payload.opening_amount,
+            status=payload.status,
+        )
+    except ValueError as exc:
+        record_audit_event(
+            actor_id=auth.subject,
+            action="cash_sessions.create.rejected",
+            entity=payload.branch_id,
+            metadata={"reason": str(exc), "opened_by": payload.opened_by},
+        )
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
 
     record_audit_event(
         actor_id=auth.subject,
@@ -74,9 +85,18 @@ def update_session(
             session_id,
             closing_amount=payload.closing_amount,
             status=payload.status,
+            cash_delta=payload.cash_delta,
         )
     except KeyError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        record_audit_event(
+            actor_id=auth.subject,
+            action="cash_sessions.update.rejected",
+            entity=session_id,
+            metadata={"reason": str(exc), "status": payload.status},
+        )
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
 
     record_audit_event(
         actor_id=auth.subject,
@@ -93,6 +113,8 @@ def delete_session(session_id: str, auth: AuthContext = Depends(require_roles("a
         cash_session_service.delete_session(session_id)
     except KeyError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
 
     record_audit_event(actor_id=auth.subject, action="cash_sessions.delete", entity=session_id, metadata={})
     return Response(status_code=status.HTTP_204_NO_CONTENT)

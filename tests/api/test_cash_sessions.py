@@ -10,6 +10,7 @@ import json
 from fastapi.testclient import TestClient
 
 from app.main import app
+from app.modules.cash_sessions import router as cash_sessions_router
 from app.modules.cash_sessions.service import cash_session_service
 
 
@@ -73,3 +74,72 @@ def test_cash_sessions_crud_flow_for_cajero() -> None:
 
     allowed_delete = client.delete(f"/cash-sessions/{created['id']}", headers=admin_headers)
     assert allowed_delete.status_code == 204
+
+
+def test_cash_sessions_reject_duplicate_open_for_same_operator_branch() -> None:
+    headers = _auth_header(roles=["cajero"])
+    first = client.post(
+        "/cash-sessions",
+        json={"branch_id": "br-001", "opened_by": "usr-001", "opening_amount": 100000, "status": "open"},
+        headers=headers,
+    )
+    assert first.status_code == 201
+
+    duplicate = client.post(
+        "/cash-sessions",
+        json={"branch_id": "br-001", "opened_by": "usr-001", "opening_amount": 50000, "status": "open"},
+        headers=headers,
+    )
+    assert duplicate.status_code == 409
+    assert "already has an open cash session" in duplicate.json()["detail"]
+
+
+def test_cash_sessions_reject_update_when_already_closed() -> None:
+    headers = _auth_header(roles=["cajero"])
+    created = client.post(
+        "/cash-sessions",
+        json={"branch_id": "br-001", "opened_by": "usr-001", "opening_amount": 100000, "status": "open"},
+        headers=headers,
+    )
+    assert created.status_code == 201
+    session_id = created.json()["id"]
+
+    closed = client.patch(
+        f"/cash-sessions/{session_id}",
+        json={"closing_amount": 95000, "status": "closed"},
+        headers=headers,
+    )
+    assert closed.status_code == 200
+
+    second_update = client.patch(
+        f"/cash-sessions/{session_id}",
+        json={"cash_delta": 1000},
+        headers=headers,
+    )
+    assert second_update.status_code == 409
+    assert "only open cash sessions can be updated" in second_update.json()["detail"]
+
+
+def test_cash_sessions_audit_rejected_on_duplicate_open(monkeypatch: pytest.MonkeyPatch) -> None:
+    events: list[dict[str, object]] = []
+
+    def _capture(**kwargs):
+        events.append(kwargs)
+
+    monkeypatch.setattr(cash_sessions_router, "record_audit_event", _capture)
+
+    headers = _auth_header(roles=["cajero"])
+    first = client.post(
+        "/cash-sessions",
+        json={"branch_id": "br-001", "opened_by": "usr-001", "opening_amount": 100000, "status": "open"},
+        headers=headers,
+    )
+    assert first.status_code == 201
+
+    duplicate = client.post(
+        "/cash-sessions",
+        json={"branch_id": "br-001", "opened_by": "usr-001", "opening_amount": 50000, "status": "open"},
+        headers=headers,
+    )
+    assert duplicate.status_code == 409
+    assert any(event["action"] == "cash_sessions.create.rejected" for event in events)

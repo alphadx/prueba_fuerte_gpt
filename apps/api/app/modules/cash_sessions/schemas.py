@@ -12,6 +12,7 @@ class CashSessionCreateRequest(BaseModel):
 
 class CashSessionUpdateRequest(BaseModel):
     closing_amount: float | None = Field(default=None, ge=0)
+    cash_delta: float | None = None
     status: str | None = Field(default=None, min_length=1)
 
 
@@ -21,6 +22,8 @@ class CashSessionResponse(BaseModel):
     opened_by: str
     opening_amount: float
     closing_amount: float | None
+    expected_amount: float
+    difference_amount: float | None
     status: str
 
 

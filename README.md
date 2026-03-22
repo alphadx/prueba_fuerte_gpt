@@ -94,22 +94,3 @@ Se creó un paquete documental completo para la inspección por pasos, con repor
 - `docs/inspeccion/anexos/conclusion_general.md`: criterio de consolidación, lectura ejecutiva del resultado global y acciones de gobernanza recomendadas.
 
 En conjunto, este registro deja trazabilidad documental de la inspección realizada, separando el resumen de gestión (reportes) de la evidencia técnica ampliada (anexos).
-
-## Inspection workspace for phases 6–12 (`docs/inspection`)
-
-Starting with phase 6, the repository also includes an inspection workspace in English to track the next implementation-heavy stages with QA evidence:
-
-- `docs/inspection/phase6_report.md`: executive inspection result for phase 6.
-- `docs/inspection/annexes/phase6_analysis.md`: technical analysis with reviewed evidence, executed checks, findings, and recommendations.
-- `docs/inspection/phase7_report.md`: executive inspection result for phase 7.
-- `docs/inspection/annexes/phase7_analysis.md`: technical analysis for sandbox electronic receipt integration coverage and gaps.
-- `docs/inspection/phase8_report.md`: executive inspection result for phase 8.
-- `docs/inspection/annexes/phase8_analysis.md`: technical analysis for payment-adapter coverage, webhook idempotency, and reconciliation gaps.
-- `docs/inspection/phase9_report.md`: executive inspection result for phase 9.
-- `docs/inspection/annexes/phase9_analysis.md`: technical analysis for e-commerce store-pickup readiness, implementation gaps, and missing QA coverage.
-- `docs/inspection/phase10_report.md`: executive inspection result for phase 10.
-- `docs/inspection/annexes/phase10_analysis.md`: technical analysis for HR documentary coverage, alert-engine readiness, and delivery gaps.
-- `docs/inspection/phase11_report.md`: executive inspection result for phase 11.
-- `docs/inspection/annexes/phase11_analysis.md`: technical analysis for QA bootstrap readiness, fixture completeness, and smoke stability gaps.
-
-This workspace is intended to grow phase by phase through steps 6 to 12, while `README.md` remains the index of the inspection record created in the repository.

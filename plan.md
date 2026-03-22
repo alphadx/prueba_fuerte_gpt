@@ -59,53 +59,68 @@ Sí: **algunas tecnologías deben montarse como servicios** (PostgreSQL, Redis, 
 - Entregable: endpoints CRUD y flujos principales documentados en Swagger.
 
 ## 6) Implementar POS y flujo de caja mínimo operable
-- Flujo POS:
-  - apertura de caja,
-  - creación de venta,
-  - registro de pago en efectivo o electrónico simulado,
-  - cierre de caja y arqueo simple.
-- Al confirmar venta:
-  - descontar stock,
-  - persistir movimiento kardex,
-  - disparar evento para facturación electrónica.
-- Entregable: pruebas de integración del flujo “venta completa”.
+- **Estado actual asumido:** borrador inicial con **cumplimiento estimado 0%** para ejecución minuciosa por etapas.
+- **Estrategia de ejecución:** dividir el paso 6 en **7 etapas secuenciales** con salida verificable por etapa:
+  1. análisis funcional/técnico y criterios de aceptación medibles,
+  2. contratos API POS+caja (requests/responses/errores),
+  3. reglas de caja (apertura/cierre/arqueo) con invariantes,
+  4. reglas de venta y pagos con estados determinísticos,
+  5. consistencia stock/kardex + rollback e idempotencia operativa,
+  6. pruebas automáticas por etapa (unitarias + integración happy/failure),
+  7. hardening final (auditoría, observabilidad mínima y checklist de cierre).
+- **Entregable de planificación:** `avances/paso-06.md` actualizado con análisis, plan de 7 etapas y protocolo de ejecución por orden del usuario.
 
 ## 7) Integrar boleta electrónica vía proveedor (sandbox)
-- Crear adaptador `BillingProvider` desacoplado.
-- Implementar cliente sandbox con manejo de:
-  - folio,
-  - XML/PDF,
-  - track ID,
-  - estado SII.
-- Definir reintentos y cola asíncrona para evitar bloquear caja.
-- Entregable: boleta emitida en sandbox y consulta de estado desde API.
+- **Estado operativo:** este paso se ejecuta como **prototipo iterativo en 7 etapas**.
+- **Regla de control:** al cierre de cada etapa, el equipo debe **solicitar orden de avance** antes de iniciar la siguiente.
+- **Etapas del prototipo (paso 7):**
+  1. análisis funcional/técnico y criterios de aceptación fiscal sandbox,
+  2. contrato `BillingProvider` y modelo canónico de request/response,
+  3. adaptador sandbox (folio, XML/PDF, track ID, estado SII),
+  4. desacople de caja/POS con encolado asíncrono de emisión,
+  5. resiliencia (reintentos acotados, idempotencia, estados terminales),
+  6. consulta de estado/API + pruebas de integración por escenarios,
+  7. hardening documental y checklist de cierre del paso.
+- **Entregable por etapa:** evidencia en `avances/paso-07.md` + solicitud explícita al usuario para autorizar la siguiente iteración.
 
 ## 8) Integrar capa de pagos por adaptadores
-- Interface `PaymentGateway` con drivers:
-  - `cash` (local),
-  - `transbank_stub`, `mercadopago_stub` para MVP,
-  - webhook unificado de confirmación/rechazo.
-- Mantener feature flags por sucursal/canal para activar medios de pago.
-- Entregable: conciliación básica de pagos + test de webhook idempotente.
+- **Estado operativo:** este paso se ejecuta como **prototipo iterativo en 7 etapas**.
+- **Regla de control:** al cierre de cada etapa, el equipo debe **solicitar orden de avance** antes de iniciar la siguiente.
+- **Etapas del prototipo (paso 8):**
+  1. análisis funcional/técnico de pagos + criterios de aceptación por canal y sucursal,
+  2. contrato `PaymentGateway` y modelo canónico de `PaymentIntent/PaymentResult` con errores normalizados,
+  3. implementación de adaptador `cash` con cierre local y conciliación de caja,
+  4. implementación de `transbank_stub` y `mercadopago_stub` con flujos de autorización/captura simulados,
+  5. webhook unificado (confirmación/rechazo) con firma, idempotencia y trazabilidad de eventos,
+  6. feature flags por sucursal/canal + pruebas integrales (happy path, duplicados, rechazos, timeout),
+  7. hardening final (conciliación básica multi-medio, auditoría y checklist de salida del paso).
+- **Entregable por etapa:** evidencia en `avances/paso-08.md` + solicitud explícita al usuario para autorizar la siguiente iteración.
 
 ## 9) Construir e-commerce básico con retiro en tienda
-- Frontend con:
-  - catálogo y stock por sucursal,
-  - carrito + checkout,
-  - selección de `PickupSlot`.
-- Backend de estados de pedido:
-  - `recibido -> preparado -> listo para retiro -> entregado`.
-- Integrar Bing Maps solo en vista pública de tienda.
-- Entregable: flujo e2e de compra web con retiro.
+- **Estado operativo:** este paso se ejecuta como **prototipo iterativo en 7 etapas**.
+- **Regla de control:** al cierre de cada etapa, el equipo debe **solicitar orden de avance** antes de iniciar la siguiente.
+- **Etapas del prototipo (paso 9):**
+  1. análisis funcional/técnico del canal web retiro + criterios de aceptación e2e (checkout éxito, consistencia stock sucursal, SLA de retiro),
+  2. diseño modular `catalog/cart/checkout/orders/inventory/pickup_slots` y contratos API (incluyendo errores normalizados),
+  3. frontend MVP de catálogo por sucursal + carrito + checkout con selección de `PickupSlot` y validaciones de UX responsive,
+  4. backend de creación de pedido con reserva/descuento de stock por sucursal e idempotencia en confirmación de checkout,
+  5. máquina de estados de pedido con transiciones válidas y auditables `recibido -> preparado -> listo_para_retiro -> entregado`,
+  6. integración de Bing Maps solo en vista pública de tienda + pruebas integrales/e2e del flujo completo web-to-store,
+  7. hardening final (consistencia stock web/tienda, observabilidad mínima, checklist de cierre y criterios de salida del paso).
+- **Entregable por etapa:** evidencia en `avances/paso-09.md` + solicitud explícita al usuario para autorizar la siguiente iteración.
 
 ## 10) Implementar RRHH documental flexible y motor de alertas
-- Configurar `DocumentType` con campos dinámicos (JSON schema).
-- Crear carga de documentos (archivo + metadatos + fechas).
-- Job diario en worker:
-  - evalúa umbrales (30/15/7/1 días),
-  - genera `AlarmEvent`,
-  - notifica (in-app + email en entorno de pruebas).
-- Entregable: alerta generada y visible para documento de prueba próximo a vencer.
+- **Estado operativo:** este paso se ejecuta como **prototipo iterativo en 7 etapas**.
+- **Regla de control:** al cierre de cada etapa, el equipo debe **solicitar orden de avance** antes de iniciar la siguiente.
+- **Etapas del prototipo (paso 10):**
+  1. análisis funcional/técnico RRHH documental + criterios de aceptación (cobertura documental, precisión de alertas, trazabilidad),
+  2. contrato de `DocumentType` flexible con `JSON Schema` versionado y validación de metadatos en escritura,
+  3. flujo de carga documental (`archivo + metadatos + fechas`) con separación de almacenamiento y modelo de cumplimiento,
+  4. motor diario de evaluación de vencimientos (30/15/7/1 días) con reglas determinísticas e idempotencia por ventana,
+  5. generación de `AlarmEvent` auditable + deduplicación de alertas por documento/umbral,
+  6. notificaciones desacopladas (in-app + email en entorno de pruebas) con tolerancia a fallas por canal,
+  7. hardening final (auditoría de evaluaciones/notificaciones, pruebas integrales, checklist de cierre del paso).
+- **Entregable por etapa:** evidencia en `avances/paso-10.md` + solicitud explícita al usuario para autorizar la siguiente iteración.
 
 ## 11) Crear estado inicial válido de pruebas (seed + fixtures + smoke tests)
 - Datos semilla mínimos:
@@ -123,17 +138,18 @@ Sí: **algunas tecnologías deben montarse como servicios** (PostgreSQL, Redis, 
 - Entregable: comando único `make bootstrap-test-state` que deja el sistema listo para QA en menos de 10 minutos.
 
 ## 12) Validación final, observabilidad y checklist de salida
-- Ejecutar pipeline local:
-  - lint/format,
-  - tests unitarios,
-  - integración API,
-  - smoke e2e.
-- Métricas mínimas de salud:
-  - latencia API,
-  - cola de trabajos,
-  - tasa de error de boletas/pagos.
-- Definir checklist de go-live MVP y riesgos conocidos.
-- Entregable: `docs/release_checklist.md` + reporte de ejecución del pipeline.
+- **Estado operativo:** este paso se ejecuta como **prototipo iterativo en 8 etapas**.
+- **Regla de control:** al cierre de cada etapa, el equipo debe **solicitar orden de avance** antes de iniciar la siguiente.
+- **Etapas del prototipo (paso 12):**
+  1. baseline de release readiness y criterios de aceptación medibles (pipeline, SLO y riesgos),
+  2. diseño/normalización del pipeline local (lint/format, unit, integración API, smoke e2e) con contrato de evidencias,
+  3. instrumentación mínima de observabilidad (latencia API, salud de cola worker, error rate de boletas/pagos),
+  4. definición de umbrales SLO/SLI y reglas de alerta accionables (con ownership por dominio),
+  5. checklist de go-live MVP ejecutable con clasificación de riesgos críticos/no críticos,
+  6. estrategia de rollback y contingencia operativa (incluyendo criterios de abortar release),
+  7. corrida integral de validación final y consolidación de evidencias reproducibles,
+  8. hardening de cierre documental + reporte final de salida (`release_checklist` + resumen pipeline/observabilidad).
+- **Entregable por etapa:** evidencia en `avances/paso-12.md` + solicitud explícita al usuario para autorizar la siguiente iteración.
 
 ---
 

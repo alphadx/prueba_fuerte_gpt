@@ -1,0 +1,28 @@
+{
+  "fixtures": {
+    "FX-BILLING-SBX": {
+      "document_status": "accepted",
+      "sale_id": "sale-0003",
+      "track_id": "track-8ac1d88e49be"
+    },
+    "FX-PAYMENT-WEBHOOK": {
+      "duplicated": true,
+      "event_id": "fx-event-001",
+      "status": "reconciled"
+    },
+    "FX-SALE-CASH": {
+      "product_id": "prod-0001",
+      "sale_id": "sale-0001",
+      "status": "paid"
+    },
+    "FX-SALE-ELECTRONIC": {
+      "payment_status": "pending",
+      "sale_id": "sale-0002",
+      "status": "confirmed"
+    },
+    "FX-WEB-PICKUP": {
+      "order_id": "ord-0001",
+      "state": "recibido"
+    }
+  }
+}
