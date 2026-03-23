@@ -65,9 +65,11 @@ services:
   web:
     image: node:20-alpine
     working_dir: /web
-    command: sh -c "echo 'web placeholder for step 3' && sleep infinity"
+    command: node server.js
     ports:
       - "${WEB_PORT:-3000}:3000"
+    volumes:
+      - ./apps/web:/web
     profiles: ["core", "full"]
 
   mailhog:
@@ -126,6 +128,7 @@ services:
       KC_DB_URL_DATABASE: ${KEYCLOAK_DB}
       KC_DB_USERNAME: ${KEYCLOAK_DB_USER}
       KC_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD}
+      KC_HEALTH_ENABLED: "true"
     ports:
       - "${KEYCLOAK_PORT:-8081}:8080"
     depends_on:

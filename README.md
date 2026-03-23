@@ -45,7 +45,7 @@ Opciones avanzadas del script directo:
 | **API /ready** | `8000` | http://127.0.0.1:8000/ready | core / full |
 | **PostgreSQL** | `5432` | `psql -h 127.0.0.1 -U erp_user -d erp_barrio` | core / full |
 | **Redis** | `6379` | `redis-cli -h 127.0.0.1` | core / full |
-| **Web (placeholder)** | `3000` | http://127.0.0.1:3000 | core / full |
+| **Web estática** | `3000` | http://127.0.0.1:3000 | core / full |
 | **Mailhog UI** | `8025` | http://127.0.0.1:8025 | full |
 | **Mailhog SMTP** | `1025` | `smtp://127.0.0.1:1025` | full |
 | **MinIO API** | `9000` | http://127.0.0.1:9000 | full |
@@ -115,7 +115,7 @@ make architecture-review
 
 ### Qué hace cada comando
 
-- `make up`: levanta stack `core` con Docker Compose (`postgres`, `redis`, `api`, `worker`, `web`, `tooling`).
+- `make up`: levanta stack `core` con Docker Compose (`postgres`, `redis`, `api`, `worker`, `web`, `tooling`). El servicio `web` publica el frontend estático de `apps/web` en el puerto `3000`.
 - `make test`: ejecuta tests en contenedor `tooling` (sin `venv` local).
 - `make seed`: genera datos semilla iniciales en `infra/seeds/dev_seed.json` desde `tooling`.
 - `make migrate-up`: aplica migraciones SQL versionadas desde `tooling` contra PostgreSQL de Compose.

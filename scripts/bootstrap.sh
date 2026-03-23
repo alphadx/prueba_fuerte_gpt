@@ -73,6 +73,29 @@ service_url() {
   fi
 }
 
+probe_http() {
+  local url="$1"
+  local retries="${2:-1}"
+  local sleep_seconds="${3:-2}"
+  local ok_pattern="${4:-^(200)$}"
+  local http_code="000"
+
+  for ((attempt=1; attempt<=retries; attempt++)); do
+    http_code=$(curl -o /dev/null -s -w "%{http_code}" "$url" || true)
+    http_code="${http_code:-000}"
+    if [[ "$http_code" =~ $ok_pattern ]]; then
+      echo "$http_code"
+      return 0
+    fi
+    if (( attempt < retries )); then
+      sleep "$sleep_seconds"
+    fi
+  done
+
+  echo "$http_code"
+  return 1
+}
+
 # ── Encabezado del reporte ────────────────────────────────────────────────────
 {
   echo "ERP Barrio Chile — Bootstrap Report"
@@ -147,7 +170,7 @@ API_PORT="${API_PORT:-8000}"
 API_URL=$(service_url "$API_PORT")
 
 for ENDPOINT in health ready; do
-  HTTP_CODE=$(curl -o /dev/null -s -w "%{http_code}" "http://127.0.0.1:${API_PORT}/${ENDPOINT}" || echo "000")
+  HTTP_CODE=$(probe_http "http://127.0.0.1:${API_PORT}/${ENDPOINT}" 5 2 '^(200)$')
   BODY=$(curl -fsS "http://127.0.0.1:${API_PORT}/${ENDPOINT}" 2>/dev/null || echo "error")
   if [[ "$HTTP_CODE" == "200" ]]; then
     result "GET /${ENDPOINT}" "ok" "HTTP ${HTTP_CODE} — ${BODY}  [${API_URL}/${ENDPOINT}]"
@@ -161,25 +184,36 @@ done
 step "6/7  Health checks servicios auxiliares"
 
 declare -A SERVICE_PORTS=(
+  ["web_ui"]="$(grep -E '^WEB_PORT=' "$ENV_FILE" | cut -d= -f2 | tr -d '[:space:]')"
   ["mailhog_ui"]="$(grep -E '^MAILHOG_UI_PORT=' "$ENV_FILE" | cut -d= -f2 | tr -d '[:space:]')"
   ["minio_console"]="$(grep -E '^MINIO_CONSOLE_PORT=' "$ENV_FILE" | cut -d= -f2 | tr -d '[:space:]')"
   ["keycloak"]="$(grep -E '^KEYCLOAK_PORT=' "$ENV_FILE" | cut -d= -f2 | tr -d '[:space:]')"
   ["greenmail_web"]="$(grep -E '^GREENMAIL_WEB_PORT=' "$ENV_FILE" | cut -d= -f2 | tr -d '[:space:]')"
 )
+SERVICE_PORTS["web_ui"]="${SERVICE_PORTS["web_ui"]:-3000}"
 SERVICE_PORTS["mailhog_ui"]="${SERVICE_PORTS["mailhog_ui"]:-8025}"
 SERVICE_PORTS["minio_console"]="${SERVICE_PORTS["minio_console"]:-9001}"
 SERVICE_PORTS["keycloak"]="${SERVICE_PORTS["keycloak"]:-8081}"
 SERVICE_PORTS["greenmail_web"]="${SERVICE_PORTS["greenmail_web"]:-8082}"
 
-for SVC in mailhog_ui minio_console keycloak greenmail_web; do
+for SVC in web_ui mailhog_ui minio_console keycloak greenmail_web; do
   PORT="${SERVICE_PORTS[$SVC]}"
   # Solo verifica si el perfil full está activo
-  if [[ "$PROFILE" == "core" ]] && [[ "$SVC" != "mailhog_ui" ]]; then
+  if [[ "$PROFILE" == "core" ]] && [[ "$SVC" != "web_ui" ]]; then
     log "  ${SKIP} ${SVC}:${PORT} (solo en perfil full)"
     continue
   fi
   SVC_URL=$(service_url "$PORT")
-  HTTP_CODE=$(curl -o /dev/null -s -w "%{http_code}" "http://127.0.0.1:${PORT}" || echo "000")
+  RETRIES=5
+  SLEEP_SECONDS=2
+  OK_PATTERN='^(200|301|302|303|401|403)$'
+  if [[ "$SVC" == "web_ui" ]]; then
+    OK_PATTERN='^(200)$'
+  elif [[ "$SVC" == "keycloak" ]]; then
+    RETRIES=20
+    SLEEP_SECONDS=3
+  fi
+  HTTP_CODE=$(probe_http "http://127.0.0.1:${PORT}" "$RETRIES" "$SLEEP_SECONDS" "$OK_PATTERN")
   if [[ "$HTTP_CODE" =~ ^(200|301|302|303|401|403)$ ]]; then
     result "${SVC}:${PORT}" "ok" "HTTP ${HTTP_CODE}  [${SVC_URL}]"
   else
