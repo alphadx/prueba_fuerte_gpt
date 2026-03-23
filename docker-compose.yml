@@ -24,6 +24,7 @@ services:
     environment:
       REDIS_URL: redis://redis:6379/0
       ALERTS_QUEUE: ${ALERTS_QUEUE:-alerts_queue}
+      JWT_ALLOW_INSECURE_TOKENS: "true"
     ports:
       - "${API_PORT:-8000}:8000"
     depends_on:

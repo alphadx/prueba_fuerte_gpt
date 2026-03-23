@@ -202,6 +202,123 @@ Para crear realm, usuarios, clientes y obtener tokens JWT en local:
 **Información de puertos y arquitectura:** [docs/auth_strategy.md](docs/auth_strategy.md)
 
 
+## Pruebas de Creación de Productos y Stock
+
+Para validar el flujo se separó la automatización en scripts modulares:
+
+1. Crear/actualizar usuario en Keycloak.
+2. Asignar rol al usuario.
+3. Crear producto en API autenticando con Keycloak.
+
+### Ejecución de la prueba
+
+**Requisitos previos:**
+- Stack levantado: `make compose-up-full`
+- Realm y cliente `erp-web` existentes (ver `docs/keycloak_quickstart.md` o `./infra/scripts/setup_keycloak.sh`).
+- API aceptando tokens para desarrollo (config actual del proyecto).
+
+**Flujo recomendado (separado):**
+```bash
+USERNAME=bodega1 PASSWORD=pass123 EMAIL=bodega1@erp.local bash ./scripts/keycloak/create_user.sh
+USERNAME=bodega1 ROLE=bodega bash ./scripts/keycloak/assign_role.sh
+USERNAME=bodega1 PASSWORD=pass123 SKU=COMP-001 NAME=Computadoras PRICE=599990 bash ./scripts/products/create_product.sh
+```
+
+**Orquestador (mismo flujo en un comando):**
+```bash
+bash ./scripts/setup_keycloak_and_test.sh
+```
+
+**Compatibilidad (wrapper legado):**
+```bash
+bash ./scripts/test_product_creation.sh
+```
+
+**Salida esperada:**
+- Token JWT obtenido desde Keycloak
+- Listado de sucursales existentes
+- Producto "Computadoras" creado con:
+  - **ID:** autogenerado (ej: `prod-0001`)
+  - **SKU:** `COMP-001`
+  - **Nombre:** Computadoras
+  - **Precio:** $599.990 CLP
+- Verificación final del producto en el catálogo
+
+### Parámetros de la prueba
+
+El script demuestra creación de un producto con los siguientes parámetros:
+
+| Parámetro | Valor | Descripción |
+|-----------|-------|-------------|
+| **SKU** | `COMP-001` | Código único de producto |
+| **Nombre** | Computadoras | Descripción de producto |
+| **Precio** | 599990 | Precio en CLP (moneda chilena) |
+| **Usuario** | `bodega1` | Usuario autenticado |
+| **Rol requerido** | `admin` o `bodega` | Permiso para `POST /products` |
+| **Cliente OAuth2** | `erp-web` | Client público con direct grants |
+
+### Modelo de datos
+
+El producto se almacena con la siguiente estructura:
+
+```json
+{
+  "id": "prod-XXXX",
+  "sku": "COMP-001",
+  "name": "Computadoras",
+  "price": 599990
+}
+```
+
+En este MVP no existe endpoint público dedicado para setear stock por sucursal. El stock se gestiona en servicio interno o por flujos transaccionales.
+
+Ejemplo en código interno/tests:
+
+```python
+# Desde Python/tests
+product_service.set_stock(product_id, quantity=50)
+```
+
+O en un flujo transaccional:
+- Compra de inventario → incrementa stock (movimiento `inbound`)
+- Venta confirmada → decrementa stock (movimiento `outbound`)
+- Ajuste manual → movimiento `adjustment`
+
+### Verificación posterior
+
+Después de ejecutar el script, puedes validar manualmente:
+
+1. **Consultar el producto:**
+   ```bash
+   curl -H "Authorization: Bearer $TOKEN" \
+     http://localhost:8000/products/prod-0001 | jq .
+   ```
+
+2. **Listar todos los productos:**
+   ```bash
+   curl -H "Authorization: Bearer $TOKEN" \
+     http://localhost:8000/products | jq .
+   ```
+
+3. **Verificar stock en catálogo de sucursal:**
+   ```bash
+   curl -H "Authorization: Bearer $TOKEN" \
+     "http://localhost:8000/catalog/products?branch_id=br-001" | jq .
+   ```
+
+### Registro en auditoría
+
+Cada creación de producto registra un evento de auditoría:
+- **Usuario:** `bodega1` (o el usuario usado en el token)
+- **Acción:** `products.create`
+- **Entidad:** ID del producto creado
+- **Metadata:** SKU y nombre del producto
+
+Consulta los logs del API para validar el evento:
+```bash
+docker logs prueba_fuerte_gpt-api-1 | grep "products.create"
+```
+
 ## Revisión final de arquitectura
 
 Para alinear pasos 9-12 con los requisitos críticos (correo IMAP, experiencia web+móvil y QR P2P), revisar `docs/final_infra_architecture_review.md`.
