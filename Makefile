@@ -1,7 +1,42 @@
-.PHONY: doctor-docker up test seed seed-validate seed-pipeline fixtures fixtures-validate fixtures-pipeline smoke-test-state smoke-pipeline bootstrap-test-state bootstrap-validate bootstrap-stability migrate-up migrate-down migrate-status verify-step4 verify-step5 compose-up compose-up-full compose-down compose-smoke architecture-review release-evidence-stage9 release-validate-stage9 release-evidence-pipeline-stage9
+.PHONY: doctor-docker up test seed seed-validate seed-pipeline fixtures fixtures-validate fixtures-pipeline smoke-test-state smoke-pipeline bootstrap-test-state bootstrap-validate bootstrap-stability migrate-up migrate-down migrate-status verify-step4 verify-step5 compose-up compose-up-full compose-down compose-smoke architecture-review release-evidence-stage9 release-validate-stage9 release-evidence-pipeline-stage9 bootstrap
 
 COMPOSE = docker compose --env-file .env.example
 RUN_TOOLING = $(COMPOSE) run --rm tooling
+
+bootstrap:
+	@chmod +x scripts/bootstrap.sh
+	./scripts/bootstrap.sh --profile full
+
+urls:
+	@API_PORT=$$(grep -E '^API_PORT=' .env 2>/dev/null | cut -d= -f2 | tr -d '[:space:]'); API_PORT=$${API_PORT:-8000}; \
+	 WEB_PORT=$$(grep -E '^WEB_PORT=' .env 2>/dev/null | cut -d= -f2 | tr -d '[:space:]'); WEB_PORT=$${WEB_PORT:-3000}; \
+	 MH=$$(grep -E '^MAILHOG_UI_PORT=' .env 2>/dev/null | cut -d= -f2 | tr -d '[:space:]'); MH=$${MH:-8025}; \
+	 MC=$$(grep -E '^MINIO_CONSOLE_PORT=' .env 2>/dev/null | cut -d= -f2 | tr -d '[:space:]'); MC=$${MC:-9001}; \
+	 KC=$$(grep -E '^KEYCLOAK_PORT=' .env 2>/dev/null | cut -d= -f2 | tr -d '[:space:]'); KC=$${KC:-8081}; \
+	 GM=$$(grep -E '^GREENMAIL_WEB_PORT=' .env 2>/dev/null | cut -d= -f2 | tr -d '[:space:]'); GM=$${GM:-8082}; \
+	 if [ -n "$$CODESPACE_NAME" ]; then \
+	   DOMAIN=$${GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN:-app.github.dev}; \
+	   BASE="https://$$CODESPACE_NAME"; \
+	   echo "── Codespaces URLs ──────────────────────────────────────────"; \
+	   echo "API /health   : $${BASE}-$${API_PORT}.$${DOMAIN}/health"; \
+	   echo "API /docs     : $${BASE}-$${API_PORT}.$${DOMAIN}/docs"; \
+	   echo "Web UI        : $${BASE}-$${WEB_PORT}.$${DOMAIN}"; \
+	   echo "Mailhog UI    : $${BASE}-$${MH}.$${DOMAIN}"; \
+	   echo "MinIO Console : $${BASE}-$${MC}.$${DOMAIN}"; \
+	   echo "Keycloak      : $${BASE}-$${KC}.$${DOMAIN}"; \
+	   echo "GreenMail Web : $${BASE}-$${GM}.$${DOMAIN}"; \
+	   echo "─────────────────────────────────────────────────────────────"; \
+	   echo "ℹ  Puertos PRIVATE por defecto. Cambia visibilidad en la pestaña Ports de VS Code."; \
+	 else \
+	   echo "── URLs locales ─────────────────────────────────────────────"; \
+	   echo "API /health   : http://127.0.0.1:$${API_PORT}/health"; \
+	   echo "API /docs     : http://127.0.0.1:$${API_PORT}/docs"; \
+	   echo "Web UI        : http://127.0.0.1:$${WEB_PORT}"; \
+	   echo "Mailhog UI    : http://127.0.0.1:$${MH}"; \
+	   echo "MinIO Console : http://127.0.0.1:$${MC}"; \
+	   echo "Keycloak      : http://127.0.0.1:$${KC}"; \
+	   echo "GreenMail Web : http://127.0.0.1:$${GM}"; \
+	 fi
 
 doctor-docker:
 	@echo "[doctor] Verificando Docker y Docker Compose..."
