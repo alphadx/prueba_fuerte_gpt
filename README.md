@@ -156,8 +156,50 @@ El contrato vive en `apps/api/openapi.yaml`. Cualquier endpoint nuevo debe decla
 ## Control de usuarios y SSO
 
 - Se adopta estrategia de identidad con **Keycloak** (OIDC/OAuth2).
-- Diseño y consideraciones: `docs/auth_strategy.md`.
-- En perfil `full`, Keycloak queda disponible para preparar el paso 5 (auth/permisos).
+- Diseño y consideraciones: [docs/auth_strategy.md](docs/auth_strategy.md).
+- En perfil `full`, Keycloak queda disponible inmediatamente.
+
+### Setup rápido de Keycloak para testing
+
+Para crear realm, usuarios, clientes y obtener tokens JWT en local:
+
+1. **Levanta el stack con perfil full:**
+   ```bash
+   make compose-up-full
+   ```
+
+2. **Opción A - Setup vía consola web (exploración manual):**
+   - Accede a http://127.0.0.1:8081 (credenciales: `admin`/`admin`)
+   - Crea realm `erp-barrio`, usuarios, roles y clients manualmente
+   - Detalles completos: [docs/keycloak_quickstart.md](docs/keycloak_quickstart.md)
+
+3. **Opción B - Setup automatizado:**
+   ```bash
+   chmod +x ./infra/scripts/setup_keycloak.sh
+   ./infra/scripts/setup_keycloak.sh
+   ```
+   Esto crea automáticamente:
+   - Realm: `erp-barrio`
+   - Roles: `admin`, `cajero`, `bodega`, `rrhh`
+   - Clients: `erp-web` (público), `erp-api` (confidential)
+   - Usuario test: `cajero1` / password: `pass123`
+
+4. **Obtén un token para testing:**
+   ```bash
+   TOKEN=$(curl -s -X POST "http://localhost:8081/realms/erp-barrio/protocol/openid-connect/token" \
+     -H "Content-Type: application/x-www-form-urlencoded" \
+     -d "grant_type=password&client_id=erp-web&username=cajero1&password=pass123" | jq -r .access_token)
+   echo "$TOKEN"
+   ```
+
+5. **Valida el token contra la API:**
+   ```bash
+   curl -H "Authorization: Bearer $TOKEN" http://localhost:8000/health
+   ```
+
+**Guía completa y troubleshooting:** [docs/keycloak_quickstart.md](docs/keycloak_quickstart.md)
+
+**Información de puertos y arquitectura:** [docs/auth_strategy.md](docs/auth_strategy.md)
 
 
 ## Revisión final de arquitectura
