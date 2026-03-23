@@ -20,7 +20,13 @@ from app.modules.payments.schemas import (
     PaymentUpdateRequest,
     PaymentWebhookRequest,
     PaymentWebhookResponse,
+    ProviderConfirmationResponse,
     StubPaymentCreateRequest,
+    TransbankPosConfirmRequest,
+    TransbankPosInitRequest,
+    TransbankWebCommitRequest,
+    TransbankWebInitRequest,
+    TransbankWebInitResponse,
 )
 from app.modules.payments.service import Payment, payment_service
 
@@ -35,6 +41,11 @@ def _to_response(payment: Payment) -> PaymentResponse:
         method=payment.method,
         status=payment.status,
         idempotency_key=payment.idempotency_key,
+        provider=payment.provider,
+        provider_payment_id=payment.provider_payment_id,
+        branch_id=payment.branch_id,
+        channel=payment.channel,
+        currency=payment.currency,
     )
 
 
@@ -147,6 +158,139 @@ def reconcile_cash_branch(
     )
     return CashReconciliationResponse(**report)
 
+
+
+@router.post("/transbank/web/init", response_model=TransbankWebInitResponse, status_code=status.HTTP_201_CREATED)
+def init_transbank_web_payment(
+    payload: TransbankWebInitRequest,
+    auth: AuthContext = Depends(require_roles("admin", "cajero")),
+) -> TransbankWebInitResponse:
+    try:
+        created, redirect_url = payment_service.create_transbank_web_payment(
+            sale_id=payload.sale_id,
+            company_id=payload.company_id,
+            branch_id=payload.branch_id,
+            amount=payload.amount,
+            currency=payload.currency,
+            idempotency_key=payload.idempotency_key,
+            return_url=payload.return_url,
+            metadata=payload.metadata,
+        )
+    except ValueError as exc:
+        message = str(exc)
+        if message == "idempotency key already exists":
+            raise HTTPException(status_code=409, detail=message) from exc
+        if message == "payment method disabled for branch/channel":
+            raise HTTPException(status_code=403, detail=message) from exc
+        raise HTTPException(status_code=502, detail=message) from exc
+
+    record_audit_event(
+        actor_id=auth.subject,
+        action="payments.transbank_web.init",
+        entity=created.id,
+        metadata={"sale_id": created.sale_id, "branch_id": created.branch_id, "amount": created.amount},
+    )
+    return TransbankWebInitResponse(
+        payment_id=created.id,
+        provider=created.provider,
+        provider_payment_id=created.provider_payment_id or "",
+        redirect_url=redirect_url,
+        status=created.status,
+    )
+
+
+@router.post("/transbank/web/commit", response_model=ProviderConfirmationResponse)
+def commit_transbank_web_payment(
+    payload: TransbankWebCommitRequest,
+    auth: AuthContext = Depends(require_roles("admin", "cajero")),
+) -> ProviderConfirmationResponse:
+    try:
+        result = payment_service.commit_transbank_web_payment(token_ws=payload.token)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+    record_audit_event(
+        actor_id=auth.subject,
+        action="payments.transbank_web.commit",
+        entity=result.payment_id or "unknown",
+        metadata={"previous_status": result.previous_status, "current_status": result.current_status},
+    )
+    return ProviderConfirmationResponse(
+        payment_id=result.payment_id,
+        provider=result.provider,
+        previous_status=result.previous_status,
+        current_status=result.current_status,
+    )
+
+
+@router.post("/transbank/pos/init", response_model=PaymentResponse, status_code=status.HTTP_201_CREATED)
+def init_transbank_pos_payment(
+    payload: TransbankPosInitRequest,
+    auth: AuthContext = Depends(require_roles("admin", "cajero")),
+) -> PaymentResponse:
+    try:
+        created = payment_service.create_transbank_pos_payment(
+            sale_id=payload.sale_id,
+            company_id=payload.company_id,
+            branch_id=payload.branch_id,
+            amount=payload.amount,
+            currency=payload.currency,
+            idempotency_key=payload.idempotency_key,
+            terminal_id=payload.terminal_id,
+            cashier_id=payload.cashier_id,
+            device_id=payload.device_id,
+            metadata=payload.metadata,
+        )
+    except ValueError as exc:
+        message = str(exc)
+        if message == "idempotency key already exists":
+            raise HTTPException(status_code=409, detail=message) from exc
+        if message == "payment method disabled for branch/channel":
+            raise HTTPException(status_code=403, detail=message) from exc
+        raise HTTPException(status_code=502, detail=message) from exc
+
+    record_audit_event(
+        actor_id=auth.subject,
+        action="payments.transbank_pos.init",
+        entity=created.id,
+        metadata={"sale_id": created.sale_id, "branch_id": created.branch_id, "terminal_id": payload.terminal_id},
+    )
+    return _to_response(created)
+
+
+@router.post("/transbank/pos/confirm", response_model=ProviderConfirmationResponse)
+def confirm_transbank_pos_payment(
+    payload: TransbankPosConfirmRequest,
+    auth: AuthContext = Depends(require_roles("admin", "cajero")),
+) -> ProviderConfirmationResponse:
+    try:
+        result = payment_service.confirm_transbank_pos_payment(
+            provider_payment_id=payload.provider_payment_id,
+            approval_code=payload.approval_code,
+            response_code=payload.response_code,
+            terminal_id=payload.terminal_id,
+            ticket_number=payload.ticket_number,
+            metadata=payload.metadata,
+        )
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+    record_audit_event(
+        actor_id=auth.subject,
+        action="payments.transbank_pos.confirm",
+        entity=result.payment_id or "unknown",
+        metadata={"previous_status": result.previous_status, "current_status": result.current_status},
+    )
+    return ProviderConfirmationResponse(
+        payment_id=result.payment_id,
+        provider=result.provider,
+        previous_status=result.previous_status,
+        current_status=result.current_status,
+    )
 
 
 @router.post("/stubs/{provider}", response_model=PaymentResponse, status_code=status.HTTP_201_CREATED)

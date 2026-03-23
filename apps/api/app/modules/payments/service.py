@@ -5,9 +5,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from threading import RLock
 
-from app.modules.payments.cash_adapter import cash_payment_gateway
 from app.modules.payments.gateway import PaymentChannel, PaymentIntent, PaymentStatus, can_transition
-from app.modules.payments.stub_adapters import gateway_registry
+from app.modules.payments.registry import GATEWAY_REGISTRY, PROVIDER_CHANNEL_CONSTRAINT
 
 
 @dataclass
@@ -31,6 +30,14 @@ class PaymentMethodFlag:
     channel: str
     method: str
     enabled: bool
+
+
+@dataclass
+class ProviderConfirmationResult:
+    payment_id: str | None
+    provider: str
+    previous_status: str | None
+    current_status: str | None
 
 
 @dataclass
@@ -63,8 +70,17 @@ class PaymentService:
         self._seq = 0
         self._lock = RLock()
 
-    def _all_gateways(self):
-        return {"cash": cash_payment_gateway, **gateway_registry}
+    def _all_gateways(self) -> dict:
+        return GATEWAY_REGISTRY
+
+    def _validate_channel_constraint(self, *, provider: str, channel: str) -> None:
+        """Lanza ValueError si el canal del intento no es compatible con el proveedor."""
+        required = PROVIDER_CHANNEL_CONSTRAINT.get(provider)
+        if required is not None and channel != required:
+            raise ValueError(
+                f"provider '{provider}' solo acepta channel '{required}', "
+                f"se recibió '{channel}'"
+            )
 
 
 
@@ -157,7 +173,7 @@ class PaymentService:
                 method="cash",
                 metadata={},
             )
-            result = cash_payment_gateway.authorize(intent)
+            result = GATEWAY_REGISTRY["cash"].authorize(intent)
 
             self._seq += 1
             payment_id = f"pay-{self._seq:04d}"
@@ -194,10 +210,11 @@ class PaymentService:
         metadata: dict[str, str] | None = None,
     ) -> Payment:
         with self._lock:
-            if provider not in gateway_registry:
+            if provider not in GATEWAY_REGISTRY:
                 raise ValueError("unsupported provider")
             if idempotency_key in self._ids_by_idempotency_key:
                 raise ValueError("idempotency key already exists")
+            self._validate_channel_constraint(provider=provider, channel=channel)
             self._ensure_method_enabled(branch_id=branch_id, channel=channel, method=provider)
 
             intent = PaymentIntent(
@@ -212,7 +229,7 @@ class PaymentService:
                 metadata=metadata or {},
             )
 
-            gateway = gateway_registry[provider]
+            gateway = GATEWAY_REGISTRY[provider]
             authorized = gateway.authorize(intent)
             final_result = authorized
             if authorized.status == PaymentStatus.PENDING_CONFIRMATION:
@@ -238,6 +255,248 @@ class PaymentService:
             if final_result.provider_payment_id:
                 self._ids_by_provider_payment_id[final_result.provider_payment_id] = payment_id
             return Payment(**vars(payment))
+
+    # ── Transbank WEB ────────────────────────────────────────────────────────
+
+    def create_transbank_web_payment(
+        self,
+        *,
+        sale_id: str,
+        company_id: str,
+        branch_id: str,
+        amount: float,
+        currency: str = "CLP",
+        idempotency_key: str,
+        return_url: str | None = None,
+        metadata: dict[str, str] | None = None,
+    ) -> tuple[Payment, str]:
+        """Inicia checkout Transbank Webpay Plus (canal web).
+
+        Devuelve (payment, redirect_url) con status=pending_confirmation.
+        El cliente debe redirigir al usuario a redirect_url.
+        """
+        with self._lock:
+            if idempotency_key in self._ids_by_idempotency_key:
+                raise ValueError("idempotency key already exists")
+            self._ensure_method_enabled(branch_id=branch_id, channel="web", method="transbank_web")
+
+            intent_metadata: dict[str, str] = dict(metadata or {})
+            if return_url:
+                intent_metadata["return_url"] = return_url
+
+            intent = PaymentIntent(
+                idempotency_key=idempotency_key,
+                sale_id=sale_id,
+                company_id=company_id,
+                branch_id=branch_id,
+                channel=PaymentChannel.WEB,
+                amount=amount,
+                currency=currency,
+                method="transbank_web",
+                metadata=intent_metadata,
+            )
+            gateway = GATEWAY_REGISTRY["transbank_web"]
+            result = gateway.authorize(intent)
+
+            if result.error_code is not None and not result.provider_payment_id:
+                raise ValueError(result.error_message or "provider error")
+
+            self._seq += 1
+            payment_id = f"pay-{self._seq:04d}"
+            payment = Payment(
+                id=payment_id,
+                sale_id=sale_id,
+                amount=amount,
+                method="transbank_web",
+                status=result.status.value,
+                idempotency_key=idempotency_key,
+                provider=result.provider,
+                provider_payment_id=result.provider_payment_id,
+                branch_id=branch_id,
+                channel="web",
+                currency=currency,
+            )
+            self._by_id[payment_id] = payment
+            self._ids_by_idempotency_key[idempotency_key] = payment_id
+            if result.provider_payment_id:
+                self._ids_by_provider_payment_id[result.provider_payment_id] = payment_id
+            return Payment(**vars(payment)), result.raw_payload_ref
+
+    def commit_transbank_web_payment(
+        self,
+        *,
+        token_ws: str,
+    ) -> ProviderConfirmationResult:
+        """Commit del checkout web tras el retorno del usuario con token_ws.
+
+        token_ws es el valor del query-param devuelto por Transbank en la return_url;
+        coincide con el provider_payment_id almacenado durante el init.
+        """
+        with self._lock:
+            payment_id = self._ids_by_provider_payment_id.get(token_ws)
+            if payment_id is None:
+                raise KeyError("payment not found for token_ws")
+
+            payment = self._by_id[payment_id]
+            if payment.status != PaymentStatus.PENDING_CONFIRMATION.value:
+                raise ValueError(
+                    f"payment already resolved (current status: {payment.status})"
+                )
+
+            # Reconstruimos un intent mínimo; capture() de transbank_web sólo usa metadata['token_ws'].
+            intent = PaymentIntent(
+                idempotency_key=payment.idempotency_key,
+                sale_id=payment.sale_id,
+                company_id="",
+                branch_id=payment.branch_id or "",
+                channel=PaymentChannel.WEB,
+                amount=payment.amount,
+                currency=payment.currency,
+                method="transbank_web",
+                metadata={"token_ws": token_ws},
+            )
+            gateway = GATEWAY_REGISTRY["transbank_web"]
+            result = gateway.capture(intent)
+
+            previous_status = payment.status
+            if can_transition(PaymentStatus(previous_status), result.status):
+                payment.status = result.status.value
+
+            return ProviderConfirmationResult(
+                payment_id=payment_id,
+                provider=result.provider,
+                previous_status=previous_status,
+                current_status=payment.status,
+            )
+
+    # ── Transbank POS / Redcompra ────────────────────────────────────────────
+
+    def create_transbank_pos_payment(
+        self,
+        *,
+        sale_id: str,
+        company_id: str,
+        branch_id: str,
+        amount: float,
+        currency: str = "CLP",
+        idempotency_key: str,
+        terminal_id: str,
+        cashier_id: str,
+        device_id: str | None = None,
+        metadata: dict[str, str] | None = None,
+    ) -> Payment:
+        """Inicia operación en terminal POS Redcompra (canal pos).
+
+        Devuelve un Payment con status=pending_confirmation.
+        El middleware POS debe invocar confirm_transbank_pos_payment() con el resultado del terminal.
+        """
+        with self._lock:
+            if idempotency_key in self._ids_by_idempotency_key:
+                raise ValueError("idempotency key already exists")
+            self._ensure_method_enabled(branch_id=branch_id, channel="pos", method="transbank_pos")
+
+            intent_metadata: dict[str, str] = dict(metadata or {})
+            intent_metadata["terminal_id"] = terminal_id
+            intent_metadata["cashier_id"] = cashier_id
+            if device_id:
+                intent_metadata["device_id"] = device_id
+
+            intent = PaymentIntent(
+                idempotency_key=idempotency_key,
+                sale_id=sale_id,
+                company_id=company_id,
+                branch_id=branch_id,
+                channel=PaymentChannel.POS,
+                amount=amount,
+                currency=currency,
+                method="transbank_pos",
+                metadata=intent_metadata,
+            )
+            gateway = GATEWAY_REGISTRY["transbank_pos"]
+            result = gateway.authorize(intent)
+
+            if result.error_code is not None and not result.provider_payment_id:
+                raise ValueError(result.error_message or "provider error")
+
+            self._seq += 1
+            payment_id = f"pay-{self._seq:04d}"
+            payment = Payment(
+                id=payment_id,
+                sale_id=sale_id,
+                amount=amount,
+                method="transbank_pos",
+                status=result.status.value,
+                idempotency_key=idempotency_key,
+                provider=result.provider,
+                provider_payment_id=result.provider_payment_id,
+                branch_id=branch_id,
+                channel="pos",
+                currency=currency,
+            )
+            self._by_id[payment_id] = payment
+            self._ids_by_idempotency_key[idempotency_key] = payment_id
+            if result.provider_payment_id:
+                self._ids_by_provider_payment_id[result.provider_payment_id] = payment_id
+            return Payment(**vars(payment))
+
+    def confirm_transbank_pos_payment(
+        self,
+        *,
+        provider_payment_id: str,
+        approval_code: str,
+        response_code: str,
+        terminal_id: str,
+        ticket_number: str | None = None,
+        metadata: dict[str, str] | None = None,
+    ) -> ProviderConfirmationResult:
+        """Confirma el resultado del terminal POS.
+
+        provider_payment_id debe coincidir con el devuelto por create_transbank_pos_payment().
+        response_code '00' → APPROVED, cualquier otro → REJECTED.
+        """
+        with self._lock:
+            payment_id = self._ids_by_provider_payment_id.get(provider_payment_id)
+            if payment_id is None:
+                raise KeyError("payment not found for provider_payment_id")
+
+            payment = self._by_id[payment_id]
+            if payment.status != PaymentStatus.PENDING_CONFIRMATION.value:
+                raise ValueError(
+                    f"payment already resolved (current status: {payment.status})"
+                )
+
+            capture_metadata: dict[str, str] = dict(metadata or {})
+            capture_metadata["response_code"] = response_code
+            capture_metadata["approval_code"] = approval_code
+            capture_metadata["provider_payment_id"] = provider_payment_id
+            capture_metadata["terminal_id"] = terminal_id
+            if ticket_number:
+                capture_metadata["ticket_number"] = ticket_number
+
+            intent = PaymentIntent(
+                idempotency_key=payment.idempotency_key,
+                sale_id=payment.sale_id,
+                company_id="",
+                branch_id=payment.branch_id or "",
+                channel=PaymentChannel.POS,
+                amount=payment.amount,
+                currency=payment.currency,
+                method="transbank_pos",
+                metadata=capture_metadata,
+            )
+            gateway = GATEWAY_REGISTRY["transbank_pos"]
+            result = gateway.capture(intent)
+
+            previous_status = payment.status
+            if can_transition(PaymentStatus(previous_status), result.status):
+                payment.status = result.status.value
+
+            return ProviderConfirmationResult(
+                payment_id=payment_id,
+                provider=result.provider,
+                previous_status=previous_status,
+                current_status=payment.status,
+            )
 
     def process_webhook_event(
         self,
