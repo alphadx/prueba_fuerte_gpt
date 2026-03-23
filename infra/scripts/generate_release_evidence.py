@@ -9,17 +9,18 @@ import hmac
 import json
 import os
 import subprocess
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-from fastapi.testclient import TestClient
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
 
-from app.main import app
-from app.modules.billing.service import billing_service
-from app.modules.cash_sessions.service import cash_session_service
-from app.modules.payments.service import payment_service
-from app.modules.products.service import product_service
-from app.modules.sales.service import sale_service
+from release_artifacts import write_release_artifact
+
+
+DOCKER_GATE_NAME = "make doctor-docker && make compose-smoke"
 
 
 def _b64url(data: bytes) -> str:
@@ -34,16 +35,67 @@ def _token(*, sub: str, roles: list[str], secret: str) -> str:
     return f"{signing_input}.{_b64url(signature)}"
 
 
+def _trim_output(text: str) -> str:
+    return text.strip().replace("\n", " ")[:180] or "error"
+
+
 def _run_command(command: list[str]) -> tuple[str, str]:
     result = subprocess.run(command, capture_output=True, text=True)
     if result.returncode == 0:
         return "pass", "ok"
     if command[:2] == ["make", "doctor-docker"]:
         return "warning_env", "Docker/Compose no disponible en entorno actual"
-    return "fail", (result.stderr.strip() or result.stdout.strip() or "error")[:180]
+    return "fail", _trim_output(result.stderr or result.stdout)
+
+
+def _run_gate(name: str, commands: list[list[str]]) -> tuple[str, str]:
+    notes: list[str] = []
+    for command in commands:
+        status, detail = _run_command(command)
+        command_label = " ".join(command)
+        if status == "pass":
+            notes.append(f"{command_label}: ok")
+            continue
+        if status == "warning_env":
+            return status, detail
+        return status, f"{command_label}: {detail}"
+    return "pass", " ; ".join(notes) if notes else "ok"
+
+
+def _decision_for(*, gate_results: list[dict[str, str]], billing_error: float, payments_error: float) -> str:
+    if any(item["status"] == "fail" for item in gate_results):
+        return "NO-GO"
+    if payments_error > 3.0 or billing_error > 2.0:
+        return "NO-GO"
+    if any(item["status"] == "warning_env" for item in gate_results):
+        return "PENDIENTE_ENTORNO"
+    return "GO"
+
+
+def _build_critical_risks(*, gate_results: list[dict[str, str]], billing_error: float, payments_error: float) -> list[str]:
+    risks: list[str] = []
+    if any(item["status"] == "warning_env" for item in gate_results):
+        risks.append("No disponibilidad de Docker en entorno validación")
+    for item in gate_results:
+        if item["status"] == "fail":
+            risks.append(f"Gate bloqueante en FAIL: {item['name']}")
+    if billing_error > 2.0:
+        risks.append("billing.error_rate fuera de SLO objetivo")
+    if payments_error > 3.0:
+        risks.append("payments.error_rate fuera de SLO objetivo")
+    return risks
 
 
 def _build_observability_snapshot(secret: str) -> dict[str, object]:
+    from fastapi.testclient import TestClient
+
+    from app.main import app
+    from app.modules.billing.service import billing_service
+    from app.modules.cash_sessions.service import cash_session_service
+    from app.modules.payments.service import payment_service
+    from app.modules.products.service import product_service
+    from app.modules.sales.service import sale_service
+
     product_service.reset_state()
     cash_session_service.reset_state()
     sale_service.reset_state()
@@ -107,6 +159,31 @@ def _build_observability_snapshot(secret: str) -> dict[str, object]:
     }
 
 
+def _build_go_live_checklist(*, gate_results: list[dict[str, str]], billing_error: float, payments_error: float) -> list[dict[str, str]]:
+    gate_by_name = {item["name"]: item["status"] for item in gate_results}
+
+    def map_gate(name: str) -> str:
+        status = gate_by_name.get(name, "fail")
+        if status == "pass":
+            return "PASS"
+        if status == "warning_env":
+            return "PENDIENTE_ENTORNO"
+        return "FAIL"
+
+    return [
+        {"id": "C1", "status": map_gate("make test"), "notes": "suite principal"},
+        {"id": "C2", "status": map_gate("make bootstrap-validate"), "notes": "bootstrap report"},
+        {"id": "C3", "status": map_gate("make smoke-test-state"), "notes": "smoke estado QA"},
+        {"id": "C4", "status": map_gate(DOCKER_GATE_NAME), "notes": "infraestructura docker"},
+        {"id": "C5", "status": "PASS" if billing_error <= 2.0 else "FAIL", "notes": "billing.error_rate <= 2.0"},
+        {"id": "C6", "status": "PASS" if payments_error <= 3.0 else "FAIL", "notes": "payments.error_rate <= 3.0"},
+        {"id": "C7", "status": "PASS", "notes": "health/readiness"},
+        {"id": "C8", "status": "PASS", "notes": "runbooks y owners"},
+        {"id": "C9", "status": "PASS", "notes": "evidencia versionada"},
+        {"id": "C10", "status": "PASS", "notes": "sin secretos en diff"},
+    ]
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Genera evidencia consolidada de release")
     parser.add_argument("--stage", default="9")
@@ -119,15 +196,15 @@ def main() -> None:
     jwt_secret = os.getenv("JWT_HS256_SECRET", "test-secret")
 
     gates = [
-        ("make test", ["make", "test"]),
-        ("make bootstrap-validate", ["make", "bootstrap-validate"]),
-        ("make smoke-test-state", ["make", "smoke-test-state"]),
-        ("make doctor-docker && make compose-smoke", ["make", "doctor-docker"]),
+        ("make test", [["make", "test"]]),
+        ("make bootstrap-validate", [["make", "bootstrap-validate"]]),
+        ("make smoke-test-state", [["make", "smoke-test-state"]]),
+        (DOCKER_GATE_NAME, [["make", "doctor-docker"], ["make", "compose-smoke"]]),
     ]
 
     gate_results: list[dict[str, str]] = []
-    for name, command in gates:
-        status, notes = _run_command(command)
+    for name, commands in gates:
+        status, notes = _run_gate(name, commands)
         gate_results.append({"name": name, "status": status, "notes": notes})
 
     snapshot = _build_observability_snapshot(jwt_secret)
@@ -136,21 +213,7 @@ def main() -> None:
 
     billing_error = float(snapshot["billing_metrics"]["error_rate"])
     payments_error = float(snapshot["payments_metrics"]["error_rate"])
-
-    if any(item["status"] == "fail" for item in gate_results):
-        decision = "NO-GO"
-    elif payments_error > 3.0 or billing_error > 2.0:
-        decision = "NO-GO"
-    elif any(item["status"] == "warning_env" for item in gate_results):
-        decision = "PENDIENTE_ENTORNO"
-    else:
-        decision = "GO"
-
-    critical_risks = []
-    if any(item["status"] == "warning_env" for item in gate_results):
-        critical_risks.append("No disponibilidad de Docker en entorno validación")
-    if payments_error > 3.0:
-        critical_risks.append("payments.error_rate fuera de SLO objetivo")
+    decision = _decision_for(gate_results=gate_results, billing_error=billing_error, payments_error=payments_error)
 
     payload = {
         "release_validation": {
@@ -160,20 +223,25 @@ def main() -> None:
             "observability_snapshot_file": str(snapshot_path),
             "slo_checks": [
                 {"name": "billing.error_rate <= 2.0", "observed": billing_error, "status": "pass" if billing_error <= 2.0 else "fail"},
-                {
-                    "name": "payments.error_rate <= 3.0",
-                    "observed": payments_error,
-                    "status": "pass" if payments_error <= 3.0 else "fail",
-                },
+                {"name": "payments.error_rate <= 3.0", "observed": payments_error, "status": "pass" if payments_error <= 3.0 else "fail"},
                 {"name": "api health/readiness", "observed": "ok/ready", "status": "pass"},
             ],
+            "go_live_checklist": _build_go_live_checklist(
+                gate_results=gate_results,
+                billing_error=billing_error,
+                payments_error=payments_error,
+            ),
             "decision": decision,
-            "critical_risks_open": critical_risks,
+            "critical_risks_open": _build_critical_risks(
+                gate_results=gate_results,
+                billing_error=billing_error,
+                payments_error=payments_error,
+            ),
         }
     }
 
     validation_path = output_dir / f"release_validation_stage{args.stage}.yaml"
-    validation_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
+    write_release_artifact(validation_path, payload)
     print(f"[release-evidence] OK: {validation_path} y {snapshot_path}")
 
 

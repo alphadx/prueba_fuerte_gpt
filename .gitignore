@@ -1,3 +1,6 @@
 .venv/
 __pycache__/
 .pytest_cache/
+
+# Reportes generados por bootstrap.sh
+docs/bootstrap_run_*.txt

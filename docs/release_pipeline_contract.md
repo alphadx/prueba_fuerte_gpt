@@ -119,3 +119,15 @@ release_validation:
 1. Ejecutar handoff stage 11 en runner con Docker/Compose.
 2. Regenerar evidencia stage 9 y actualizar dictamen final (`GO|NO-GO`).
 3. Cerrar paso con acta final de salida sin bloqueos de entorno.
+
+## Resultado etapa 12 (acta formal de cierre)
+- Acta de cierre final: `docs/release_stage12_closure_acta.md`.
+- Generación automática: `infra/scripts/generate_release_closure_acta.py` a partir de `docs/release_validation_stage9.yaml`.
+- La salida sólo puede cerrarse como `GO` o `NO-GO` tras ejecutar handoff en entorno Docker/Compose sin `warning_env` en infraestructura.
+- Mientras no exista esa evidencia final, el estado operativo permanece en `PENDIENTE_ENTORNO`.
+
+## Resultado etapa 13 (validación automática de consistencia)
+- Nuevo validador: `infra/scripts/validate_release_evidence.py`.
+- Pipeline de cierre recomendado: `make release-closure-pipeline-stage9` (genera evidencia, valida consistencia y emite acta).
+- Robustez adicional: el gate `make doctor-docker && make compose-smoke` se ejecuta como secuencia real, el consolidado stage 9 se emite como YAML real y el validador cruza gates/SLO contra el checklist consolidado antes de aceptar el dictamen.
+- Beneficio: asegura consistencia entre formato del artefacto, gates, SLO, checklist, decisión final y acta emitida.

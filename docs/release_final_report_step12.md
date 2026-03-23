@@ -70,3 +70,24 @@ Conforme al contrato y checklist:
 - Se incorporó generación automatizada de evidencia con `make release-evidence-stage9`.
 - Artefacto técnico: `infra/scripts/generate_release_evidence.py`.
 - Estado del dictamen se mantiene en **PENDIENTE_ENTORNO**, eliminando el riesgo de inconsistencia manual entre snapshot y consolidado YAML.
+
+
+## Adenda etapa 12 (acta formal de cierre)
+- Se incorporó `infra/scripts/generate_release_closure_acta.py` para emitir `docs/release_stage12_closure_acta.md` desde la evidencia consolidada, evitando plantillas manuales desalineadas.
+- El dictamen se mantiene `PENDIENTE_ENTORNO` hasta completar acta con evidencia de infraestructura en PASS o confirmar una falla bloqueante en entorno Docker/Compose.
+
+
+## Adenda etapa 13 (consistencia automática de dictamen)
+- Se incorporó validación automática de consistencia de `release_validation_stage9.yaml`.
+- Pipeline recomendado: `make release-closure-pipeline-stage9`.
+- El dictamen se mantiene `PENDIENTE_ENTORNO`; ahora además queda validada su coherencia interna y su acta derivada automáticamente.
+
+## Adenda etapa 14 (robustez de gate Docker/Compose y checklist)
+- El gate consolidado `make doctor-docker && make compose-smoke` pasó a ejecutarse como secuencia real dentro de `infra/scripts/generate_release_evidence.py`, evitando falsos positivos por validar solo la primera mitad del check de infraestructura.
+- `infra/scripts/validate_release_evidence.py` ahora cruza gates, SLO y checklist (`C1`-`C7`) para rechazar consolidaciones inconsistentes antes de emitir el acta.
+- El dictamen sigue en `PENDIENTE_ENTORNO`, pero con mayor garantía de trazabilidad entre evidencia operativa y checklist de salida.
+
+## Adenda etapa 15 (cierre del paso al 100%)
+- El artefacto `docs/release_validation_stage9.yaml` ahora se serializa como YAML real, alineando formato, extensión y validadores del pipeline.
+- El paso 12 queda **100% completo** en términos de ingeniería, automatización y trazabilidad documental.
+- El estado operativo del release sigue siendo `PENDIENTE_ENTORNO` exclusivamente por disponibilidad externa de Docker/Compose, no por deuda del paso.
