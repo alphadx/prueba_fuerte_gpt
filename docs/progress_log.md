@@ -63,7 +63,7 @@
 - [x] Paso 4 — Modelo de datos y migraciones.
 - [ ] Paso 5 — API modular + auth/permisos.
 - [ ] Paso 6 — POS y flujo de caja.
-- [ ] Paso 7 — Boleta electrónica sandbox (prototipo iterativo 7 etapas).
+- [x] Paso 7 — Boleta electrónica sandbox (prototipo iterativo 7 etapas).
 - [ ] Paso 8 — Adaptadores de pago.
 - [ ] Paso 9 — E-commerce retiro en tienda.
 - [ ] Paso 10 — RRHH documental + alertas.
@@ -120,3 +120,23 @@ Cada avance debe añadir:
 **Evolución etapa 5 (resiliencia e idempotencia):**
 - Se incorporó backoff acotado por ciclos de worker para retry de errores transitorios.
 - Se agregó estado/contador de dead-letter para errores no recuperables al agotar intentos.
+
+
+**Evolución etapa 6 (consulta y pruebas):**
+- Se habilitó consulta por tipo documental y endpoint de refresh de estado para reconciliación explícita.
+- Se amplió cobertura API para escenarios de estado progresivo y ambigüedad por tipo documental.
+
+
+**Evolución etapa 7 (hardening y cierre):**
+- Se cerró checklist de salida de paso en `docs/paso7_hardening_checklist.md`.
+- Paso 7 marcado como completado a nivel prototipo (7/7).
+
+
+### 🟢 Paso 8 — Integrar capa de pagos por adaptadores
+
+**Estado:** completado como prototipo iterativo de 7 etapas (7/7).
+
+**Cierre etapa 7 (hardening):**
+- Se cerró checklist de salida en `docs/paso8_hardening_checklist.md`.
+- Se consolidaron controles de webhook idempotente, feature flags por sucursal/canal y conciliación básica.
+- Se completó evidencia de pruebas unitarias + API para escenarios críticos.

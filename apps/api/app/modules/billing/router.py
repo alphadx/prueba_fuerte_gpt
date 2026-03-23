@@ -2,11 +2,16 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.core.auth import AuthContext
 from app.core.permissions import require_roles
-from app.modules.billing.schemas import BillingDocumentResponse, BillingProcessRequest, BillingWorkerProcessResponse
+from app.modules.billing.schemas import (
+    BillingDocumentResponse,
+    BillingObservabilityResponse,
+    BillingProcessRequest,
+    BillingWorkerProcessResponse,
+)
 from app.modules.billing.service import BillingDocument, billing_service
 
 router = APIRouter(prefix="/billing", tags=["billing"])
@@ -36,10 +41,11 @@ def _to_response(doc: BillingDocument) -> BillingDocumentResponse:
 @router.get("/documents/{sale_id}", response_model=BillingDocumentResponse)
 def get_billing_document(
     sale_id: str,
+    document_type: str = Query(default="boleta", min_length=1),
     _: AuthContext = Depends(require_roles("admin", "cajero")),
 ) -> BillingDocumentResponse:
     try:
-        return _to_response(billing_service.get_by_sale_id(sale_id))
+        return _to_response(billing_service.get_by_sale_id(sale_id, document_type=document_type))
     except KeyError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
 
@@ -53,3 +59,23 @@ def process_billing_queue(
     return BillingWorkerProcessResponse(
         enqueued=enqueued, processed=processed, succeeded=succeeded, failed=failed, dead_lettered=dead_lettered
     )
+
+
+@router.post("/documents/{sale_id}/refresh-status", response_model=BillingDocumentResponse)
+def refresh_billing_document_status(
+    sale_id: str,
+    document_type: str = Query(default="boleta", min_length=1),
+    _: AuthContext = Depends(require_roles("admin", "cajero")),
+) -> BillingDocumentResponse:
+    try:
+        return _to_response(billing_service.refresh_status(sale_id=sale_id, document_type=document_type))
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@router.get("/observability/metrics", response_model=BillingObservabilityResponse)
+def get_billing_observability_metrics(
+    _: AuthContext = Depends(require_roles("admin", "cajero")),
+) -> BillingObservabilityResponse:
+    snapshot = billing_service.get_observability_snapshot()
+    return BillingObservabilityResponse(**vars(snapshot))

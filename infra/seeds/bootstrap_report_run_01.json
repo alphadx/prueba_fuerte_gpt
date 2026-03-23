@@ -1,0 +1,112 @@
+{
+  "started_at": "2026-03-22T23:56:04.492922+00:00",
+  "finished_at": "2026-03-22T23:56:05.506664+00:00",
+  "max_seconds": 600.0,
+  "step_timeout_seconds": 240.0,
+  "retries": 1,
+  "total_seconds": 1.014,
+  "within_target": true,
+  "all_steps_passed": true,
+  "steps": [
+    {
+      "name": "seed",
+      "command": "/usr/local/bin/python3 infra/scripts/seed.py",
+      "attempts": [
+        {
+          "name": "seed",
+          "command": "/usr/local/bin/python3 infra/scripts/seed.py",
+          "returncode": 0,
+          "duration_seconds": 0.035,
+          "started_at": "2026-03-22T23:56:04.492940+00:00",
+          "timed_out": false,
+          "stdout": "Seed canónico generado en infra/seeds/dev_seed.json\nSHA256=0b69d0cfa809bc51714265e2138aed5a2add1d69145b545c5d358d87b8f8981c\n",
+          "stderr": "",
+          "attempt": 1
+        }
+      ],
+      "returncode": 0,
+      "duration_seconds": 0.035,
+      "timed_out": false
+    },
+    {
+      "name": "seed-validate",
+      "command": "/usr/local/bin/python3 infra/scripts/validate_seed.py",
+      "attempts": [
+        {
+          "name": "seed-validate",
+          "command": "/usr/local/bin/python3 infra/scripts/validate_seed.py",
+          "returncode": 0,
+          "duration_seconds": 0.051,
+          "started_at": "2026-03-22T23:56:04.528104+00:00",
+          "timed_out": false,
+          "stdout": "[seed-check] company base OK\n[seed-check] branch base OK\n[seed-check] roles base OK\n[seed-check] productos base OK\n[seed-check] empleados y documentos base OK\n[seed-check] reglas de alerta base OK\n[seed-check] ventana de vencimiento cercana OK\n[seed-check] OK: invariantes cumplidos\n",
+          "stderr": "",
+          "attempt": 1
+        }
+      ],
+      "returncode": 0,
+      "duration_seconds": 0.051,
+      "timed_out": false
+    },
+    {
+      "name": "fixtures",
+      "command": "/usr/local/bin/python3 infra/scripts/load_fixtures.py",
+      "attempts": [
+        {
+          "name": "fixtures",
+          "command": "/usr/local/bin/python3 infra/scripts/load_fixtures.py",
+          "returncode": 0,
+          "duration_seconds": 0.867,
+          "started_at": "2026-03-22T23:56:04.578753+00:00",
+          "timed_out": false,
+          "stdout": "Fixtures críticos cargados y reportados en infra/seeds/fixtures_state.json\n",
+          "stderr": "",
+          "attempt": 1
+        }
+      ],
+      "returncode": 0,
+      "duration_seconds": 0.867,
+      "timed_out": false
+    },
+    {
+      "name": "fixtures-validate",
+      "command": "/usr/local/bin/python3 infra/scripts/validate_fixtures.py",
+      "attempts": [
+        {
+          "name": "fixtures-validate",
+          "command": "/usr/local/bin/python3 infra/scripts/validate_fixtures.py",
+          "returncode": 0,
+          "duration_seconds": 0.03,
+          "started_at": "2026-03-22T23:56:05.446051+00:00",
+          "timed_out": false,
+          "stdout": "[fixtures] OK: catálogo crítico completo\n",
+          "stderr": "",
+          "attempt": 1
+        }
+      ],
+      "returncode": 0,
+      "duration_seconds": 0.03,
+      "timed_out": false
+    },
+    {
+      "name": "smoke-test-state",
+      "command": "/usr/local/bin/python3 infra/scripts/smoke_test_state.py",
+      "attempts": [
+        {
+          "name": "smoke-test-state",
+          "command": "/usr/local/bin/python3 infra/scripts/smoke_test_state.py",
+          "returncode": 0,
+          "duration_seconds": 0.031,
+          "started_at": "2026-03-22T23:56:05.475825+00:00",
+          "timed_out": false,
+          "stdout": "[smoke] OK: estado QA ejecutable\n",
+          "stderr": "",
+          "attempt": 1
+        }
+      ],
+      "returncode": 0,
+      "duration_seconds": 0.031,
+      "timed_out": false
+    }
+  ]
+}

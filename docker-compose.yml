@@ -43,6 +43,25 @@ services:
       - redis
     profiles: ["core", "full"]
 
+  tooling:
+    build:
+      context: .
+      dockerfile: infra/tooling/Dockerfile
+    working_dir: /workspace
+    volumes:
+      - .:/workspace
+    environment:
+      PYTHONPATH: /workspace/apps/api
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      REDIS_URL: redis://redis:6379/0
+      ALERTS_QUEUE: ${ALERTS_QUEUE:-alerts_queue}
+      ALLOW_MEMORY_QUEUE_FALLBACK: ${ALLOW_MEMORY_QUEUE_FALLBACK:-true}
+      JWT_HS256_SECRET: ${JWT_HS256_SECRET:-test-secret}
+    depends_on:
+      - postgres
+      - redis
+    profiles: ["core", "full"]
+
   web:
     image: node:20-alpine
     working_dir: /web

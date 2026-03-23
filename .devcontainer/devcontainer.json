@@ -1,0 +1,46 @@
+{
+  "name": "ERP Barrio Chile",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu-24.04",
+
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+  },
+
+  "onCreateCommand": "chmod +x scripts/bootstrap.sh",
+
+  "forwardPorts": [
+    8000, 3000,
+    5432, 5433,
+    6379,
+    8025, 1025,
+    9000, 9001,
+    8081,
+    3025, 3143, 8082
+  ],
+
+  "portsAttributes": {
+    "8000": { "label": "API FastAPI",       "onAutoForward": "notify", "visibility": "private" },
+    "3000": { "label": "Web UI",            "onAutoForward": "silent",  "visibility": "private" },
+    "5432": { "label": "PostgreSQL (app)",  "onAutoForward": "silent",  "visibility": "private" },
+    "5433": { "label": "PostgreSQL (kc)",   "onAutoForward": "silent",  "visibility": "private" },
+    "6379": { "label": "Redis",             "onAutoForward": "silent",  "visibility": "private" },
+    "8025": { "label": "Mailhog UI",        "onAutoForward": "openBrowser", "visibility": "private" },
+    "1025": { "label": "Mailhog SMTP",      "onAutoForward": "silent",  "visibility": "private" },
+    "9000": { "label": "MinIO API",         "onAutoForward": "silent",  "visibility": "private" },
+    "9001": { "label": "MinIO Console",     "onAutoForward": "openBrowser", "visibility": "private" },
+    "8081": { "label": "Keycloak",          "onAutoForward": "openBrowser", "visibility": "private" },
+    "3025": { "label": "GreenMail SMTP",    "onAutoForward": "silent",  "visibility": "private" },
+    "3143": { "label": "GreenMail IMAP",    "onAutoForward": "silent",  "visibility": "private" },
+    "8082": { "label": "GreenMail Web",     "onAutoForward": "silent",  "visibility": "private" }
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-azuretools.vscode-docker",
+        "ms-python.python",
+        "GitHub.copilot"
+      ]
+    }
+  }
+}

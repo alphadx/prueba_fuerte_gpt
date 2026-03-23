@@ -34,3 +34,12 @@ class BillingWorkerProcessResponse(BaseModel):
     succeeded: int
     failed: int
     dead_lettered: int
+
+
+class BillingObservabilityResponse(BaseModel):
+    queue_depth: int
+    queued_documents: int
+    processing_documents: int
+    dead_lettered_documents: int
+    total_documents: int
+    error_rate: float

@@ -325,6 +325,22 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/PaymentResponse'
+    PaymentObservabilityResponse:
+      type: object
+      required: [payments_total, approved_total, rejected_total, pending_total, webhook_events_processed, error_rate]
+      properties:
+        payments_total:
+          type: integer
+        approved_total:
+          type: integer
+        rejected_total:
+          type: integer
+        pending_total:
+          type: integer
+        webhook_events_processed:
+          type: integer
+        error_rate:
+          type: number
     CashSessionCreateRequest:
       type: object
       required: [branch_id, opened_by, opening_amount, status]
@@ -490,6 +506,22 @@ components:
           type: integer
         dead_lettered:
           type: integer
+    BillingObservabilityResponse:
+      type: object
+      required: [queue_depth, queued_documents, processing_documents, dead_lettered_documents, total_documents, error_rate]
+      properties:
+        queue_depth:
+          type: integer
+        queued_documents:
+          type: integer
+        processing_documents:
+          type: integer
+        dead_lettered_documents:
+          type: integer
+        total_documents:
+          type: integer
+        error_rate:
+          type: number
 paths:
   /billing/documents/{sale_id}:
     parameters:
@@ -502,6 +534,13 @@ paths:
       tags: [billing]
       summary: Obtiene estado de boleta electrónica por venta
       operationId: getBillingDocumentBySaleId
+      parameters:
+        - in: query
+          name: document_type
+          required: false
+          schema:
+            type: string
+            default: boleta
       security:
         - bearerAuth: []
       responses:
@@ -529,6 +568,78 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+
+  /billing/documents/{sale_id}/refresh-status:
+    parameters:
+      - in: path
+        name: sale_id
+        required: true
+        schema:
+          type: string
+      - in: query
+        name: document_type
+        required: false
+        schema:
+          type: string
+          default: boleta
+    post:
+      tags: [billing]
+      summary: Refresca estado SII/proveedor de un documento emitido
+      operationId: postBillingDocumentRefreshStatus
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Estado actualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BillingDocumentResponse'
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Documento tributario no existe para la venta
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /billing/observability/metrics:
+    get:
+      tags: [billing]
+      summary: Obtiene métricas de observabilidad de emisión de boletas
+      operationId: getBillingObservabilityMetrics
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Snapshot de observabilidad de billing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BillingObservabilityResponse'
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
   /billing/worker/process:
     post:
       tags: [billing]
@@ -1444,6 +1555,33 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /payments/observability/metrics:
+    get:
+      tags: [payments]
+      summary: Obtiene métricas de observabilidad de pagos
+      operationId: getPaymentsObservabilityMetrics
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Snapshot de observabilidad de pagos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentObservabilityResponse'
+        '401':
+          description: Token ausente/inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rol insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
   /payments:
     get:
       tags: [payments]

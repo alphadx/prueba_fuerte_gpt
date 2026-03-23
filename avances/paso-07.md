@@ -15,9 +15,9 @@
 7. **Hardening documental** y checklist de cierre del paso.
 
 ## Estado actual del prototipo
-- **Etapa en ejecución:** **Etapa 5 de 7 (completada)**.
-- **Cumplimiento estimado del paso 7:** **71%** (5/7 completadas: + resiliencia/reintentos/idempotencia).
-- **Semáforo:** 🟡 Amarillo (En progreso controlado por etapas).
+- **Etapa en ejecución:** **Etapa 7 de 7 (completada)**.
+- **Cumplimiento estimado del paso 7:** **100%** (7/7 completadas; hardening y checklist final cerrados).
+- **Semáforo:** 🟢 Verde (Terminado).
 - **Observación:** Se asume enfoque iterativo; no se considera cierre definitivo del paso hasta completar 7/7 con aprobación explícita por etapa.
 
 ## Checklist de control por etapa
@@ -26,8 +26,8 @@
 - [x] Etapa 3 — adaptador sandbox.
 - [x] Etapa 4 — desacople asíncrono POS.
 - [x] Etapa 5 — resiliencia/reintentos/idempotencia.
-- [ ] Etapa 6 — consulta de estado + pruebas.
-- [ ] Etapa 7 — hardening documental.
+- [x] Etapa 6 — consulta de estado + pruebas.
+- [x] Etapa 7 — hardening documental.
 
 ## Protocolo de interacción
 1. Ejecutar una etapa.
@@ -68,3 +68,15 @@
 - Se agregó marcación de dead-letter (`dead_lettered`) al agotar intentos máximos y contador global de documentos en dead-letter.
 - El endpoint del worker ahora reporta `dead_lettered` además de `enqueued/processed/succeeded/failed`.
 - Se añadieron pruebas unitarias y API para validar backoff, transición a dead-letter y observabilidad del contador.
+
+
+## Evidencia etapa 6
+- La consulta de documento ahora soporta `document_type` por query param para evitar ambigüedad entre boleta/factura de una misma venta.
+- Se agregó endpoint de reconciliación `POST /billing/documents/{sale_id}/refresh-status` para actualizar estado observado en proveedor/SII.
+- Se amplió la batería de pruebas API con casos de refresh progresivo y búsqueda por tipo documental.
+
+
+## Evidencia etapa 7
+- Se consolidó checklist de hardening y salida en `docs/paso7_hardening_checklist.md`.
+- Se validó cobertura de confiabilidad: desacople POS, retries/backoff, dead-letter y reconciliación de estado.
+- Se cerró formalmente el paso 7 como prototipo completo (7/7).

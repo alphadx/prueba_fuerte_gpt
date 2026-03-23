@@ -41,6 +41,16 @@ class BillingEmissionEvent:
     document_type: str
 
 
+@dataclass
+class BillingObservabilitySnapshot:
+    queue_depth: int
+    queued_documents: int
+    processing_documents: int
+    dead_lettered_documents: int
+    total_documents: int
+    error_rate: float
+
+
 class BillingService:
     def __init__(self, *, provider: BillingProvider, max_attempts: int = 3) -> None:
         self._provider = provider
@@ -130,6 +140,25 @@ class BillingService:
                 )
 
             raise KeyError("billing document not found")
+
+
+    def refresh_status(self, *, sale_id: str, document_type: str = "boleta") -> BillingDocument:
+        with self._lock:
+            key = (sale_id, document_type)
+            doc = self._documents.get(key)
+            if doc is None:
+                raise KeyError("billing document not found")
+            if doc.track_id is None:
+                return self._clone(doc)
+
+        status = self._provider.get_status(track_id=doc.track_id)
+
+        with self._lock:
+            doc = self._documents[key]
+            doc.sii_status = status
+            if doc.status == "processing" and status == "accepted":
+                doc.status = "accepted"
+            return self._clone(doc)
 
     def process_worker_batch(self, *, limit: int = 20) -> tuple[int, int, int, int, int]:
         enqueued = self.drain_emission_events(limit=limit)
@@ -224,7 +253,7 @@ class BillingService:
             doc.xml_url = response.xml_url
             doc.pdf_url = response.pdf_url
             doc.raw_payload_ref = response.raw_payload_ref
-            doc.sii_status = self._provider.get_status(track_id=response.track_id)
+            doc.sii_status = response.status
             doc.last_error = None
             doc.retry_after_batches = 0
             doc.dead_lettered = False
@@ -234,6 +263,23 @@ class BillingService:
     def dead_letter_count(self) -> int:
         with self._lock:
             return len(self._dead_letter_keys)
+
+    def get_observability_snapshot(self) -> BillingObservabilitySnapshot:
+        with self._lock:
+            queue_depth = len(self._emission_queue)
+            queued_documents = len(self._queued_index)
+            processing_documents = sum(1 for item in self._documents.values() if item.status == "processing")
+            dead_lettered_documents = len(self._dead_letter_keys)
+            total_documents = len(self._documents) + queued_documents
+            error_rate = (dead_lettered_documents / total_documents * 100) if total_documents else 0.0
+            return BillingObservabilitySnapshot(
+                queue_depth=queue_depth,
+                queued_documents=queued_documents,
+                processing_documents=processing_documents,
+                dead_lettered_documents=dead_lettered_documents,
+                total_documents=total_documents,
+                error_rate=round(error_rate, 2),
+            )
 
     def _mark_dead_letter(self, doc: BillingDocument, *, reason: str) -> None:
         doc.status = "failed"
